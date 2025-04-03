@@ -1,10 +1,7 @@
 
-// @ts-ignore
 import CookieParser from "cookie-parser";
-// @ts-ignore
 import express, {Express, Request, Response, urlencoded} from "express";
 import {PORT} from "./config/env";
-import userRoutes from "./routes/user.routes";
 import connectToDB from "./database/mongodb";
 import errorMiddleware from "./middlewares/error.middlewares";
 import cors from "cors";
