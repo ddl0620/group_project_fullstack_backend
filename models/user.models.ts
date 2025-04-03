@@ -1,11 +1,10 @@
 // src/models/candidate.model.ts
 import { Schema, model } from 'mongoose';
 import {UserInterface} from "../interfaces/user.interfaces";
-import {University} from "../enums/university.enums";
-import {Major} from "../enums/major.enums";
 
 
-const candidateSchema = new Schema<UserInterface>(
+
+const userSchema = new Schema<UserInterface>(
     {
         name: {
             type: String,
@@ -36,4 +35,4 @@ const candidateSchema = new Schema<UserInterface>(
     }
 );
 
-export const CandidateModel = model<UserInterface>('Candidate', candidateSchema);
+export const UserModel = model<UserInterface>('Candidate', userSchema);

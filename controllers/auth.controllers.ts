@@ -3,7 +3,7 @@ import {NextFunction} from "express";
 import mongoose from "mongoose";
 import {HttpError} from "../helpers/httpsError.helpers";
 import {generateToken} from "../helpers/jwtGenerate.helper";
-import {CandidateModel} from "../models/user.models";
+import {UserModel} from "../models/user.models";
 import bcrypt from "bcryptjs";
 
 export class AuthControllers {
@@ -17,8 +17,9 @@ export class AuthControllers {
         session.startTransaction();
 
         try{
+            console.log("sign up started");
             const {name, email, password} = request.body;
-            const existingUser = await CandidateModel.findOne({email});
+            const existingUser = await UserModel.findOne({email});
             if(existingUser){
                 throw new HttpError("User already exists", 400, "USER_EXISTS", response);
             }
@@ -26,7 +27,7 @@ export class AuthControllers {
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(password, salt);
 
-            const [newUser] = await CandidateModel.create(
+            const [newUser] = await UserModel.create(
                 [{
                     name,
                     email,
@@ -68,7 +69,7 @@ export class AuthControllers {
 
         try{
             const {email, password} = request.body;
-            const user = await CandidateModel.findOne({email});
+            const user = await UserModel.findOne({email});
 
             if(!user){
                 throw new HttpError("User does not exist", 400, "USER_NOT_EXISTS", response);
@@ -86,8 +87,7 @@ export class AuthControllers {
                     user,
                     token
                 }
-            });
-        }
+            });}
         catch(err){
             nextFunction(err);
         }

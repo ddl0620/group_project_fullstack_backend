@@ -6,6 +6,7 @@ import connectToDB from "./database/mongodb";
 import errorMiddleware from "./middlewares/error.middlewares";
 import cors from "cors";
 import authRoutes from "./routes/auth.routes";
+import userRoutes from "./routes/user.routes";
 const app: Express = express();
 
 app.use(urlencoded({ extended: false }));
@@ -19,11 +20,11 @@ app.use(cors({
 }));
 
 app.use('/api/v1/auth', authRoutes);
-// app.use('/api/v1/user', userRoutes);
+app.use('/api/v1/user', userRoutes);
 // app.use('/api/v1/order', orderRoutes);
 
 app.get("/", (_req: Request, res: Response): void => {
-    res.send("Hello World! This is the backend of the E-commerce app");
+    res.send("This is the backend of group project: Full Stack\n");
 });
 
 app.listen(PORT, async (): Promise<void> => {
