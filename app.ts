@@ -5,7 +5,7 @@ import {PORT} from "./config/env";
 import connectToDB from "./database/mongodb";
 import errorMiddleware from "./middlewares/error.middlewares";
 import cors from "cors";
-import authRoutes from "./routes/user.routes"; // Import cors
+import authRoutes from "./routes/auth.routes";
 const app: Express = express();
 
 app.use(urlencoded({ extended: false }));
@@ -13,7 +13,7 @@ app.use(errorMiddleware)
 app.use(CookieParser());
 app.use(express.json());
 app.use(cors({
-    origin: "http://localhost:3000", // Allow requests from the frontend
+    origin: "*", // Allow requests from the frontend
     methods: ["GET", "POST", "PUT", "DELETE"], // Allow these HTTP methods
     allowedHeaders: ["Content-Type", "Authorization"], // Allow these headers
 }));

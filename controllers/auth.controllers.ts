@@ -3,7 +3,7 @@ import {NextFunction} from "express";
 import mongoose from "mongoose";
 import {HttpError} from "../helpers/httpsError.helpers";
 import {generateToken} from "../helpers/jwtGenerate.helper";
-import {CandidateModel} from "../models/candidate.models";
+import {CandidateModel} from "../models/user.models";
 import bcrypt from "bcryptjs";
 
 export class AuthControllers {
@@ -17,7 +17,7 @@ export class AuthControllers {
         session.startTransaction();
 
         try{
-            const {name, dob, email, password, phone, cccd, university, major, sid} = request.body;
+            const {name, email, password} = request.body;
             const existingUser = await CandidateModel.findOne({email});
             if(existingUser){
                 throw new HttpError("User already exists", 400, "USER_EXISTS", response);
@@ -30,13 +30,7 @@ export class AuthControllers {
                 [{
                     name,
                     email,
-                    password: hashedPassword,
-                    dob,
-                    phone,
-                    cccd,
-                    university,
-                    major,
-                    sid
+                    password: hashedPassword
                 }],
                 {session: session});
 
@@ -102,11 +96,5 @@ export class AuthControllers {
         }
     }
 
-    async signOut(
-        request: Request,
-        response: Response,
-        nextFunction: NextFunction
-    ): Promise<void> {
-        return;
-    }
+
 }
