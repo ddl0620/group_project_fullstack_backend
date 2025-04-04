@@ -33,4 +33,4 @@ const userSchema = new Schema<UserInterface>(
     }
 );
 
-export const UserModel = model<UserInterface>('Candidate', userSchema);
+export const UserModel = model<UserInterface>('user', userSchema);
