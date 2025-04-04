@@ -29,9 +29,14 @@ export class UserController {
 
             response.status(200).json({
                 success: true,
-                message: "User retrieved successfully",
-                data: user
+                message: "Fetch user successfully",
+                data: {
+                    user
+                }
             });
+
+
+
         }
         catch(err){
             await session.abortTransaction();

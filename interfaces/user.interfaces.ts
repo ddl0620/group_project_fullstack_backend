@@ -7,5 +7,4 @@ export interface UserInterface extends Document {
     role: string;
     createdAt: Date;
     updatedAt: Date;
-    // votes?: number; // Số lượt bình chọn (liên quan đến Vote)
 }
