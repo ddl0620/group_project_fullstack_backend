@@ -1,0 +1,7 @@
+export enum EventType {
+    ONLINE = 'ONLINE',
+    OFFLINE = 'OFFLINE',
+    WEBINAR = 'WEBINAR',
+    WORKSHOP = 'WORKSHOP',
+    COMPETITION = 'COMPETITION',
+}

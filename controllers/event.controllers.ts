@@ -17,9 +17,9 @@ export class EventController {
         nextFunction: NextFunction
     ): Promise<void> {
 
-        response.status(401).json({
+        response.status(200).json({
             success: true,
-            message: "Dit me may"
+            message: "yoink"
         });
 
     }
