@@ -6,6 +6,10 @@ const event = new EventController();
 
 eventRoutes.post("/add-event", event.addEvent);
 eventRoutes.get("/all-event", event.getEvent);
+eventRoutes.get("/:id", event.getEventById);
+eventRoutes.put("/:id", event.updateEvent);
+
+
 // eventRoutes.get("//events/:id", auth.signUp);
 // authRoutes.post("/sign-out", auth.signOut);
 

@@ -97,4 +97,106 @@ export class EventController {
             next(err);
         }
     }
+
+    async getEventById(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ) : Promise<void> {
+        try {
+            console.log("getting event by ID");
+
+            const {id} = req.params;
+
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                res.status(400).json({
+                    success: false,
+                    message: "Invalid event ID format"
+                });
+                return;
+            }
+
+            const event = await EventModel.findById(id);
+
+            if (!event) {
+                res.status(404).json({
+                    success: false,
+                    message: "Event not found"
+                })
+                return;
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Event found successfully",
+                data: {
+                    event,
+                }
+            })
+
+        }
+        catch(err) {
+            next(err);
+        }
+    }
+
+    async updateEvent (
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ) : Promise<void> {
+        try {
+            console.log("update event");
+
+
+            const {id} = req.params;
+            const {title, description, type, startDate, endDate, location, images, organizer, participants, isPublic} = req.body;
+
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                res.status(400).json({
+                    success: false,
+                    message: "Invalid event ID format",
+                });
+                return;
+            }
+
+            const updatedEvent = await EventModel.findByIdAndUpdate(
+                id,
+                {
+                    title,
+                    description,
+                    type,
+                    startDate,
+                    endDate,
+                    location,
+                    images,
+                    organizer,
+                    participants,
+                    isPublic,
+                },
+                { new: true }
+            )
+
+            if (!updatedEvent) {
+                res.status(404).json({
+                    success: false,
+                    message: "Event not found"
+                })
+                return;
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Event updated successfully",
+                data: {
+                    updatedEvent,
+                }
+            })
+
+        }
+        catch(err) {
+            next(err);
+        }
+    }
+
 }
