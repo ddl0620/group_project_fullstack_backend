@@ -54,4 +54,47 @@ export class EventController {
         }
 
     }
+
+    async getEvent(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ) : Promise<void> {
+
+        try {
+            console.log("getting event");
+
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+            const sortBy = ((req.query.sortBy as string) || "desc").toLowerCase();
+            const skip = (page - 1) * limit;
+
+            const sortOrder = sortBy === "asc" ? 1 : -1;
+
+            const events = await EventModel.find()
+                .sort({createdAt: sortOrder})
+                .skip(skip)
+                .limit(limit);
+
+            const totalEvents = await EventModel.countDocuments();
+
+
+            res.status(200).json({
+                success: true,
+                message: "Event fetched successfully",
+                data: {
+                    events,
+                    pagination: {
+                        page,
+                        limit,
+                        totalPages: Math.ceil(totalEvents / limit),
+                        totalEvents,
+                    }
+                }
+            })
+        }
+        catch(err) {
+            next(err);
+        }
+    }
 }

@@ -5,6 +5,7 @@ const eventRoutes = Router();
 const event = new EventController();
 
 eventRoutes.post("/add-event", event.addEvent);
+eventRoutes.get("/all-event", event.getEvent);
 // eventRoutes.get("//events/:id", auth.signUp);
 // authRoutes.post("/sign-out", auth.signOut);
 
