@@ -1,11 +1,15 @@
 import {Router} from "express";
-import {AuthControllers} from "../controllers/auth.controllers";
 import {EventController} from "../controllers/event.controllers";
 
 const eventRoutes = Router();
-const auth = new EventController();
+const event = new EventController();
 
-eventRoutes.get("/all", auth.events);
+eventRoutes.post("/add-event", event.addEvent);
+eventRoutes.get("/all-event", event.getEvent);
+eventRoutes.get("/:id", event.getEventById);
+eventRoutes.put("/:id", event.updateEvent);
+
+
 // eventRoutes.get("//events/:id", auth.signUp);
 // authRoutes.post("/sign-out", auth.signOut);
 
