@@ -34,3 +34,4 @@ const userSchema = new Schema<UserInterface>(
 );
 
 export const UserModel = model<UserInterface>('User', userSchema);
+
