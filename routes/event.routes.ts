@@ -8,6 +8,7 @@ eventRoutes.post("/add-event", event.addEvent);
 eventRoutes.get("/all-event", event.getEvent);
 eventRoutes.get("/:id", event.getEventById);
 eventRoutes.put("/:id", event.updateEvent);
+eventRoutes.delete("/:id", event.deleteEvent);
 
 
 // eventRoutes.get("//events/:id", auth.signUp);
