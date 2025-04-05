@@ -13,8 +13,9 @@ const EventSchema = new mongoose.Schema({
     organizer: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     participants: { type: [ParticipantSchema], required: false }, // Use imported schema
     isPublic: { type: Boolean, default: false },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now },
-});
+},
+    {
+        timestamps: true,
+    });
 
 export const EventModel = mongoose.model('Event', EventSchema);
