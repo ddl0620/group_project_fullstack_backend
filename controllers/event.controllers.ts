@@ -199,4 +199,44 @@ export class EventController {
         }
     }
 
+    async deleteEvent(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ) : Promise<void> {
+        try {
+            console.log("deleting event");
+            const { id } = req.params;
+
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                res.status(400).json({
+                    success: false,
+                    message: "Invalid event ID format",
+                });
+                return;
+            }
+
+            const deletedEvent = await EventModel.findByIdAndDelete(id);
+
+            if (!deletedEvent) {
+                res.status(404).json({
+                    success: false,
+                    message: "Event not found"
+                })
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Event deleted successfully",
+                data: {
+                    deletedEvent,
+                }
+            })
+
+        }
+        catch(err) {
+            next(err);
+        }
+    }
+
 }
