@@ -10,7 +10,7 @@ const EventSchema = new mongoose.Schema({
     endDate: { type: Date, required: true },
     location: { type: String, required: true, maxlength: 200 },
     images: { type: [String], required: true },
-    organizer: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    organizer: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     participants: { type: [ParticipantSchema], required: false }, // Use imported schema
     isPublic: { type: Boolean, default: false },
 },

@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import {HttpError} from "../helpers/httpsError.helpers";
 import {UserModel} from "../models/user.models";
 import {UserInterface} from "../interfaces/user.interfaces";
+
 interface AuthenticationRequest extends Request {
     user?: {
         userId: string;

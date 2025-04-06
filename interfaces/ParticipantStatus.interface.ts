@@ -1,8 +1,4 @@
-export enum ParticipationStatus {
-    PENDING = 'PENDING',
-    ACCEPTED = 'ACCEPTED',
-    DENIED = 'DENIED'
-}
+import {ParticipationStatus} from "../enums/participationStatus.enums";
 
 export interface IParticipantStatus {
     userId: string;
