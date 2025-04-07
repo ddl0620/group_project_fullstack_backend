@@ -95,9 +95,9 @@ export class EventController {
 
             const query = {
                 $or: [
-                    { isPublic: true }, // Public events visible to all authenticated users
-                    { organizer: userId }, // Private events where the user is the organizer
-                    { participants: userId } // Private events where the user is a participant
+                    { isPublic: true },
+                    { organizer: userId },
+                    { "participants.userId": userId } // Fixed query
                 ]
             };
 
@@ -129,7 +129,7 @@ export class EventController {
     }
 
     async getEventById(
-        req: Request,
+        req: AuthenticationRequest,
         res: Response,
         next: NextFunction
     ) : Promise<void> {
@@ -137,6 +137,12 @@ export class EventController {
             console.log("getting event by ID");
 
             const {id} = req.params;
+            const userId = req.user?.userId;
+
+            if (!userId) {
+                return next(new HttpError("nope", 401, "not today"));
+            }
+
 
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 res.status(400).json({
@@ -154,6 +160,17 @@ export class EventController {
                     message: "Event not found"
                 })
                 return;
+            }
+
+            if (!event.isPublic) {
+                const isOrganizer = event.organizer && event.organizer.toString() === userId;
+                const isParticipant = event.participants && event.participants.some(
+                    (participant) => participant.userId && participant.userId.toString() === userId
+                ) || false; // Default to false if participants is null/undefined
+
+                if (!isOrganizer && !isParticipant) {
+                    return next(new HttpError("Access denied to private event", 403, "ACCESS_DENIED"));
+                }
             }
 
             res.status(200).json({
