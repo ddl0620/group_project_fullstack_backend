@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import {EventModel} from "../models/event.models";
 import {UserModel} from "../models/user.models";
 import {HttpError} from "../helpers/httpsError.helpers";
+import {EventInterface} from "../interfaces/event.interfaces";
 
 interface AuthenticationRequest extends Request {
     user?: {
@@ -205,7 +206,7 @@ export class EventController {
                 return next(new HttpError("nope", 401, "not today"));
             }
 
-            const event = await EventModel.findById(id);
+            const event: (EventInterface | null) = await EventModel.findById(id);
 
             if (!event) {
                 res.status(404).json({
