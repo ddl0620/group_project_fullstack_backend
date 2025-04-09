@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import mongoose from "mongoose";
 import { NotificationModel } from "../models/notification.models";
 import { HttpError } from "../helpers/httpsError.helpers";
+import { sendNotification } from "../websocket"; // Import WebSocket notification emitter
 
 interface AuthenticationRequest extends Request {
     user?: {
@@ -26,29 +27,13 @@ export class NotificationController {
                 return next(new HttpError("Unauthorized", 401, "AUTH_REQUIRED"));
             }
 
-            const page = parseInt(req.query.page as string) || 1;
-            const limit = parseInt(req.query.limit as string) || 10;
-            const skip = (page - 1) * limit;
-
             const notifications = await NotificationModel.find({ recipient: userId })
-                .sort({ createdAt: -1 }) // Most recent first
-                .skip(skip)
-                .limit(limit);
-
-            const totalNotifications = await NotificationModel.countDocuments({ recipient: userId });
+                .sort({ createdAt: -1 }); // Most recent first
 
             res.status(200).json({
                 success: true,
                 message: "Notifications fetched successfully",
-                data: {
-                    notifications,
-                    pagination: {
-                        page,
-                        limit,
-                        totalPages: Math.ceil(totalNotifications / limit),
-                        totalNotifications,
-                    },
-                },
+                data: notifications,
             });
         } catch (err) {
             next(err);
@@ -126,6 +111,7 @@ export class NotificationController {
                 return;
             }
 
+            // Create the notification in the database
             const newNotification = await NotificationModel.create({
                 recipient,
                 type,
@@ -134,6 +120,9 @@ export class NotificationController {
                 relatedUser,
                 isRead: false,
             });
+
+            // Emit the notification via WebSocket
+            sendNotification(recipient, newNotification);
 
             res.status(201).json({
                 success: true,

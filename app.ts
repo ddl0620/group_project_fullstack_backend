@@ -10,6 +10,9 @@ import userRoutes from "./routes/user.routes";
 import eventRoutes from "./routes/event.routes";
 const app: Express = express();
 
+//notification routes
+import notificationRoutes from "./routes/notification.routes";
+
 //websocket for notification
 import io from "./websocket";
 import { createServer } from "http";
@@ -29,7 +32,8 @@ app.use(cors({
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/user', userRoutes);
-app.use('/api/v1/event', eventRoutes)
+app.use('/api/v1/event', eventRoutes);
+app.use('/api/v1/notification', notificationRoutes);
 // app.use('/api/v1/order', orderRoutes);
 
 app.get("/", (_req: Request, res: Response): void => {
