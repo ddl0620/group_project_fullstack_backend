@@ -15,6 +15,8 @@ export interface NotificationInterface extends Document {
     relatedUser?: mongoose.Schema.Types.ObjectId | UserInterface; // Friend request, friend request accepted, friend request rejected, message received
     // Evenvitation sent by a user to another user used both
     isRead: boolean; // Whether the notification has been read
+
+    readAt?: Date; // Timestamp when the notification was marked as read
     
     createdAt: Date; // Timestamp when the notification was created
     
