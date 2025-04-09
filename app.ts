@@ -10,6 +10,13 @@ import userRoutes from "./routes/user.routes";
 import eventRoutes from "./routes/event.routes";
 const app: Express = express();
 
+//websocket for notification
+import io from "./websocket";
+import { createServer } from "http";
+const server = createServer(app);
+io.attach(server);
+
+
 app.use(urlencoded({ extended: false }));
 app.use(errorMiddleware)
 app.use(CookieParser());
