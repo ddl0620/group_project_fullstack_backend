@@ -264,7 +264,6 @@ export class EventController {
                     updatedEvent,
                 }
             })
-
         }
         catch(err) {
             next(err);
