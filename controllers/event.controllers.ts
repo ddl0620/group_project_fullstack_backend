@@ -72,7 +72,62 @@ export class EventController {
         }
     }
 
-    async getEvent(
+    async getMyEvent(
+        req: AuthenticationRequest,
+        res: Response,
+        next: NextFunction
+    ) : Promise<void> {
+
+        try {
+            console.log("getting my event");
+
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+            const sortBy = ((req.query.sortBy as string) || "desc").toLowerCase();
+            const skip = (page - 1) * limit;
+
+            const sortOrder = sortBy === "asc" ? 1 : -1;
+
+            const userId = req.user?.userId;
+
+            if (!userId) {
+                return next(new HttpError("nope", 401, "not today"));
+            }
+
+            const query = {
+                $or: [
+                    { organizer: userId },
+                ]
+            };
+
+            const events = await EventModel.find(query)
+                .sort({ createdAt: sortOrder })
+                .skip(skip)
+                .limit(limit);
+
+
+            const totalEvents = await EventModel.countDocuments(query);
+
+            res.status(200).json({
+                success: true,
+                message: "Event fetched successfully",
+                data: {
+                    events,
+                    pagination: {
+                        page,
+                        limit,
+                        totalPages: Math.ceil(totalEvents / limit),
+                        totalEvents,
+                    }
+                }
+            })
+        }
+        catch(err) {
+            next(err);
+        }
+    }
+
+    async getAllEvent(
         req: AuthenticationRequest,
         res: Response,
         next: NextFunction
@@ -209,11 +264,7 @@ export class EventController {
             const event: (EventInterface | null) = await EventModel.findById(id);
 
             if (!event) {
-                res.status(404).json({
-                    success: false,
-                    message: "Event not found"
-                })
-                return;
+                return next(new HttpError("Event not found", 404, "NOT_FOUND_EVENT"));
             }
 
             if (!event.organizer || event.organizer.toString() !== userId) {
@@ -222,15 +273,8 @@ export class EventController {
 
 
             if (!mongoose.Types.ObjectId.isValid(id)) {
-                res.status(400).json({
-                    success: false,
-                    message: "Invalid event ID format",
-                });
-                return;
+                return next(new HttpError("Invalid event ID format", 400, "INVALID_EVENT_ID"));
             }
-
-
-
 
             const updatedEvent = await EventModel.findByIdAndUpdate(
                 id,
@@ -250,11 +294,7 @@ export class EventController {
             )
 
             if (!updatedEvent) {
-                res.status(404).json({
-                    success: false,
-                    message: "Event not found"
-                })
-                return;
+                return next(new HttpError("Event not found", 404, "NOT_FOUND_EVENT"));
             }
 
             res.status(200).json({
@@ -288,11 +328,7 @@ export class EventController {
             const event = await EventModel.findById(id);
 
             if (!event) {
-                res.status(404).json({
-                    success: false,
-                    message: "Event not found",
-                });
-                return;
+                return next(new HttpError("Not found event", 404, "NOT_FOUND_EVENT"))
             }
 
             // Check if organizer exists and matches the authenticated user
