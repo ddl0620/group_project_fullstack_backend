@@ -1,4 +1,5 @@
 import mongoose, { Schema} from "mongoose";
+import { IMessage } from "../interfaces/message.interfaces";
 
 const MessageSchema = new Schema<IMessage>({
     content: { type: String, required: true },
@@ -7,4 +8,4 @@ const MessageSchema = new Schema<IMessage>({
     sender_id: { type: mongoose.Types.ObjectId, ref: "user", required: true },
 });
 
-export const MessageModel = mongoose.model<IMessage>("Message", MessageSchema);
+export const MessageModel = mongoose.model<IMessage>('Message', MessageSchema);
