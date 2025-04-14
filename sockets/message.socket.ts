@@ -1,4 +1,5 @@
 import { Server, Socket } from "socket.io";
+import mongoose from "mongoose";
 import MessageService from "../services/message.service";
 
 export default function messageSocket(io: Server) {
@@ -21,7 +22,17 @@ export default function messageSocket(io: Server) {
         socket.on("send_message", async (data) => {
             const { content, event_id, sender_id } = data;
 
+            console.log("Received send_message event with data:", data); // Log dữ liệu nhận được
+
+            // Kiểm tra và chuyển đổi sender_id thành ObjectId
+            if (!mongoose.Types.ObjectId.isValid(sender_id)) {
+                console.error("Invalid sender_id:", sender_id);
+                return socket.emit("error", { message: "Invalid sender_id" });
+            }
+
             const message = await MessageService.createMessage(content, event_id, sender_id);
+
+            console.log("Message saved to database:", message); // Log tin nhắn đã lưu
 
             // Gửi tin nhắn đến tất cả client trong event đó
             io.to(event_id).emit("new_message", message);
