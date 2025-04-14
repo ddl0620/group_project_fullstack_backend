@@ -1,74 +1,39 @@
-import {Request, Response} from "express";
-import {NextFunction} from "express";
-import mongoose from "mongoose";
-//import {HttpError} from "../helpers/httpsError.helpers";
-import {EventModel} from "../models/event.models";
-import {UserModel} from "../models/user.models";
-import {HttpError} from "../helpers/httpsError.helpers";
-import {EventInterface} from "../interfaces/event.interfaces";
-
-interface AuthenticationRequest extends Request {
-    user?: {
-        userId: string;
-    };
-}
+import { Response, NextFunction } from 'express';
+import { HttpError } from '../helpers/httpsError.helpers';
+import { EventService } from '../service/event.service';
+import { AuthenticationRequest } from '../interfaces/authenticationRequest.interface';
 
 export class EventController {
     async addEvent(
         req: AuthenticationRequest,
         res: Response,
         next: NextFunction
-    ) : Promise<void> {
-        const session = await mongoose.startSession()
-        session.startTransaction();
-
+    ): Promise<void> {
         try {
-            console.log("add an event");
+            console.log('add an event');
 
-            const user = await UserModel.findById(req.user?.userId)
-                .select("-password");
-
-            if (!user) {
-                return next(new HttpError("User not found", 404, "USER_NOT_FOUND"));
+            if (!req.user?.userId) {
+                throw new HttpError(
+                    'Authentication required',
+                    401,
+                    'AUTH_REQUIRED'
+                );
             }
 
-
-            const {title, description, type, startDate, endDate, location, images, participants, isPublic} = req.body;
-            const organizer = req.user!.userId;
-
-            const [newEvent] = await EventModel.create(
-                [{
-                    title,
-                    description,
-                    type,
-                    startDate,
-                    endDate,
-                    location,
-                    images,
-                    organizer,
-                    participants,
-                    isPublic,
-                }],
-                {session: session}
-            )
-
-            await session.commitTransaction();
-            await session.endSession();
+            const newEvent = await EventService.addEvent(req.user.userId, {
+                ...req.body,
+                organizer: req.user.userId,
+            });
 
             res.status(201).json({
                 success: true,
-                message: "Event added successfully",
+                message: 'Event added successfully',
                 data: {
-                    event: newEvent
-                }
-            })
-        }
-        catch(err) {
-            await session.abortTransaction();
+                    event: newEvent,
+                },
+            });
+        } catch (err) {
             next(err);
-        }
-        finally {
-            await session.endSession();
         }
     }
 
@@ -76,53 +41,35 @@ export class EventController {
         req: AuthenticationRequest,
         res: Response,
         next: NextFunction
-    ) : Promise<void> {
-
+    ): Promise<void> {
         try {
-            console.log("getting my event");
+            console.log('getting my event');
+
+            if (!req.user?.userId) {
+                throw new HttpError(
+                    'Authentication required',
+                    401,
+                    'AUTH_REQUIRED'
+                );
+            }
 
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
-            const sortBy = ((req.query.sortBy as string) || "desc").toLowerCase();
-            const skip = (page - 1) * limit;
+            const sortBy = (req.query.sortBy as string) || 'desc';
 
-            const sortOrder = sortBy === "asc" ? 1 : -1;
-
-            const userId = req.user?.userId;
-
-            if (!userId) {
-                return next(new HttpError("nope", 401, "not today"));
-            }
-
-            const query = {
-                $or: [
-                    { organizer: userId },
-                ]
-            };
-
-            const events = await EventModel.find(query)
-                .sort({ createdAt: sortOrder })
-                .skip(skip)
-                .limit(limit);
-
-
-            const totalEvents = await EventModel.countDocuments(query);
+            const result = await EventService.getMyEvents(
+                req.user.userId,
+                page,
+                limit,
+                sortBy
+            );
 
             res.status(200).json({
                 success: true,
-                message: "Event fetched successfully",
-                data: {
-                    events,
-                    pagination: {
-                        page,
-                        limit,
-                        totalPages: Math.ceil(totalEvents / limit),
-                        totalEvents,
-                    }
-                }
-            })
-        }
-        catch(err) {
+                message: 'Event fetched successfully',
+                data: result,
+            });
+        } catch (err) {
             next(err);
         }
     }
@@ -131,55 +78,35 @@ export class EventController {
         req: AuthenticationRequest,
         res: Response,
         next: NextFunction
-    ) : Promise<void> {
-
+    ): Promise<void> {
         try {
-            console.log("getting event");
+            console.log('getting event');
+
+            if (!req.user?.userId) {
+                throw new HttpError(
+                    'Authentication required',
+                    401,
+                    'AUTH_REQUIRED'
+                );
+            }
 
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
-            const sortBy = ((req.query.sortBy as string) || "desc").toLowerCase();
-            const skip = (page - 1) * limit;
+            const sortBy = (req.query.sortBy as string) || 'desc';
 
-            const sortOrder = sortBy === "asc" ? 1 : -1;
-
-            const userId = req.user?.userId;
-
-            if (!userId) {
-                return next(new HttpError("nope", 401, "not today"));
-            }
-
-            const query = {
-                $or: [
-                    { isPublic: true },
-                    { organizer: userId },
-                    { "participants.userId": userId } // Fixed query
-                ]
-            };
-
-            const events = await EventModel.find(query)
-                .sort({ createdAt: sortOrder })
-                .skip(skip)
-                .limit(limit);
-
-
-            const totalEvents = await EventModel.countDocuments(query);
+            const result = await EventService.getAllEvents(
+                req.user.userId,
+                page,
+                limit,
+                sortBy
+            );
 
             res.status(200).json({
                 success: true,
-                message: "Event fetched successfully",
-                data: {
-                    events,
-                    pagination: {
-                        page,
-                        limit,
-                        totalPages: Math.ceil(totalEvents / limit),
-                        totalEvents,
-                    }
-                }
-            })
-        }
-        catch(err) {
+                message: 'Event fetched successfully',
+                data: result,
+            });
+        } catch (err) {
             next(err);
         }
     }
@@ -188,125 +115,65 @@ export class EventController {
         req: AuthenticationRequest,
         res: Response,
         next: NextFunction
-    ) : Promise<void> {
+    ): Promise<void> {
         try {
-            console.log("getting event by ID");
+            console.log('getting event by ID');
 
-            const {id} = req.params;
-            const userId = req.user?.userId;
-
-            if (!userId) {
-                return next(new HttpError("nope", 401, "not today"));
+            if (!req.user?.userId) {
+                throw new HttpError(
+                    'Authentication required',
+                    401,
+                    'AUTH_REQUIRED'
+                );
             }
 
-
-            if (!mongoose.Types.ObjectId.isValid(id)) {
-                res.status(400).json({
-                    success: false,
-                    message: "Invalid event ID format"
-                });
-                return;
-            }
-
-            const event = await EventModel.findById(id);
-
-            if (!event) {
-                res.status(404).json({
-                    success: false,
-                    message: "Event not found"
-                })
-                return;
-            }
-
-            if (!event.isPublic) {
-                const isOrganizer = event.organizer && event.organizer.toString() === userId;
-                const isParticipant = event.participants && event.participants.some(
-                    (participant) => participant.userId && participant.userId.toString() === userId
-                ) || false; // Default to false if participants is null/undefined
-
-                if (!isOrganizer && !isParticipant) {
-                    return next(new HttpError("Access denied to private event", 403, "ACCESS_DENIED"));
-                }
-            }
+            const event = await EventService.getEventById(
+                req.user.userId,
+                req.params.id
+            );
 
             res.status(200).json({
                 success: true,
-                message: "Event found successfully",
+                message: 'Event found successfully',
                 data: {
                     event,
-                }
-            })
-
-        }
-        catch(err) {
+                },
+            });
+        } catch (err) {
             next(err);
         }
     }
 
-    async updateEvent (
+    async updateEvent(
         req: AuthenticationRequest,
         res: Response,
         next: NextFunction
-    ) : Promise<void> {
+    ): Promise<void> {
         try {
-            console.log("update event");
+            console.log('update event');
 
-
-            const {id} = req.params;
-            const {title, description, type, startDate, endDate, location, images, organizer, participants, isPublic} = req.body;
-
-            const userId = req.user?.userId;
-
-            if (!userId) {
-                return next(new HttpError("nope", 401, "not today"));
+            if (!req.user?.userId) {
+                throw new HttpError(
+                    'Authentication required',
+                    401,
+                    'AUTH_REQUIRED'
+                );
             }
 
-            const event: (EventInterface | null) = await EventModel.findById(id);
-
-            if (!event) {
-                return next(new HttpError("Event not found", 404, "NOT_FOUND_EVENT"));
-            }
-
-            if (!event.organizer || event.organizer.toString() !== userId) {
-                return next(new HttpError("Event not found", 403, "not today"));
-            }
-
-
-            if (!mongoose.Types.ObjectId.isValid(id)) {
-                return next(new HttpError("Invalid event ID format", 400, "INVALID_EVENT_ID"));
-            }
-
-            const updatedEvent = await EventModel.findByIdAndUpdate(
-                id,
-                {
-                    title,
-                    description,
-                    type,
-                    startDate,
-                    endDate,
-                    location,
-                    images,
-                    organizer,
-                    participants,
-                    isPublic,
-                },
-                { new: true }
-            )
-
-            if (!updatedEvent) {
-                return next(new HttpError("Event not found", 404, "NOT_FOUND_EVENT"));
-            }
+            const updatedEvent = await EventService.updateEvent(
+                req.user.userId,
+                req.params.id,
+                req.body
+            );
 
             res.status(200).json({
                 success: true,
-                message: "Event updated successfully",
+                message: 'Event updated successfully',
                 data: {
                     updatedEvent,
-                }
-            })
-
-        }
-        catch(err) {
+                },
+            });
+        } catch (err) {
             next(err);
         }
     }
@@ -315,54 +182,31 @@ export class EventController {
         req: AuthenticationRequest,
         res: Response,
         next: NextFunction
-    ) : Promise<void> {
+    ): Promise<void> {
         try {
-            console.log("deleting event");
-            const { id } = req.params;
+            console.log('deleting event');
 
-            const userId = req.user?.userId;
-            if (!userId) {
-                return next(new HttpError("Authentication required to delete events", 401, "AUTH_REQUIRED"));
+            if (!req.user?.userId) {
+                throw new HttpError(
+                    'Authentication required',
+                    401,
+                    'AUTH_REQUIRED'
+                );
             }
 
-            const event = await EventModel.findById(id);
-
-            if (!event) {
-                return next(new HttpError("Not found event", 404, "NOT_FOUND_EVENT"))
-            }
-
-            // Check if organizer exists and matches the authenticated user
-            if (!event.organizer || event.organizer.toString() !== userId) {
-                return next(new HttpError("Only the organizer can delete this event", 403, "FORBIDDEN"));
-            }
-
-            if (!mongoose.Types.ObjectId.isValid(id)) {
-                res.status(400).json({
-                    success: false,
-                    message: "Invalid event ID format",
-                });
-                return;
-            }
-
-            const deletedEvent = await EventModel.findByIdAndDelete(id);
-
-            if (!deletedEvent) {
-                res.status(404).json({
-                    success: false,
-                    message: "Event not found"
-                })
-            }
+            const deletedEvent = await EventService.deleteEvent(
+                req.user.userId,
+                req.params.id
+            );
 
             res.status(200).json({
                 success: true,
-                message: "Event deleted successfully",
+                message: 'Event deleted successfully',
                 data: {
                     deletedEvent,
-                }
-            })
-
-        }
-        catch(err) {
+                },
+            });
+        } catch (err) {
             next(err);
         }
     }
