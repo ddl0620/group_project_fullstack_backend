@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { HttpError } from '../helpers/httpsError.helpers';
-import { UserService } from '../service/user.service';
+import { UserService } from '../services/user.service';
 
 interface AuthenticationRequest extends Request {
     user?: {

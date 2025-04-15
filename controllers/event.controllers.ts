@@ -1,7 +1,9 @@
 import { Response, NextFunction } from 'express';
 import { HttpError } from '../helpers/httpsError.helpers';
-import { EventService } from '../service/event.service';
+import { EventService } from '../services/event.service';
 import { AuthenticationRequest } from '../interfaces/authenticationRequest.interface';
+import {EventInterface} from "../interfaces/event.interfaces";
+import {HttpResponse} from "../helpers/HttpResponse";
 
 export class EventController {
     async addEvent(
@@ -210,4 +212,39 @@ export class EventController {
             next(err);
         }
     }
+
+    async joinEvent(
+        request: AuthenticationRequest,
+        response: Response,
+        next: NextFunction
+    ): Promise<void> {
+        try{
+            const {userId} = request.body;
+            const {eventId} = request.params;
+
+            const event = await EventService.joinEvent(userId, eventId);
+
+            HttpResponse.sendYES(response, 201, 'Event joined/send request successfully', event)
+        }
+        catch (err){
+            next(err);
+        }
+    }
+
+    async respondEvent(
+        request: AuthenticationRequest,
+        response: Response,
+        next: NextFunction
+    ): Promise<void> {
+        try{
+            const {userId, status} = request.body;
+            const {eventId} = request.params;
+            const event = await EventService.replyEvent(eventId, {userId, status});
+            HttpResponse.sendYES(response, 201, 'Event responded successfully', event)
+        }
+        catch (err){
+            next(err);
+        }
+    }
+
 }

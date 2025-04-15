@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        #messages {
+            border: 1px solid #ccc;
+            height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        #message-form {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+<h2>Chat Test</h2>
+<div>
+    <input type="text" id="eventId" placeholder="Event ID" value="event123" />
+    <button onclick="joinRoom()">Join Room</button>
+    <button onclick="leaveRoom()">Leave Room</button>
+</div>
+<div id="messages"></div>
+<form id="message-form">
+    <input type="text" id="message-input" placeholder="Type a message..." />
+    <button type="submit">Send</button>
+</form>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io('http://localhost:3000', {
+        auth: {
+            token: 'your_jwt_token' // Thay bằng token từ bước đăng nhập
+        }
+    });
+
+    const userId = 'user123'; // Thay bằng user_id từ bước đăng ký
+    let eventId = '';
+
+    socket.on('connect', () => {
+        console.log('Connected to WebSocket server');
+    });
+
+    socket.on('joined_event', (eventId) => {
+        console.log(`Joined event ${eventId}`);
+    });
+
+    socket.on('new_message', (message) => {
+        const messagesDiv = document.getElementById('messages');
+        const messageElement = document.createElement('div');
+        messageElement.textContent = `[${new Date(message.send_at).toLocaleTimeString()}] ${message.sender_id.name}: ${message.content}`;
+        messagesDiv.appendChild(messageElement);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+
+    socket.on('user_joined', (data) => {
+        const messagesDiv = document.getElementById('messages');
+        const messageElement = document.createElement('div');
+        messageElement.textContent = `User ${data.user_id} joined the chat`;
+        messageElement.style.color = 'green';
+        messagesDiv.appendChild(messageElement);
+    });
+
+    socket.on('user_left', (data) => {
+        const messagesDiv = document.getElementById('messages');
+        const messageElement = document.createElement('div');
+        messageElement.textContent = `User ${data.user_id} left the chat`;
+        messageElement.style.color = 'red';
+        messagesDiv.appendChild(messageElement);
+    });
+
+    socket.on('user_typing', (data) => {
+        console.log(`User ${data.user_id} is typing...`);
+    });
+
+    socket.on('error', (data) => {
+        console.error('Error:', data.message);
+        alert(data.message);
+    });
+
+    function joinRoom() {
+        eventId = document.getElementById('eventId').value;
+        socket.emit('join_event', { event_id: eventId, user_id: userId });
+    }
+
+    function leaveRoom() {
+        socket.emit('leave_event', eventId);
+    }
+
+    document.getElementById('message-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const messageInput = document.getElementById('message-input') as HTMLInputElement;
+        const content = messageInput.value.trim();
+        if (content) {
+            socket.emit('send_message', {
+                content,
+                event_id: eventId,
+                sender_id: userId,
+            });
+            messageInput.value = '';
+        }
+    });
+
+    document.getElementById('message-input').addEventListener('input', () => {
+        socket.emit('typing', eventId);
+    });
+</script>
+</body>
+</html>

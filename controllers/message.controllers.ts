@@ -1,38 +1,114 @@
-import { Request, Response } from "express";
-import MessageService from "../services/message.service";
-import { Server } from "socket.io";
+// controllers/message.controllers.ts
 
-let io: Server; // Socket.IO instance
+import {Response, NextFunction } from 'express';
+import { Server } from 'socket.io';
+import MessageService from '../services/message.service';
+import { HttpError } from '../helpers/httpsError.helpers';
+import {AuthenticationRequest} from "../interfaces/authenticationRequest.interface";
+
+let io: Server;
 
 export const setSocketIOInstance = (socketIOInstance: Server) => {
     io = socketIOInstance;
 };
 
-// Lấy danh sách tin nhắn của một event
-export const getMessagesByEvent = async (req: Request, res: Response) => {
-    const { eventId } = req.params;
-    const messages = await MessageService.getMessagesByEvent(eventId);
-    res.json(messages);
+export const getMessagesByEvent = async (
+    req: AuthenticationRequest,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const { eventId } = req.params;
+        const userId = req.user?.userId;
+
+        if (!userId) {
+            throw new HttpError('Authentication required', 401, 'AUTH_REQUIRED');
+        }
+
+        const messages = await MessageService.getMessagesByEvent(eventId, userId);
+        res.status(200).json({
+            success: true,
+            message: 'Messages fetched successfully',
+            data: messages,
+        });
+    } catch (err) {
+        next(err);
+    }
 };
 
-// Gửi tin nhắn
-export const createMessage = async (req: Request, res: Response) => {
-    const { content, event_id, sender_id } = req.body;
-    const message = await MessageService.createMessage(content, event_id, sender_id);
+export const createMessage = async (
+    req: AuthenticationRequest,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const { content, event_id, sender_id } = req.body;
+        const userId = req.user?.userId;
 
-    // Phát tin nhắn mới tới tất cả người dùng trong event
-    io.to(event_id).emit("new_message", message);
+        if (!userId) {
+            throw new HttpError('Authentication required', 401, 'AUTH_REQUIRED');
+        }
 
-    res.json(message);
+        if (sender_id !== userId) {
+            throw new HttpError(
+                'You can only send messages as yourself',
+                403,
+                'FORBIDDEN'
+            );
+        }
+
+        const message = await MessageService.createMessage({
+            content,
+            event_id,
+            sender_id,
+        });
+
+        io.to(event_id).emit('new_message', message);
+
+        res.status(201).json({
+            success: true,
+            message: 'Message sent successfully',
+            data: message,
+        });
+    } catch (err) {
+        next(err);
+    }
 };
 
-// Đánh dấu tin nhắn đã xem
-export const markMessageAsSeen = async (req: Request, res: Response) => {
-    const { message_id, user_id } = req.body;
-    const seenUsers = await MessageService.markMessageAsSeen(message_id, user_id);
+export const markMessageAsSeen = async (
+    req: AuthenticationRequest,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const { message_id, user_id } = req.body;
+        const authenticatedUserId = req.user?.userId;
 
-    // Phát danh sách người đã xem tới tất cả người dùng
-    io.to(message_id).emit("message_seen", { message_id, seenUsers });
+        if (!authenticatedUserId) {
+            throw new HttpError('Authentication required', 401, 'AUTH_REQUIRED');
+        }
 
-    res.json(seenUsers);
+        if (user_id !== authenticatedUserId) {
+            throw new HttpError(
+                'You can only mark messages as seen for yourself',
+                403,
+                'FORBIDDEN'
+            );
+        }
+
+        const { seenUsers, eventId } = await MessageService.markMessageAsSeen({
+            message_id,
+            user_id,
+        });
+
+        io.to(eventId).emit('message_seen', { message_id, seenUsers });
+
+        res.status(200).json({
+            success: true,
+            message: 'Message marked as seen',
+            data: seenUsers,
+        });
+    } catch (err) {
+        next(err);
+    }
 };

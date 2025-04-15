@@ -25,8 +25,8 @@ const EventSchema = new Schema<EventInterface>(
     }
 );
 
-EventSchema.path('endDate').validate(function (value) {
-    return value >= this.startDate;
-}, 'endDate must be after startDate');
+// EventSchema.path('endDate').validate(function (value) {
+//     return value >= this.startDate;
+// }, 'endDate must be after startDate');
 
 export const EventModel = model<EventInterface>('Event', EventSchema);

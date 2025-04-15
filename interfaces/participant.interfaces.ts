@@ -1,6 +1,6 @@
 import { ParticipationStatus} from "../enums/participationStatus.enums";
 
-export interface IParticipantStatus extends Document {
+export interface ParticipantInterface extends Document {
     userId: object;
     status: ParticipationStatus;
     invitedAt: Date;

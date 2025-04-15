@@ -29,3 +29,8 @@ export type EventListResponse = {
         totalEvents: number;
     };
 };
+
+export type RespondJoinInput = {
+    userId: string;
+    status: 'ACCEPTED' | 'DENIED';
+}
