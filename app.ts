@@ -8,7 +8,7 @@ import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import eventRoutes from "./routes/event.routes";
 import messageRoutes from "./routes/message.routes"; // Import message routes
-import messageSocket from "./sockets/message.socket"; // Import WebSocket logic
+import messageSocket from "./realtime/message.socket"; // Import WebSocket logic
 import { Server } from "socket.io"; // Import Socket.IO
 import http from "http"; // Import HTTP server
 import { setSocketIOInstance } from "./controllers/message.controllers"; // Import Socket.IO instance setter
@@ -27,6 +27,7 @@ setSocketIOInstance(io); // Kết nối WebSocket với controller
 
 // Middleware
 app.use(urlencoded({ extended: false }));
+app.use(express.static('public'));
 app.use(errorMiddleware);
 app.use(CookieParser());
 app.use(express.json());

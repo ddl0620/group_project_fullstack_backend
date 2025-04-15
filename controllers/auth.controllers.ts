@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { generateToken } from '../helpers/jwtGenerate.helper';
 import { UserInterface } from '../interfaces/user.interfaces';
-import { AuthService } from '../service/auth.service';
+import { AuthService } from '../services/auth.service';
 import { HttpResponse } from '../helpers/HttpResponse';
 
 export class AuthControllers {
