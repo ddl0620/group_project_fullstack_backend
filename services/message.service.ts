@@ -8,7 +8,14 @@ const getMessagesByEvent = async (eventId: string) => {
 };
 
 const createMessage = async (content: string, event_id: string, sender_id: string) => {
-    return MessageModel.create({ content, event_id, sender_id, send_at: new Date() });
+    try {
+        const message = await MessageModel.create({ content, event_id, sender_id, send_at: new Date() });
+        console.log("Message successfully created:", message);
+        return message;
+    } catch (error) {
+        console.error("Error saving message to database:", error);
+        throw error;
+    }
 };
 
 const markMessageAsSeen = async (message_id: string, user_id: string) => {

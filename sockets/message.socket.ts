@@ -36,6 +36,7 @@ export default function messageSocket(io: Server) {
 
             // Gửi tin nhắn đến tất cả client trong event đó
             io.to(event_id).emit("new_message", message);
+            console.log("Message emitted to all users in event with event id (", event_id, "):")
         });
 
         socket.on("disconnect", () => {
