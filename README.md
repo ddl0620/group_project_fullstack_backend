@@ -8,7 +8,7 @@
 * │   │   ├── event.controllers.ts
 * │   │   └── user.controllers.ts
 * │   ├── services/                  # Logic nghiệp vụ (business logic)
-* │   │   ├── auth.service.ts
+* │   │   ├── auth.validation.ts
 * │   │   ├── event.service.ts
 * │   │   └── user.service.ts
 * │   ├── models/                    # Schema và model MongoDB

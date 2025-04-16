@@ -1,68 +1,56 @@
-import { Request, Response, NextFunction } from 'express';
-import { HttpError } from '../helpers/httpsError.helpers';
+import { Response, NextFunction } from 'express';
+import { HttpResponse } from '../helpers/HttpResponse';
 import { UserService } from '../services/user.service';
-
-interface AuthenticationRequest extends Request {
-    user?: {
-        userId: string;
-    };
-}
+import {AuthenticationRequest} from "../interfaces/authenticationRequest.interface";
 
 export class UserController {
-    async me(
-        request: AuthenticationRequest,
-        response: Response,
-        nextFunction: NextFunction
-    ): Promise<void> {
+    async me(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
-            if (!request.user?.userId) {
-                throw new HttpError(
-                    'Authentication required',
-                    401,
-                    'AUTH_REQUIRED'
-                );
-            }
+            const user = await UserService.getCurrentUser(req.user?.userId as string);
 
-            const user = await UserService.getCurrentUser(request.user.userId);
-
-            response.status(200).json({
-                success: true,
-                message: 'Fetch user successfully',
-                data: {
-                    user,
-                },
+            HttpResponse.sendYES(res, 200, 'Fetch user successfully', {
+                user,
             });
         } catch (err) {
-            nextFunction(err);
+            next(err);
         }
     }
 
-    async updateInfor(
-        request: AuthenticationRequest,
-        response: Response,
-        nextFunction: NextFunction
-    ): Promise<void> {
+    async getAllUsers(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
-            if (!request.user?.userId) {
-                throw new HttpError(
-                    'Authentication required',
-                    401,
-                    'AUTH_REQUIRED'
-                );
-            }
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+            const sortBy = (req.query.sortBy as string) || 'desc';
 
-            const updatedUser = await UserService.updateUser(
-                request.user.userId,
-                request.body
-            );
+            const result = await UserService.getAllUsers(page, limit, sortBy);
 
-            response.status(201).json({
-                success: true,
-                message: 'User updated successfully',
-                updatedUser,
+            HttpResponse.sendYES(res, 200, 'Users fetched successfully', result);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    async updateInfor(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const updatedUser = await UserService.updateUser(req.user?.userId as string, req.body);
+
+            HttpResponse.sendYES(res, 200, 'User updated successfully', {
+                user: updatedUser,
             });
         } catch (err) {
-            nextFunction(err);
+            next(err);
+        }
+    }
+
+    async deleteUser(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const deletedUser = await UserService.deleteUser(req.user?.userId as string);
+
+            HttpResponse.sendYES(res, 200, 'User deleted successfully', {
+                user: deletedUser,
+            });
+        } catch (err) {
+            next(err);
         }
     }
 }

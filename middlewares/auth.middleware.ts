@@ -1,12 +1,9 @@
 import { NextFunction, Response, Request } from "express";
 import { HttpError } from "../helpers/httpsError.helpers";
 import jwt from "jsonwebtoken";
+import {AuthenticationRequest} from "../interfaces/authenticationRequest.interface";
 
-interface AuthenticationRequest extends Request {
-    user?: {
-        userId: string;
-    };
-}
+
 
 
 export const authenticationToken = (

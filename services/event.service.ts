@@ -1,49 +1,31 @@
 import mongoose from 'mongoose';
-import {EventModel} from '../models/event.models';
-import {UserModel} from '../models/user.models';
-import {HttpError} from '../helpers/httpsError.helpers';
-import {EventInterface} from '../interfaces/event.interfaces';
-import {CreateEventInput, EventListResponse, RespondJoinInput, UpdateEventInput,} from '../types/event.type';
-import {ParticipationStatus} from "../enums/participationStatus.enums";
-import {ParticipantInterface} from "../interfaces/participant.interfaces";
-import {UserInterface} from "../interfaces/user.interfaces";
+import { EventModel } from '../models/event.models';
+import { UserModel } from '../models/user.models';
+import { HttpError } from '../helpers/httpsError.helpers';
+import { EventInterface } from '../interfaces/event.interfaces';
+import { CreateEventInput, EventListResponse, RespondJoinInput, UpdateEventInput } from '../types/event.type';
+import { ParticipationStatus } from '../enums/participationStatus.enums';
+import { ParticipantInterface } from '../interfaces/participant.interfaces';
 
 export class EventService {
-    // Thêm sự kiện mới
-    static async addEvent(
-        userId: string,
-        eventData: CreateEventInput
-    ): Promise<EventInterface> {
-        const session = await mongoose.startSession();
-        session.startTransaction();
+    static async addEvent(userId: string, eventData: CreateEventInput): Promise<EventInterface> {
+        // Kiểm tra user tồn tại
+        const user = await UserModel.findById(userId).select('-password');
+        if (!user) {
+            throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
+        }
 
         try {
-            // Kiểm tra user tồn tại
-            const user = await UserModel.findById(userId).select('-password');
-            if (!user) {
-                throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
-            }
-
-            const [newEvent] = await EventModel.create(
-                [
-                    {
-                        ...eventData,
-                    },
-                ],
-                { session }
-            );
-
-            await session.commitTransaction();
+            const newEvent = await EventModel.create({
+                ...eventData,
+                organizer: userId,
+            });
             return newEvent;
         } catch (err) {
-            await session.abortTransaction();
-            throw err;
-        } finally {
-            await session.endSession();
+            throw new HttpError('Failed to create event', 500, 'CREATE_EVENT_FAILED');
         }
     }
 
-    // Lấy danh sách sự kiện của người dùng hiện tại (my events)
     static async getMyEvents(
         userId: string,
         page: number = 1,
@@ -75,7 +57,6 @@ export class EventService {
         };
     }
 
-    // Lấy danh sách tất cả sự kiện (public, của người dùng, hoặc người dùng tham gia)
     static async getAllEvents(
         userId: string,
         page: number = 1,
@@ -111,17 +92,9 @@ export class EventService {
         };
     }
 
-    // Lấy chi tiết một sự kiện
-    static async getEventById(
-        userId: string,
-        eventId: string
-    ): Promise<EventInterface> {
+    static async getEventById(userId: string, eventId: string): Promise<EventInterface> {
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
-            throw new HttpError(
-                'Invalid event ID format',
-                400,
-                'INVALID_EVENT_ID'
-            );
+            throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
         }
 
         const event = await EventModel.findById(eventId);
@@ -130,41 +103,26 @@ export class EventService {
         }
 
         if (!event.isPublic) {
-            const isOrganizer =
-                event.organizer && event.organizer.toString() === userId;
-            const isParticipant =
-                (event.participants &&
-                    event.participants.some(
-                        (participant) =>
-                            participant.userId &&
-                            participant.userId.toString() === userId
-                    )) ||
-                false;
+            const isOrganizer = event.organizer?.toString() === userId;
+            const isParticipant = event.participants?.some(
+                (participant) => participant.userId?.toString() === userId
+            ) || false;
 
             if (!isOrganizer && !isParticipant) {
-                throw new HttpError(
-                    'Access denied to private event',
-                    403,
-                    'ACCESS_DENIED'
-                );
+                throw new HttpError('Access denied to private event', 403, 'ACCESS_DENIED');
             }
         }
 
         return event;
     }
 
-    // Cập nhật sự kiện
     static async updateEvent(
         userId: string,
         eventId: string,
         updateData: UpdateEventInput
     ): Promise<EventInterface> {
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
-            throw new HttpError(
-                'Invalid event ID format',
-                400,
-                'INVALID_EVENT_ID'
-            );
+            throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
         }
 
         const event = await EventModel.findById(eventId);
@@ -173,20 +131,13 @@ export class EventService {
         }
 
         if (!event.organizer || event.organizer.toString() !== userId) {
-            throw new HttpError(
-                'Only the organizer can update this event',
-                403,
-                'FORBIDDEN'
-            );
+            throw new HttpError('Only the organizer can update this event', 403, 'FORBIDDEN');
         }
 
         const updatedEvent = await EventModel.findByIdAndUpdate(
             eventId,
-            updateData,
-            {
-                new: true,
-                runValidators: true,
-            }
+            { $set: updateData },
+            { new: true, runValidators: true }
         );
 
         if (!updatedEvent) {
@@ -196,17 +147,9 @@ export class EventService {
         return updatedEvent;
     }
 
-    // Xóa sự kiện
-    static async deleteEvent(
-        userId: string,
-        eventId: string
-    ): Promise<EventInterface> {
+    static async deleteEvent(userId: string, eventId: string): Promise<EventInterface> {
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
-            throw new HttpError(
-                'Invalid event ID format',
-                400,
-                'INVALID_EVENT_ID'
-            );
+            throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
         }
 
         const event = await EventModel.findById(eventId);
@@ -215,11 +158,7 @@ export class EventService {
         }
 
         if (!event.organizer || event.organizer.toString() !== userId) {
-            throw new HttpError(
-                'Only the organizer can delete this event',
-                403,
-                'FORBIDDEN'
-            );
+            throw new HttpError('Only the organizer can delete this event', 403, 'FORBIDDEN');
         }
 
         const deletedEvent = await EventModel.findByIdAndDelete(eventId);
@@ -232,94 +171,95 @@ export class EventService {
 
     static async joinEvent(userId: string, eventId: string): Promise<EventInterface> {
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
-            throw new HttpError(
-                'Invalid event ID format',
-                400,
-                'INVALID_EVENT_ID'
-            );
+            throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
         }
 
-        if(!mongoose.Types.ObjectId.isValid(userId)){
-            throw new HttpError(
-                'Invalid user ID format',
-                400,
-                'INVALID_USER_ID'
-            );
-        }
-
-        const event: (EventInterface | null) = await EventModel.findById(eventId);
-        if(!event){
-            throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
-        }
-        const user: (UserInterface | null) = await UserModel.findById(userId);
-        if(!user){
-            throw new HttpError('User not found', 404, 'NOT_FOUND_USER');
-        }
-        event.participants = [...(event.participants || [])];
-        let isJoined = false;
-        for(let i = 0; i < event.participants.length; i++){
-            if(event.participants[i].userId.toString() === userId || userId === event.organizer.toString()){
-                isJoined = true;
-                break;
-            }
-        }
-
-        if(isJoined){
-            throw new HttpError('User already joined/send request the event', 400, 'USER_ALREADY_JOINED');
-        }
-
-        const status = event.isPublic ? ParticipationStatus.ACCEPTED : ParticipationStatus.PENDING;
-
-        // Thêm user vào danh sách participants
-        event.participants = event.participants || [];
-        event.participants.push({
-            userId: new mongoose.Types.ObjectId(userId),
-            status,
-            invitedAt: new Date(), // Thêm invitedAt thủ công
-            respondedAt: event.isPublic ? new Date() : undefined, // Nếu public thì tự động chấp nhận, có respondedAt
-        } as ParticipantInterface);
-
-        await event.save();
-        return event;
-    }
-
-    static async replyEvent(eventId: string, input: RespondJoinInput): Promise<EventInterface> {
-        if(!mongoose.Types.ObjectId.isValid(eventId)) {
-            throw new HttpError(
-                'Invalid event ID format',
-                400,
-                'INVALID_EVENT_ID'
-            );
-        }
-
-        if(!mongoose.Types.ObjectId.isValid(input.userId)){
-            throw new HttpError(
-                'userId is required',
-                400,
-                'MISSING_INPUT'
-            );
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            throw new HttpError('Invalid user ID format', 400, 'INVALID_USER_ID');
         }
 
         const event = await EventModel.findById(eventId);
-        if(!event){
+        if (!event) {
+            throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
+        }
+
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            throw new HttpError('User not found', 404, 'NOT_FOUND_USER');
+        }
+
+        const isJoined = event.participants?.some(
+            (participant) => participant.userId?.toString() === userId
+        ) || userId === event.organizer?.toString();
+
+        if (isJoined) {
+            throw new HttpError('User already joined or sent request to the event', 400, 'USER_ALREADY_JOINED');
+        }
+
+        const status = event.isPublic ? ParticipationStatus.ACCEPTED : ParticipationStatus.PENDING;
+        const newParticipant: ParticipantInterface = {
+            userId: new mongoose.Types.ObjectId(userId),
+            status,
+            invitedAt: new Date(),
+            respondedAt: event.isPublic ? new Date() : null,
+        } as ParticipantInterface;
+
+        const updatedEvent = await EventModel.findByIdAndUpdate(
+            eventId,
+            {
+                $push: { participants: newParticipant },
+            },
+            { new: true }
+        );
+
+        if (!updatedEvent) {
+            throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
+        }
+
+        return updatedEvent;
+    }
+
+    static async replyEvent(eventId: string, input: RespondJoinInput): Promise<EventInterface> {
+        if (!mongoose.Types.ObjectId.isValid(eventId)) {
+            throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(input.userId)) {
+            throw new HttpError('Invalid user ID format', 400, 'INVALID_USER_ID');
+        }
+
+        const event = await EventModel.findById(eventId);
+        if (!event) {
             throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
         }
 
         const participant = event.participants?.find(
-            (p) => p.userId.toString() === input.userId);
+            (p) => p.userId?.toString() === input.userId
+        );
 
-        if(!participant){
+        if (!participant) {
             throw new HttpError('Participant not found', 404, 'NOT_FOUND_PARTICIPANT');
         }
 
-        if(participant.status !== ParticipationStatus.PENDING){
+        if (participant.status !== ParticipationStatus.PENDING) {
             throw new HttpError('Participant already replied', 400, 'PARTICIPANT_ALREADY_REPLIED');
         }
 
-        participant.status = (input.status) === 'ACCEPTED' ? ParticipationStatus.ACCEPTED : ParticipationStatus.DENIED;
-        participant.respondedAt = new Date();
+        const updatedEvent = await EventModel.findOneAndUpdate(
+            { _id: eventId, 'participants.userId': input.userId },
+            {
+                $set: {
+                    'participants.$.status': input.status === 'ACCEPTED' ? ParticipationStatus.ACCEPTED : ParticipationStatus.DENIED,
+                    'participants.$.respondedAt': new Date(),
+                },
+            },
+            { new: true }
+        );
 
-        await event.save();
-        return event;
+        if (!updatedEvent) {
+            throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
+        }
+
+        return updatedEvent;
     }
 }
