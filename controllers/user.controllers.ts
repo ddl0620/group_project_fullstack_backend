@@ -1,50 +1,56 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { HttpResponse } from '../helpers/HttpResponse';
 import { UserService } from '../services/user.service';
 import {AuthenticationRequest} from "../interfaces/authenticationRequest.interface";
-// import {AuthenticationRequest} from "../interfaces/authenticationRequest.interface";
-
-// interface AuthenticationRequest extends Request {
-//     user: {
-//         userId: string;
-//     };
-// }
 
 export class UserController {
-    async me(
-        request: AuthenticationRequest,
-        response: Response,
-        nextFunction: NextFunction
-    ): Promise<void> {
-        if(!request.user) throw new Error("User not found in request");
+    async me(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
-            const user = await UserService.getCurrentUser(request.user.userId);
+            const user = await UserService.getCurrentUser(req.user?.userId as string);
 
-            HttpResponse.sendYES(response, 200, 'Fetch user successfully', {
+            HttpResponse.sendYES(res, 200, 'Fetch user successfully', {
                 user,
             });
         } catch (err) {
-            nextFunction(err);
+            next(err);
         }
     }
 
-    async updateInfor(
-        request: AuthenticationRequest,
-        response: Response,
-        nextFunction: NextFunction
-    ): Promise<void> {
-        if(!request.user) throw new Error("User not found in request");
+    async getAllUsers(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
-            const updatedUser = await UserService.updateUser(
-                request.user.userId,
-                request.body
-            );
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+            const sortBy = (req.query.sortBy as string) || 'desc';
 
-            HttpResponse.sendYES(response, 200, 'User updated successfully', {
+            const result = await UserService.getAllUsers(page, limit, sortBy);
+
+            HttpResponse.sendYES(res, 200, 'Users fetched successfully', result);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    async updateInfor(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const updatedUser = await UserService.updateUser(req.user?.userId as string, req.body);
+
+            HttpResponse.sendYES(res, 200, 'User updated successfully', {
                 user: updatedUser,
             });
         } catch (err) {
-            nextFunction(err);
+            next(err);
+        }
+    }
+
+    async deleteUser(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const deletedUser = await UserService.deleteUser(req.user?.userId as string);
+
+            HttpResponse.sendYES(res, 200, 'User deleted successfully', {
+                user: deletedUser,
+            });
+        } catch (err) {
+            next(err);
         }
     }
 }

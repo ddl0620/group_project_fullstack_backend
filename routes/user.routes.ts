@@ -10,5 +10,8 @@ const controller = new UserController();
 
 userRoutes.get('/me', authenticationToken, controller.me);
 userRoutes.put('/:id', authenticationToken, onlySelf, validateRequest(updateUserSchema), controller.updateInfor);
-
+userRoutes.get('/me', authenticationToken, controller.me);
+userRoutes.get('/all', authenticationToken, controller.getAllUsers);
+userRoutes.put('/:id', authenticationToken, onlySelf, validateRequest(updateUserSchema), controller.updateInfor);
+userRoutes.delete('/:id', authenticationToken, onlySelf, controller.deleteUser);
 export default userRoutes;
