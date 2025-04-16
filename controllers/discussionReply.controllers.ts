@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { DiscussionReplyService } from "../services/discussionReply.service";
 import { HttpResponse } from "../helpers/HttpResponse";
+import { ImageDiscussionService } from "../services/imageDiscussion.service";
+import { ImageDiscussionInterface } from "../interfaces/ImageDiscussion.interfaces";    
 
 export class DiscussionReplyController {
     static async createReply(req: Request, res: Response, next: NextFunction) {
@@ -69,12 +71,16 @@ export class DiscussionReplyController {
     static async deleteReply(req: Request, res: Response, next: NextFunction) {
         try {
             const { replyId } = req.params;
-
+    
+            // Xóa bình luận
             const reply = await DiscussionReplyService.deleteReply(replyId);
             if (!reply) {
                 return HttpResponse.sendNO(res, 404, "Reply not found");
             }
-
+    
+            // Xóa hình ảnh liên quan
+            await ImageDiscussionService.deleteImagesByReference(replyId, "reply");
+    
             HttpResponse.sendYES(res, 200, "Reply deleted successfully", { reply });
         } catch (err) {
             next(err);

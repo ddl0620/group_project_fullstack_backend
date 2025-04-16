@@ -7,7 +7,10 @@ import cors from "cors";
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import eventRoutes from "./routes/event.routes";
+import discussionPostRoutes from "./routes/discussionPost.routes";
+import discussionReplyRoutes from "./routes/discussionReply.routes";
 import http from "http"; // Import HTTP server
+import imageDiscussionRoutes from "./routes/imageDiscussion.routes";
 
 const app: Express = express();
 const server = http.createServer(app); // Tạo HTTP server
@@ -30,6 +33,10 @@ app.use(
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/event", eventRoutes);
+app.use("/api/v1/discussion-posts", discussionPostRoutes);
+app.use("/api/v1/discussion-replies", discussionReplyRoutes);
+// Tích hợp routes cho hình ảnh
+app.use("/api/v1/images", imageDiscussionRoutes);
 
 // Root Route
 app.get("/", (_req: Request, res: Response): void => {

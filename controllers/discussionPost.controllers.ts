@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { DiscussionPostService } from "../services/discussionPost.service";
 import { HttpResponse } from "../helpers/HttpResponse";
+import { ImageDiscussionService } from "../services/imageDiscussion.service";
 
 export class DiscussionPostController {
     static async createPost(req: Request, res: Response, next: NextFunction) {
@@ -63,12 +64,16 @@ export class DiscussionPostController {
     static async deletePost(req: Request, res: Response, next: NextFunction) {
         try {
             const { postId } = req.params;
-
+    
+            // Xóa bài viết
             const post = await DiscussionPostService.deletePost(postId);
             if (!post) {
                 return HttpResponse.sendNO(res, 404, "Post not found");
             }
-
+    
+            // Xóa hình ảnh liên quan
+            await ImageDiscussionService.deleteImagesByReference(postId, "post");
+    
             HttpResponse.sendYES(res, 200, "Post deleted successfully", { post });
         } catch (err) {
             next(err);
