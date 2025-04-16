@@ -1,68 +1,158 @@
 import mongoose from 'mongoose';
-import { HttpError } from '../helpers/httpsError.helpers';
 import { UserModel } from '../models/user.models';
+import { HttpError } from '../helpers/httpsError.helpers';
 import { UserInterface } from '../interfaces/user.interfaces';
+import bcrypt from 'bcryptjs';
 
-// Định nghĩa kiểu dữ liệu cho dữ liệu cập nhật người dùng
 interface UpdateUserInput {
-    [key: string]: any;
+    name?: string;
+    email?: string;
+}
+
+interface UserListResponse {
+    users: UserInterface[];
+    pagination: {
+        page: number;
+        limit: number;
+        totalPages: number;
+        totalUsers: number;
+    };
 }
 
 export class UserService {
-    // Lấy thông tin người dùng hiện tại
-    static async getCurrentUser(userId: string): Promise<UserInterface> {
-        const session = await mongoose.startSession();
-        session.startTransaction();
+    // Create: Tạo user mới (chuyển từ auth.service.ts)
+    static async createUser(data: {
+        name: string;
+        email: string;
+        password: string;
+        role: string;
+    }): Promise<UserInterface> {
+        const { name, email, password, role } = data;
+
+        // Kiểm tra email đã tồn tại
+        const existingUser = await UserModel.findOne({ email });
+        if (existingUser) {
+            throw new HttpError('Email already exists', 400, 'EMAIL_EXISTS');
+        }
+
+        // Mã hóa mật khẩu
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
         try {
-            const user = await UserModel.findById(userId).select('-password');
-            if (!user) {
-                throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
-            }
-
-            await session.commitTransaction();
-            return user;
+            const newUser = await UserModel.create({
+                name,
+                email,
+                password: hashedPassword,
+                role,
+            });
+            return newUser;
         } catch (err) {
-            await session.abortTransaction();
-            throw err;
-        } finally {
-            await session.endSession();
+            throw new HttpError('Failed to create user', 500, 'CREATE_USER_FAILED');
         }
     }
 
-    // Cập nhật thông tin người dùng
+    // Read: Lấy thông tin user hiện tại
+    static async getCurrentUser(userId: string): Promise<UserInterface> {
+        const user = await UserModel.findById(userId).select('-password');
+        if (!user) {
+            throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
+        }
+        return user;
+    }
+
+    // Read: Lấy danh sách user (phân trang)
+    static async getAllUsers(
+        page: number = 1,
+        limit: number = 10,
+        sortBy: string = 'desc'
+    ): Promise<UserListResponse> {
+        const skip = (page - 1) * limit;
+        const sortOrder = sortBy.toLowerCase() === 'asc' ? 1 : -1;
+
+        const users = await UserModel.find()
+            .select('-password')
+            .sort({ createdAt: sortOrder })
+            .skip(skip)
+            .limit(limit);
+
+        const totalUsers = await UserModel.countDocuments();
+
+        return {
+            users,
+            pagination: {
+                page,
+                limit,
+                totalPages: Math.ceil(totalUsers / limit),
+                totalUsers,
+            },
+        };
+    }
+
+    // Update: Cập nhật thông tin user
     static async updateUser(
         userId: string,
         updateData: UpdateUserInput
     ): Promise<UserInterface> {
-        // Kiểm tra các trường không được phép cập nhật
-        const notAllowedFields = ['password', 'userId', 'role'];
+        const notAllowedFields = ['password', 'userId', 'role', 'confirmPassword'];
         const updatedFields = Object.keys(updateData);
         const isValidOperation = updatedFields.every(
             (field) => !notAllowedFields.includes(field)
         );
 
         if (!isValidOperation) {
-            throw new HttpError(
-                'Invalid update field',
-                400,
-                'INVALID_UPDATE_FIELD'
-            );
+            throw new HttpError('Cannot update restricted fields', 400, 'INVALID_UPDATE_FIELD');
         }
 
-        // Tìm và cập nhật người dùng
-        const user = await UserModel.findById(userId);
+        if (updateData.email) {
+            const existingUser = await UserModel.findOne({
+                email: updateData.email,
+                _id: { $ne: userId },
+            });
+            if (existingUser) {
+                throw new HttpError('Email already exists', 400, 'EMAIL_EXISTS');
+            }
+        }
+
+        const user = await UserModel.findByIdAndUpdate(
+            userId,
+            { $set: updateData },
+            { new: true, runValidators: true }
+        ).select('-password');
+
         if (!user) {
             throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
         }
 
-        // Cập nhật các trường
-        updatedFields.forEach((field) => {
-            (user as any)[field] = updateData[field];
-        });
+        return user;
+    }
 
-        // Lưu thay đổi
-        await user.save();
+    // Delete: Xóa user
+    static async deleteUser(userId: string): Promise<UserInterface> {
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            throw new HttpError('Invalid user ID format', 400, 'INVALID_USER_ID');
+        }
+
+        const user = await UserModel.findByIdAndDelete(userId).select('-password');
+        if (!user) {
+            throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
+        }
+
+        return user;
+    }
+
+    // Validate credentials (chuyển từ auth.service.ts)
+    static async validateCredentials(email: string, password: string): Promise<UserInterface> {
+        const user = await UserModel.findOne({ email });
+        if (!user) {
+            throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
+        }
+
+        const isValidPassword: boolean = await bcrypt.compare(password, user.password);
+        if (!isValidPassword) {
+            throw new HttpError('Invalid password', 401, 'INVALID_PASSWORD');
+        }
+
         return user;
     }
 }

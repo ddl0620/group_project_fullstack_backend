@@ -1,12 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
-import { HttpError } from '../helpers/httpsError.helpers';
+import { HttpResponse } from '../helpers/HttpResponse';
 import { UserService } from '../services/user.service';
+import {AuthenticationRequest} from "../interfaces/authenticationRequest.interface";
+// import {AuthenticationRequest} from "../interfaces/authenticationRequest.interface";
 
-interface AuthenticationRequest extends Request {
-    user?: {
-        userId: string;
-    };
-}
+// interface AuthenticationRequest extends Request {
+//     user: {
+//         userId: string;
+//     };
+// }
 
 export class UserController {
     async me(
@@ -14,23 +16,12 @@ export class UserController {
         response: Response,
         nextFunction: NextFunction
     ): Promise<void> {
+        if(!request.user) throw new Error("User not found in request");
         try {
-            if (!request.user?.userId) {
-                throw new HttpError(
-                    'Authentication required',
-                    401,
-                    'AUTH_REQUIRED'
-                );
-            }
-
             const user = await UserService.getCurrentUser(request.user.userId);
 
-            response.status(200).json({
-                success: true,
-                message: 'Fetch user successfully',
-                data: {
-                    user,
-                },
+            HttpResponse.sendYES(response, 200, 'Fetch user successfully', {
+                user,
             });
         } catch (err) {
             nextFunction(err);
@@ -42,24 +33,15 @@ export class UserController {
         response: Response,
         nextFunction: NextFunction
     ): Promise<void> {
+        if(!request.user) throw new Error("User not found in request");
         try {
-            if (!request.user?.userId) {
-                throw new HttpError(
-                    'Authentication required',
-                    401,
-                    'AUTH_REQUIRED'
-                );
-            }
-
             const updatedUser = await UserService.updateUser(
                 request.user.userId,
                 request.body
             );
 
-            response.status(201).json({
-                success: true,
-                message: 'User updated successfully',
-                updatedUser,
+            HttpResponse.sendYES(response, 200, 'User updated successfully', {
+                user: updatedUser,
             });
         } catch (err) {
             nextFunction(err);

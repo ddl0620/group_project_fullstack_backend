@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from 'express';
-import mongoose from 'mongoose';
 import { generateToken } from '../helpers/jwtGenerate.helper';
 import { UserInterface } from '../interfaces/user.interfaces';
 import { AuthService } from '../services/auth.service';
 import { HttpResponse } from '../helpers/HttpResponse';
+import { SignInType, SignUpType } from '../types/auth.type';
 
 export class AuthControllers {
     async signUp(
@@ -12,14 +12,14 @@ export class AuthControllers {
         nextFunction: NextFunction
     ): Promise<void> {
         try {
-            const { name, email, password, role } = request.body;
+            const { name, email, password, role } = request.body as SignUpType;
 
             const newUser: UserInterface = await AuthService.createUser({
                 name,
                 email,
                 password,
                 confirmPassword: password,
-                role: role,
+                role,
             });
 
             HttpResponse.sendYES(response, 201, 'User created successfully', {
@@ -35,11 +35,8 @@ export class AuthControllers {
         response: Response,
         nextFunction: NextFunction
     ): Promise<void> {
-        const session = await mongoose.startSession();
-        session.startTransaction();
-
         try {
-            const { email, password } = request.body;
+            const { email, password } = request.body as SignInType;
 
             const user: UserInterface = await AuthService.validateCredentials({
                 email,
@@ -48,13 +45,11 @@ export class AuthControllers {
 
             const token: string = generateToken(user.id.toString());
             HttpResponse.sendYES(response, 200, 'Login successful', {
-                user: user,
-                token: token,
+                user,
+                token,
             });
         } catch (err) {
             nextFunction(err);
-        } finally {
-            await session.endSession();
         }
     }
 }
