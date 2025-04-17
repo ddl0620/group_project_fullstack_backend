@@ -1,9 +1,8 @@
-import { NextFunction, Response, Request } from "express";
-import { HttpError } from "../helpers/httpsError.helpers";
+import {NextFunction, Response} from "express";
+import {HttpError} from "../helpers/httpsError.helpers";
 import jwt from "jsonwebtoken";
 import {AuthenticationRequest} from "../interfaces/authenticationRequest.interface";
-
-
+import {USER_ROLE} from "../enums/role.enum";
 
 export const authenticationToken = (
     request: AuthenticationRequest,
@@ -62,3 +61,34 @@ export const authenticationToken = (
         );
     }
 }
+
+export const adminOnlyMiddleware = (
+    request: AuthenticationRequest,
+    response: Response,
+    nextFunction: NextFunction
+) => {
+    const userRole = request.user?.role;
+
+    if (userRole !== USER_ROLE.ADMIN) {
+        return nextFunction(
+            new HttpError('Access denied', 403, 'ACCESS_DENIED')
+        );
+    }
+    nextFunction();
+};
+
+export const userOnlyMiddleware = (
+    request: AuthenticationRequest,
+    response: Response,
+    nextFunction: NextFunction
+) => {
+    const userRole = request.user?.role;
+
+    if (userRole !== USER_ROLE.USER) {
+        return nextFunction(
+            new HttpError('Access denied', 403, 'ACCESS_DENIED')
+        );
+    }
+
+    nextFunction();
+};

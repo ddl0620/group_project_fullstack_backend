@@ -5,4 +5,5 @@ export interface ParticipantInterface extends Document {
     status: ParticipationStatus;
     invitedAt: Date;
     respondedAt: Date | null;
+    isDeleted: boolean;
 }
