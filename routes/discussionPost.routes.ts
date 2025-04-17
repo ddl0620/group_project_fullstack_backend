@@ -13,7 +13,7 @@ router.post("/:eventId", authenticationToken, validateRequest(createPostSchema),
 // input: eventId là string nhé --> oke roi
 router.get("/:eventId", authenticationToken, checkEventParticipant, DiscussionPostController.getPosts);
 
-// input: eventId và postId
+// input: eventId và postId --> oke rồi
 router.get("/:eventId/posts/:postId", authenticationToken, checkEventParticipant, DiscussionPostController.getPostById);
 
 router.put("/:postId", authenticationToken, validateRequest(updatePostSchema), checkEventParticipant, DiscussionPostController.updatePost);

@@ -4,6 +4,7 @@ import { HttpResponse } from "../helpers/HttpResponse";
 import { ImageDiscussionService } from "../services/imageDiscussion.service";
 import { AuthenticationRequest } from "../interfaces/authenticationRequest.interface";
 import {HttpError} from "../helpers/httpsError.helpers";
+import mongoose from "mongoose";
 
 export class DiscussionPostController {
     // Tạo bài viết
@@ -42,6 +43,11 @@ export class DiscussionPostController {
     static async getPostById(req: AuthenticationRequest, res: Response, next: NextFunction) {
         try {
             const { postId } = req.params;
+
+            // Kiểm tra định dạng postId
+            if (!mongoose.Types.ObjectId.isValid(postId)) {
+                throw new HttpError("Invalid post ID format", 400, "INVALID_POST_ID");
+            }
 
             const post = await DiscussionPostService.getPostById(postId);
 

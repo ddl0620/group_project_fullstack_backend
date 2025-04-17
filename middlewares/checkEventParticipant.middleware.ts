@@ -32,7 +32,12 @@ export const checkEventParticipant = async (req: AuthenticationRequest, res: Res
             ]
         });
 
-        console.log("Event found:", event);
+        // Log kết quả query
+        if (!event) {
+            console.log("Event not found or isDeleted is true");
+        } else {
+            console.log("Event found:", event);
+        }
 
         if (!event) {
             throw new HttpError("You are not authorized to access this event", 403, "UNAUTHORIZED");

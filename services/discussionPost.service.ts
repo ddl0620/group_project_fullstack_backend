@@ -32,8 +32,8 @@ export class DiscussionPostService {
     }
 
     // Lấy chi tiết bài viết
-    static async getPostById(post_id: string): Promise<DiscussionPostInterface | null> {
-        return await DiscussionPostModel.findOne({ _id: post_id, isDeleted: false }).populate("creator_id", "username");
+    static async getPostById(postId: string): Promise<DiscussionPostInterface | null> {
+        return await DiscussionPostModel.findById(postId).exec();
     }
 
     // Cập nhật bài viết
