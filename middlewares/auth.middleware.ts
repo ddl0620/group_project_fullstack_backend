@@ -5,7 +5,6 @@ import {AuthenticationRequest} from "../interfaces/authenticationRequest.interfa
 
 
 
-
 export const authenticationToken = (
     request: AuthenticationRequest,
     response: Response,
@@ -45,6 +44,7 @@ export const authenticationToken = (
 
         request.user = {
             userId: encoded.userId,
+            role: decoded.role,
         };
         nextFunction();
     }

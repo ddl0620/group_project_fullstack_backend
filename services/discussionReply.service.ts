@@ -3,7 +3,7 @@ import { DiscussionReplyModel } from "../models/discussionReply.model";
 
 export class DiscussionReplyService {
     // Tạo bình luận mới
-    static async createReply(data: DiscussionReplyInterface): Promise<DiscussionReplyInterface> {
+    static async createReply(data: Partial<DiscussionReplyInterface>): Promise<DiscussionReplyInterface> {
         return await DiscussionReplyModel.create(data);
     }
 

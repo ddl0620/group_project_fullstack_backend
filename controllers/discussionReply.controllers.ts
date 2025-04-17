@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { DiscussionReplyService } from "../services/discussionReply.service";
 import { HttpResponse } from "../helpers/HttpResponse";
-import { ImageDiscussionService } from "../services/imageDiscussion.service";
-import { ImageDiscussionInterface } from "../interfaces/ImageDiscussion.interfaces";    
+import { AuthenticationRequest } from "../interfaces/authenticationRequest.interface";
 
 export class DiscussionReplyController {
-    static async createReply(req: Request, res: Response, next: NextFunction) {
+    // Tạo bình luận mới
+    static async createReply(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
             const { content, parent_reply_id, images } = req.body;
             const { postId } = req.params;
@@ -24,7 +24,8 @@ export class DiscussionReplyController {
         }
     }
 
-    static async getReplies(req: Request, res: Response, next: NextFunction) {
+    // Lấy danh sách bình luận
+    static async getReplies(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const { postId } = req.params;
             const page = parseInt(req.query.page as string) || 1;
@@ -37,14 +38,16 @@ export class DiscussionReplyController {
         }
     }
 
-    static async getReplyById(req: Request, res: Response, next: NextFunction) {
+    // Lấy chi tiết bình luận
+    static async getReplyById(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const { replyId } = req.params;
 
             const reply = await DiscussionReplyService.getReplyById(replyId);
-            if (!reply) {
-                return HttpResponse.sendNO(res, 404, "Reply not found");
-            }
+            
+            // if (!reply) {
+            //     return HttpResponse.sendNO(res, 404, "Reply not found");
+            // }
 
             HttpResponse.sendYES(res, 200, "Reply fetched successfully", { reply });
         } catch (err) {
@@ -52,15 +55,17 @@ export class DiscussionReplyController {
         }
     }
 
-    static async updateReply(req: Request, res: Response, next: NextFunction) {
+    // Cập nhật bình luận
+    static async updateReply(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
             const { replyId } = req.params;
             const { content, images } = req.body;
 
             const reply = await DiscussionReplyService.updateReply(replyId, { content, images });
-            if (!reply) {
-                return HttpResponse.sendNO(res, 404, "Reply not found");
-            }
+            
+            // if (!reply) {
+            //     return HttpResponse.sendNO(res, 404, "Reply not found");
+            // }
 
             HttpResponse.sendYES(res, 200, "Reply updated successfully", { reply });
         } catch (err) {
@@ -68,19 +73,17 @@ export class DiscussionReplyController {
         }
     }
 
-    static async deleteReply(req: Request, res: Response, next: NextFunction) {
+    // Soft delete bình luận
+    static async deleteReply(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
             const { replyId } = req.params;
-    
-            // Xóa bình luận
+
             const reply = await DiscussionReplyService.deleteReply(replyId);
-            if (!reply) {
-                return HttpResponse.sendNO(res, 404, "Reply not found");
-            }
-    
-            // Xóa hình ảnh liên quan
-            await ImageDiscussionService.deleteImagesByReference(replyId, "reply");
-    
+            
+            // if (!reply) {
+            //     return HttpResponse.sendNO(res, 404, "Reply not found");
+            // }
+
             HttpResponse.sendYES(res, 200, "Reply deleted successfully", { reply });
         } catch (err) {
             next(err);

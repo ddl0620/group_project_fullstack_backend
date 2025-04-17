@@ -6,4 +6,5 @@ export interface ImageDiscussionInterface extends Document {
     type: "post" | "reply"; // Loại hình ảnh (thuộc bài viết hoặc bình luận)
     reference_id: mongoose.Schema.Types.ObjectId | string; // ID của bài viết hoặc bình luận
     uploaded_at?: Date; // Thời gian tải lên (tự động thêm bởi Mongoose)
+    isDeleted: boolean; // Soft delete
 }

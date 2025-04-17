@@ -1,5 +1,5 @@
 import express from "express";
-import { ImageDiscussionController } from "../controllers/imageDiscussion.controllers";
+import { ImageDiscussionController } from "../controllers/imageDiscussion.controller";
 import { authenticationToken } from "../middlewares/auth.middleware";
 
 const router = express.Router();
@@ -10,7 +10,7 @@ router.post("/", authenticationToken, ImageDiscussionController.createImage);
 // Lấy danh sách hình ảnh theo reference_id
 router.get("/:reference_id", authenticationToken, ImageDiscussionController.getImagesByReference);
 
-// Xóa hình ảnh theo ID
+// Soft delete hình ảnh theo ID
 router.delete("/:image_id", authenticationToken, ImageDiscussionController.deleteImage);
 
 export default router;

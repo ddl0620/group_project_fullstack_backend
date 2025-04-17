@@ -9,8 +9,8 @@ const DiscussionReplySchema = new Schema<DiscussionReplyInterface>({
     content: { type: String, required: true }, // Nội dung bình luận
     images: [{ type: String }], // Danh sách URL hình ảnh
     isDeleted: { type: Boolean, default: false }, // Soft delete
-    created_at: { type: Date, default: Date.now }, // Thời gian tạo
-    updated_at: { type: Date, default: Date.now }, // Thời gian cập nhật
+    created_at: { type: Date, default: Date.now }, // Thời gian tạo bình luận
+    updated_at: { type: Date, default: Date.now }, // Thời gian cập nhật bình luận
 });
 
 // Thêm index để tối ưu truy vấn

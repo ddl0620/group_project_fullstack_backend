@@ -2,9 +2,11 @@ import { Request, Response, NextFunction } from "express";
 import { DiscussionPostService } from "../services/discussionPost.service";
 import { HttpResponse } from "../helpers/HttpResponse";
 import { ImageDiscussionService } from "../services/imageDiscussion.service";
+import { AuthenticationRequest } from "../interfaces/authenticationRequest.interface";
 
 export class DiscussionPostController {
-    static async createPost(req: Request, res: Response, next: NextFunction) {
+    // Tạo bài viết
+    static async createPost(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
             const { content, images } = req.body;
             const { eventId } = req.params;
@@ -25,6 +27,7 @@ export class DiscussionPostController {
 
             const posts = await DiscussionPostService.getPosts(eventId, page, limit);
             HttpResponse.sendYES(res, 200, "Posts fetched successfully", { posts });
+
         } catch (err) {
             next(err);
         }
@@ -35,9 +38,10 @@ export class DiscussionPostController {
             const { postId } = req.params;
 
             const post = await DiscussionPostService.getPostById(postId);
-            if (!post) {
-                return HttpResponse.sendNO(res, 404, "Post not found");
-            }
+
+            // if (!post) {
+            //     return HttpResponse.sendNO(res, 404, "Post not found");
+            // }
 
             HttpResponse.sendYES(res, 200, "Post fetched successfully", { post });
         } catch (err) {
@@ -51,9 +55,10 @@ export class DiscussionPostController {
             const { content, images } = req.body;
 
             const post = await DiscussionPostService.updatePost(postId, { content, images });
-            if (!post) {
-                return HttpResponse.sendNO(res, 404, "Post not found");
-            }
+            
+            // if (!post) {
+            //     return HttpResponse.sendNO(res, 404, "Post not found");
+            // }
 
             HttpResponse.sendYES(res, 200, "Post updated successfully", { post });
         } catch (err) {
@@ -67,10 +72,11 @@ export class DiscussionPostController {
     
             // Xóa bài viết
             const post = await DiscussionPostService.deletePost(postId);
-            if (!post) {
-                return HttpResponse.sendNO(res, 404, "Post not found");
-            }
-    
+
+            // if (!post) {
+            //     return HttpResponse.sendNO(res, 404, "Post not found");
+            // }
+        
             // Xóa hình ảnh liên quan
             await ImageDiscussionService.deleteImagesByReference(postId, "post");
     

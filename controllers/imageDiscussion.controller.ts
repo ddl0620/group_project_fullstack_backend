@@ -28,15 +28,16 @@ export class ImageDiscussionController {
         }
     }
 
-    // Xóa hình ảnh theo ID
+    // Soft delete hình ảnh theo ID
     static async deleteImage(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const { image_id } = req.params;
 
             const image = await ImageDiscussionService.deleteImage(image_id);
-            if (!image) {
-                return HttpResponse.sendNO(res, 404, "Image not found");
-            }
+
+            // if (!image) {
+            //     return HttpResponse.sendNO(res, 404, "Image not found");
+            // }
 
             HttpResponse.sendYES(res, 200, "Image deleted successfully", { image });
         } catch (err) {

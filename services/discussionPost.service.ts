@@ -3,7 +3,7 @@ import { DiscussionPostModel } from "../models/discussionPost.model";
 
 export class DiscussionPostService {
     // Tạo bài viết mới
-    static async createPost(data: DiscussionPostInterface): Promise<DiscussionPostInterface> {
+    static async createPost(data: Partial<DiscussionPostInterface>): Promise<DiscussionPostInterface> {
         return await DiscussionPostModel.create(data);
     }
 

@@ -1,8 +1,9 @@
-import { Request, Response, NextFunction } from "express";
+import {Response, NextFunction } from "express";
 import { EventModel } from "../models/event.models";
 import { HttpError } from "../helpers/httpsError.helpers";
+import { AuthenticationRequest } from "../interfaces/authenticationRequest.interface";
 
-export const checkEventParticipant = async (req: Request, res: Response, next: NextFunction) => {
+export const checkEventParticipant = async (req: AuthenticationRequest, res: Response, next: NextFunction) => {
     try {
         const { eventId } = req.params;
         const userId = req.user?.userId;

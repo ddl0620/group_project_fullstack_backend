@@ -1,7 +1,7 @@
 import express from "express";
 import { DiscussionPostController } from "../controllers/discussionPost.controllers";
 import { authenticationToken } from "../middlewares/auth.middleware";
-import { checkEventParticipant } from "../middlewares/eventParticipant.middleware";
+import { checkEventParticipant} from "../middlewares/checkEventParticipant.middleware"
 
 const router = express.Router();
 
