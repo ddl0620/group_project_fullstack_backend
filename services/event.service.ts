@@ -6,10 +6,10 @@ import { EventInterface } from '../interfaces/event.interfaces';
 import { CreateEventInput, EventListResponse, RespondJoinInput, UpdateEventInput } from '../types/event.type';
 import { ParticipationStatus } from '../enums/participationStatus.enums';
 import { ParticipantInterface } from '../interfaces/participant.interfaces';
+import {decodeToken} from "../helpers/decodeToken";
 
 export class EventService {
     static async addEvent(userId: string, eventData: CreateEventInput): Promise<EventInterface> {
-        // Kiểm tra user tồn tại
         const user = await UserModel.findById(userId).select('-password');
         if (!user) {
             throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
@@ -19,6 +19,7 @@ export class EventService {
             const newEvent = await EventModel.create({
                 ...eventData,
                 organizer: userId,
+                participants: [],
             });
             return newEvent;
         } catch (err) {
@@ -36,7 +37,10 @@ export class EventService {
         const sortOrder = sortBy.toLowerCase() === 'asc' ? 1 : -1;
 
         const query = {
-            $or: [{ organizer: userId }],
+            $and: [
+                { $or: [{ organizer: userId }] },
+                { isDeleted: false }, // Loại bỏ sự kiện đã bị xóa
+            ],
         };
 
         const events = await EventModel.find(query)
@@ -67,10 +71,15 @@ export class EventService {
         const sortOrder = sortBy.toLowerCase() === 'asc' ? 1 : -1;
 
         const query = {
-            $or: [
-                { isPublic: true },
-                { organizer: userId },
-                { 'participants.userId': userId },
+            $and: [
+                {
+                    $or: [
+                        { isPublic: true },
+                        { organizer: userId },
+                        { 'participants.userId': userId },
+                    ],
+                },
+                { isDeleted: false }, // Loại bỏ sự kiện đã bị xóa
             ],
         };
 
@@ -97,7 +106,7 @@ export class EventService {
             throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
         }
 
-        const event = await EventModel.findById(eventId);
+        const event = await EventModel.findOne({ _id: eventId, isDeleted: false }); // Loại bỏ sự kiện đã bị xóa
         if (!event) {
             throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
         }
@@ -125,7 +134,7 @@ export class EventService {
             throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
         }
 
-        const event = await EventModel.findById(eventId);
+        const event = await EventModel.findOne({ _id: eventId, isDeleted: false }); // Loại bỏ sự kiện đã bị xóa
         if (!event) {
             throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
         }
@@ -152,7 +161,7 @@ export class EventService {
             throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
         }
 
-        const event = await EventModel.findById(eventId);
+        const event = await EventModel.findOne({ _id: eventId, isDeleted: false }); // Loại bỏ sự kiện đã bị xóa
         if (!event) {
             throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
         }
@@ -161,7 +170,13 @@ export class EventService {
             throw new HttpError('Only the organizer can delete this event', 403, 'FORBIDDEN');
         }
 
-        const deletedEvent = await EventModel.findByIdAndDelete(eventId);
+        // Soft delete: Đánh dấu isDeleted = true
+        const deletedEvent = await EventModel.findByIdAndUpdate(
+            eventId,
+            { $set: { isDeleted: true } },
+            { new: true }
+        );
+
         if (!deletedEvent) {
             throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
         }
@@ -178,10 +193,11 @@ export class EventService {
             throw new HttpError('Invalid user ID format', 400, 'INVALID_USER_ID');
         }
 
-        const event = await EventModel.findById(eventId);
+        const event = await EventModel.findOne({ _id: eventId, isDeleted: false }); // Loại bỏ sự kiện đã bị xóa
         if (!event) {
             throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
         }
+
 
         const user = await UserModel.findById(userId);
         if (!user) {
@@ -228,7 +244,7 @@ export class EventService {
             throw new HttpError('Invalid user ID format', 400, 'INVALID_USER_ID');
         }
 
-        const event = await EventModel.findById(eventId);
+        const event = await EventModel.findOne({ _id: eventId, isDeleted: false }); // Loại bỏ sự kiện đã bị xóa
         if (!event) {
             throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
         }

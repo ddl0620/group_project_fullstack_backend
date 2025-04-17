@@ -26,6 +26,11 @@ const userSchema = new Schema<UserInterface>(
             type: String,
             default: 'user',
             enum: ['user', 'admin']
+        },
+        isDeleted: {
+            required: true,
+            type: Boolean,
+            default: false,
         }
     },
     {

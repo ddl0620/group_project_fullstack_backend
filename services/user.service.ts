@@ -30,7 +30,9 @@ export class UserService {
         const { name, email, password, role } = data;
 
         // Kiểm tra email đã tồn tại
-        const existingUser = await UserModel.findOne({ email });
+        const existingUser = await UserModel.findOne({
+            email: email});
+        console.log(existingUser);
         if (existingUser) {
             throw new HttpError('Email already exists', 400, 'EMAIL_EXISTS');
         }
@@ -54,7 +56,10 @@ export class UserService {
 
     // Read: Lấy thông tin user hiện tại
     static async getCurrentUser(userId: string): Promise<UserInterface> {
-        const user = await UserModel.findById(userId).select('-password');
+        const user = await UserModel.findOne({
+            _id: userId,
+            isDeleted: false,
+        }).select('-password');
         if (!user) {
             throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
         }
@@ -133,17 +138,34 @@ export class UserService {
             throw new HttpError('Invalid user ID format', 400, 'INVALID_USER_ID');
         }
 
-        const user = await UserModel.findByIdAndDelete(userId).select('-password');
+        const user = await UserModel.findOne({
+            _id: userId,
+            isDeleted: false,
+        });
+
         if (!user) {
             throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
         }
 
-        return user;
+        const deletedUser = await UserModel.findByIdAndUpdate(
+            userId,
+            { isDeleted: true },
+            { new: true, runValidators: true }
+        ).select('-password');
+
+        if (!deletedUser) {
+            throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
+        }
+
+        return deletedUser;
     }
 
     // Validate credentials (chuyển từ auth.service.ts)
     static async validateCredentials(email: string, password: string): Promise<UserInterface> {
-        const user = await UserModel.findOne({ email });
+        const user = await UserModel.findOne({
+            email: email.toLowerCase(),
+            isDeleted: false,
+        });
         if (!user) {
             throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
         }

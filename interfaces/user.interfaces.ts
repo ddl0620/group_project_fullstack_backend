@@ -7,6 +7,7 @@ export interface UserInterface extends Document {
     role: string;
     createdAt: Date;
     updatedAt: Date;
+    isDeleted: boolean
 
     //Note: no need to declare methods in UserInterface, CRUD in UserServices
 }

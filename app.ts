@@ -11,7 +11,8 @@ import messageRoutes from "./routes/message.routes"; // Import message routes
 import messageSocket from "./realtime/message.socket"; // Import WebSocket logic
 import { Server } from "socket.io"; // Import Socket.IO
 import http from "http"; // Import HTTP server
-import { setSocketIOInstance } from "./controllers/message.controllers"; // Import Socket.IO instance setter
+import { setSocketIOInstance } from "./controllers/message.controllers";
+import invitationRoutes from "./routes/invitation.routes"; // Import Socket.IO instance setter
 
 const app: Express = express();
 const server = http.createServer(app); // Tạo HTTP server
@@ -43,6 +44,7 @@ app.use(
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/event", eventRoutes);
+app.use("/api/v1/invitation", invitationRoutes);
 app.use("/api/v1/messages", messageRoutes); // Thêm route cho message
 
 // Root Route
