@@ -16,8 +16,10 @@ router.get("/:eventId", authenticationToken, checkEventParticipant, DiscussionPo
 // input: eventId và postId --> oke rồi
 router.get("/:eventId/posts/:postId", authenticationToken, checkEventParticipant, DiscussionPostController.getPostById);
 
-router.put("/:postId", authenticationToken, validateRequest(updatePostSchema), checkEventParticipant, DiscussionPostController.updatePost);
+// input: eventId và postId --> oke rồi
+router.put("/:eventId/posts/:postId", authenticationToken, validateRequest(updatePostSchema), checkEventParticipant, DiscussionPostController.updatePost);
 
-router.delete("/:postId", authenticationToken, checkEventParticipant, DiscussionPostController.deletePost);
+// input: eventId và postId --> oke rồi
+router.delete("/:eventId/posts/:postId", authenticationToken, checkEventParticipant, DiscussionPostController.deletePost);
 
 export default router;

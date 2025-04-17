@@ -41,4 +41,8 @@ export class DiscussionReplyService {
             { new: true }
         );
     }
+
+    static async deleteRepliesByPostId(post_id: string): Promise<void> {
+        await DiscussionReplyModel.updateMany({ post_id }, { isDeleted: true });
+    }
 }
