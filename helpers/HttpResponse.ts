@@ -14,16 +14,4 @@ export class HttpResponse extends Response {
         });
     }
 
-    static sendNO(
-        response: Response,
-        statusCode: number,
-        message: string,
-        content: any
-    ) {
-        response.status(statusCode).json({
-            success: false,
-            message: message,
-            content: content,
-        });
-    }
 }

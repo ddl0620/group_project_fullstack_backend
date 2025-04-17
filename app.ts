@@ -7,6 +7,10 @@ import cors from "cors";
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import eventRoutes from "./routes/event.routes";
+import messageRoutes from "./routes/message.routes"; // Import message routes
+import notificationRoutes from "./routes/notification.routes"; // Import notification routes
+import messageSocket from "./realtime/message.socket"; // Import WebSocket logic
+import { Server } from "socket.io"; // Import Socket.IO
 import discussionPostRoutes from "./routes/discussionPost.routes";
 import discussionReplyRoutes from "./routes/discussionReply.routes";
 import http from "http"; // Import HTTP server
@@ -39,9 +43,11 @@ app.use("/api/v1/event", eventRoutes);
 
 app.use("/api/v1/invitation", invitationRoutes);
 app.use("/api/v1/messages", messageRoutes); // Thêm route cho message
+app.use("/api/v1/notification", notificationRoutes)
 app.use("/api/v1/discussion-posts", discussionPostRoutes);
 app.use("/api/v1/discussion-replies", discussionReplyRoutes);
 app.use("/api/v1/images", imageDiscussionRoutes);
+
 
 // Root Route
 app.get("/", (_req: Request, res: Response): void => {
