@@ -11,12 +11,24 @@ export class DiscussionPostService {
 
     // Lấy danh sách bài viết (chỉ lấy bài viết chưa bị xóa)
     static async getPosts(event_id: string, page: number, limit: number): Promise<DiscussionPostInterface[]> {
+        // Kiểm tra định dạng event_id
+        if (!event_id.match(/^[0-9a-fA-F]{24}$/)) {
+            throw new HttpError("Invalid event ID format", 400, "INVALID_EVENT_ID");
+        }
+
         const skip = (page - 1) * limit;
-        return await DiscussionPostModel.find({ event_id, isDeleted: false })
+
+        const posts = await DiscussionPostModel.find({ event_id, isDeleted: false })
             .populate("creator_id", "username")
             .skip(skip)
             .limit(limit)
             .sort({ created_at: -1 });
+
+        if (!posts || posts.length === 0) {
+            throw new HttpError("No posts found for this event", 404, "NO_POSTS_FOUND");
+        }
+
+        return posts;
     }
 
     // Lấy chi tiết bài viết

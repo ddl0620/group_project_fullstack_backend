@@ -19,7 +19,7 @@ export class DiscussionPostController {
             
             const post = await DiscussionPostService.createPost({ content, images, creator_id, event_id: eventId });
             
-            HttpResponse.sendYES(res, 201, "Post created successfully", { post });        
+            HttpResponse.sendYES(res, 201, "Post created successfully", { post });
         } catch (err) {
             next(err);
         }
@@ -32,7 +32,6 @@ export class DiscussionPostController {
             const limit = parseInt(req.query.limit as string) || 10;
 
             const posts = await DiscussionPostService.getPosts(eventId, page, limit);
-
             HttpResponse.sendYES(res, 200, "Posts fetched successfully", { posts });
 
         } catch (err) {
@@ -45,6 +44,10 @@ export class DiscussionPostController {
             const { postId } = req.params;
 
             const post = await DiscussionPostService.getPostById(postId);
+
+            if (!post) {
+                throw new HttpError("Post not found", 404, "POST_NOT_FOUND");
+            }
 
             HttpResponse.sendYES(res, 200, "Post fetched successfully", { post });
         } catch (err) {
