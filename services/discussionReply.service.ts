@@ -1,9 +1,10 @@
 import { DiscussionReplyInterface } from "../interfaces/discussionReply.interfaces";
 import { DiscussionReplyModel } from "../models/discussionReply.model";
+import { CreateReplyInput, UpdateReplyInput } from "../types/discussionReply.type";
 
 export class DiscussionReplyService {
     // Tạo bình luận mới
-    static async createReply(data: Partial<DiscussionReplyInterface>): Promise<DiscussionReplyInterface> {
+    static async createReply(data: CreateReplyInput): Promise<DiscussionReplyInterface> {
         return await DiscussionReplyModel.create(data);
     }
 
@@ -23,15 +24,8 @@ export class DiscussionReplyService {
     }
 
     // Cập nhật bình luận
-    static async updateReply(
-        reply_id: string,
-        updateData: Partial<DiscussionReplyInterface>
-    ): Promise<DiscussionReplyInterface | null> {
-        return await DiscussionReplyModel.findByIdAndUpdate(
-            reply_id,
-            { ...updateData, updated_at: new Date() },
-            { new: true, runValidators: true }
-        );
+    static async updateReply(reply_id: string, updateData: UpdateReplyInput): Promise<DiscussionReplyInterface | null> {
+        return await DiscussionReplyModel.findByIdAndUpdate(reply_id, updateData, { new: true });
     }
 
     // Soft delete bình luận

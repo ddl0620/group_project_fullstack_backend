@@ -9,7 +9,7 @@ export const authenticationToken = (
     request: AuthenticationRequest,
     response: Response,
     nextFunction: NextFunction
-) =>{
+) => {
 
     const authHeader = request.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
@@ -44,7 +44,6 @@ export const authenticationToken = (
 
         request.user = {
             userId: encoded.userId,
-            role: decoded.role,
         };
         nextFunction();
     }

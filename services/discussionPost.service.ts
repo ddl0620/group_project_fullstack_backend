@@ -1,9 +1,10 @@
 import { DiscussionPostInterface } from "../interfaces/discussionPost.interfaces";
 import { DiscussionPostModel } from "../models/discussionPost.model";
+import { CreatePostInput, UpdatePostInput } from "../types/discussionPost.type";
 
 export class DiscussionPostService {
     // Tạo bài viết mới
-    static async createPost(data: Partial<DiscussionPostInterface>): Promise<DiscussionPostInterface> {
+    static async createPost(data: CreatePostInput): Promise<DiscussionPostInterface> {
         return await DiscussionPostModel.create(data);
     }
 
@@ -23,15 +24,8 @@ export class DiscussionPostService {
     }
 
     // Cập nhật bài viết
-    static async updatePost(
-        post_id: string,
-        updateData: Partial<DiscussionPostInterface>
-    ): Promise<DiscussionPostInterface | null> {
-        return await DiscussionPostModel.findByIdAndUpdate(
-            post_id,
-            { ...updateData, updated_at: new Date() },
-            { new: true, runValidators: true }
-        );
+    static async updatePost(post_id: string, updateData: UpdatePostInput): Promise<DiscussionPostInterface | null> {
+        return await DiscussionPostModel.findByIdAndUpdate(post_id, updateData, { new: true });
     }
 
     // Soft delete bài viết

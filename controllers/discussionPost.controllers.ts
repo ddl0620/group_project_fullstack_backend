@@ -1,8 +1,9 @@
-import { Request, Response, NextFunction } from "express";
+import {Response, NextFunction } from "express";
 import { DiscussionPostService } from "../services/discussionPost.service";
 import { HttpResponse } from "../helpers/HttpResponse";
 import { ImageDiscussionService } from "../services/imageDiscussion.service";
 import { AuthenticationRequest } from "../interfaces/authenticationRequest.interface";
+import {HttpError} from "../helpers/httpsError.helpers";
 
 export class DiscussionPostController {
     // Tạo bài viết
@@ -10,16 +11,22 @@ export class DiscussionPostController {
         try {
             const { content, images } = req.body;
             const { eventId } = req.params;
+
             const creator_id = req.user?.userId;
 
+            if (!creator_id){
+                throw new HttpError("Creator ID is required", 400, "CREATOR_ID_REQUIRED");
+            }
+            
             const post = await DiscussionPostService.createPost({ content, images, creator_id, event_id: eventId });
             HttpResponse.sendYES(res, 201, "Post created successfully", { post });
+            
         } catch (err) {
             next(err);
         }
     }
 
-    static async getPosts(req: Request, res: Response, next: NextFunction) {
+    static async getPosts(req: AuthenticationRequest, res: Response, next: NextFunction) {
         try {
             const { eventId } = req.params;
             const page = parseInt(req.query.page as string) || 1;
@@ -33,7 +40,7 @@ export class DiscussionPostController {
         }
     }
 
-    static async getPostById(req: Request, res: Response, next: NextFunction) {
+    static async getPostById(req: AuthenticationRequest, res: Response, next: NextFunction) {
         try {
             const { postId } = req.params;
 
@@ -49,7 +56,7 @@ export class DiscussionPostController {
         }
     }
 
-    static async updatePost(req: Request, res: Response, next: NextFunction) {
+    static async updatePost(req: AuthenticationRequest, res: Response, next: NextFunction) {
         try {
             const { postId } = req.params;
             const { content, images } = req.body;
@@ -66,7 +73,7 @@ export class DiscussionPostController {
         }
     }
 
-    static async deletePost(req: Request, res: Response, next: NextFunction) {
+    static async deletePost(req: AuthenticationRequest, res: Response, next: NextFunction) {
         try {
             const { postId } = req.params;
     
@@ -78,6 +85,7 @@ export class DiscussionPostController {
             // }
         
             // Xóa hình ảnh liên quan
+            
             await ImageDiscussionService.deleteImagesByReference(postId, "post");
     
             HttpResponse.sendYES(res, 200, "Post deleted successfully", { post });
