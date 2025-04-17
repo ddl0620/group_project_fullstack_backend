@@ -11,6 +11,7 @@ import {decodeToken} from "../helpers/decodeToken";
 export class EventService {
     static async addEvent(userId: string, eventData: CreateEventInput): Promise<EventInterface> {
         const user = await UserModel.findById(userId).select('-password');
+
         if (!user) {
             throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
         }
