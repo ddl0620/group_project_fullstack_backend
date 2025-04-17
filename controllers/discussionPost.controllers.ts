@@ -18,8 +18,8 @@ export class DiscussionPostController {
             }
             
             const post = await DiscussionPostService.createPost({ content, images, creator_id, event_id: eventId });
-            HttpResponse.sendYES(res, 201, "Post created successfully", { post });
             
+            HttpResponse.sendYES(res, 201, "Post created successfully", { post });        
         } catch (err) {
             next(err);
         }

@@ -1,9 +1,10 @@
 import { ImageModel } from "../models/imageDiscussion.model";
 import { ImageDiscussionInterface } from "../interfaces/imageDiscussion.interfaces";
+import { CreateImageInput } from "../types/discussionImage.type";
 
 export class ImageDiscussionService {
     // Tạo hình ảnh mới
-    static async createImage(data: Partial<ImageDiscussionInterface>): Promise<ImageDiscussionInterface> {
+    static async createImage(data: CreateImageInput): Promise<ImageDiscussionInterface> {
         return await ImageModel.create(data);
     }
 
