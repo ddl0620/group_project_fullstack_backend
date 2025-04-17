@@ -7,23 +7,13 @@ import cors from "cors";
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import eventRoutes from "./routes/event.routes";
-import messageRoutes from "./routes/message.routes"; // Import message routes
-import messageSocket from "./realtime/message.socket"; // Import WebSocket logic
-import { Server } from "socket.io"; // Import Socket.IO
+import discussionPostRoutes from "./routes/discussionPost.routes";
+import discussionReplyRoutes from "./routes/discussionReply.routes";
 import http from "http"; // Import HTTP server
-import { setSocketIOInstance } from "./controllers/message.controllers"; // Import Socket.IO instance setter
+import imageDiscussionRoutes from "./routes/imageDiscussion.routes";
 
 const app: Express = express();
 const server = http.createServer(app); // Tạo HTTP server
-const io = new Server(server, {
-    cors: {
-        origin: "*", // Cho phép tất cả, bạn có thể giới hạn sau
-    },
-});
-
-// Khởi tạo WebSocket logic
-messageSocket(io); // Tách logic WebSocket ra file riêng
-setSocketIOInstance(io); // Kết nối WebSocket với controller
 
 // Middleware
 app.use(urlencoded({ extended: false }));
@@ -43,7 +33,10 @@ app.use(
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/event", eventRoutes);
-app.use("/api/v1/messages", messageRoutes); // Thêm route cho message
+app.use("/api/v1/discussion-posts", discussionPostRoutes);
+app.use("/api/v1/discussion-replies", discussionReplyRoutes);
+// Tích hợp routes cho hình ảnh
+app.use("/api/v1/images", imageDiscussionRoutes);
 
 // Root Route
 app.get("/", (_req: Request, res: Response): void => {
