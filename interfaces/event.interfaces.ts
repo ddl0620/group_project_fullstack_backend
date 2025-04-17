@@ -15,4 +15,5 @@ export interface EventInterface extends Document {
     isPublic: boolean;
     createdAt?: Date;  // Optional because Mongoose will automatically handle this
     updatedAt?: Date;  // Optional because Mongoose will automatically handle this
+    isDeleted: boolean;  // Optional, default is false
 }

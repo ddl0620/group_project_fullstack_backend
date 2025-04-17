@@ -7,6 +7,7 @@ const ParticipantSchema = new Schema<ParticipantInterface>({
     status: { type: String, enum: Object.values(ParticipationStatus), default: ParticipationStatus.PENDING },
     invitedAt: { type: Date, default: Date.now },
     respondedAt: {type: Date },
+    isDeleted: { type: Boolean, default: false },
 });
 
 export { ParticipantSchema };

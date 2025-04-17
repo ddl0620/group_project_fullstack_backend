@@ -39,7 +39,7 @@
 * │   │   ├── websocket.ts
 * │   │   ├── chat.service.ts
 * │   │   ├── notification.service.ts
-* │   │   └── rsvp.service.ts
+* │   │   └── invitation.service.ts
 * │   ├── graphql/                   # Logic GraphQL (cho tương lai)
 * │   │   ├── schema/
 * │   │   ├── resolvers/
