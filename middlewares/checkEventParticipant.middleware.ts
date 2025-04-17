@@ -5,8 +5,12 @@ import { AuthenticationRequest } from "../interfaces/authenticationRequest.inter
 
 export const checkEventParticipant = async (req: AuthenticationRequest, res: Response, next: NextFunction) => {
     try {
-        const { eventId } = req.params; // Lấy eventId từ URL
+        const { eventId } = req.params;
         const userId = req.user?.userId;
+
+        // Log giá trị để debug
+        console.log("eventId:", eventId);
+        console.log("userId:", userId);
 
         // Validate eventId format
         if (!eventId.match(/^[0-9a-fA-F]{24}$/)) {
@@ -27,6 +31,8 @@ export const checkEventParticipant = async (req: AuthenticationRequest, res: Res
                 { "participants": { $elemMatch: { userId, status: "ACCEPTED" } } }
             ]
         });
+
+        console.log("Event found:", event);
 
         if (!event) {
             throw new HttpError("You are not authorized to access this event", 403, "UNAUTHORIZED");
