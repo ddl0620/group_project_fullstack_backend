@@ -8,6 +8,7 @@ import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import eventRoutes from "./routes/event.routes";
 import messageRoutes from "./routes/message.routes"; // Import message routes
+import notificationRoutes from "./routes/notification.routes"; // Import notification routes
 import messageSocket from "./realtime/message.socket"; // Import WebSocket logic
 import { Server } from "socket.io"; // Import Socket.IO
 import http from "http"; // Import HTTP server
@@ -44,6 +45,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/event", eventRoutes);
 app.use("/api/v1/messages", messageRoutes); // Thêm route cho message
+app.use("/api/v1/notification", notificationRoutes)
 
 // Root Route
 app.get("/", (_req: Request, res: Response): void => {
