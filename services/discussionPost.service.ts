@@ -1,6 +1,7 @@
 import { DiscussionPostInterface } from "../interfaces/discussionPost.interfaces";
 import { DiscussionPostModel } from "../models/discussionPost.model";
 import { CreatePostInput, UpdatePostInput } from "../types/discussionPost.type";
+import { HttpError } from '../helpers/httpsError.helpers';
 
 export class DiscussionPostService {
     // Tạo bài viết mới
@@ -30,6 +31,10 @@ export class DiscussionPostService {
 
     // Soft delete bài viết
     static async deletePost(post_id: string): Promise<DiscussionPostInterface | null> {
+        const post = await DiscussionPostModel.findById(post_id);
+        if (!post) {
+            throw new HttpError('Failed to delete post', 500, 'DELETE_POST_FAILED');
+        }
         return await DiscussionPostModel.findByIdAndUpdate(
             post_id,
             { isDeleted: true },

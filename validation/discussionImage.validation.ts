@@ -2,8 +2,9 @@ import Joi from "joi";
 
 // Validation schema cho tạo hình ảnh
 export const createImageSchema = Joi.object({
-    url: Joi.string().required().messages({
+    url: Joi.string().uri().required().messages({
         "string.base": "URL must be a string",
+        "string.uri": "URL must be a valid URL",
         "any.required": "URL is required",
     }),
     type: Joi.string()
