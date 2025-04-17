@@ -11,7 +11,6 @@ export class DiscussionPostController {
         try {
             const { content, images } = req.body;
             const { eventId } = req.params;
-
             const creator_id = req.user?.userId;
 
             if (!creator_id){
@@ -33,6 +32,7 @@ export class DiscussionPostController {
             const limit = parseInt(req.query.limit as string) || 10;
 
             const posts = await DiscussionPostService.getPosts(eventId, page, limit);
+
             HttpResponse.sendYES(res, 200, "Posts fetched successfully", { posts });
 
         } catch (err) {
@@ -46,10 +46,6 @@ export class DiscussionPostController {
 
             const post = await DiscussionPostService.getPostById(postId);
 
-            // if (!post) {
-            //     return HttpResponse.sendNO(res, 404, "Post not found");
-            // }
-
             HttpResponse.sendYES(res, 200, "Post fetched successfully", { post });
         } catch (err) {
             next(err);
@@ -62,10 +58,6 @@ export class DiscussionPostController {
             const { content, images } = req.body;
 
             const post = await DiscussionPostService.updatePost(postId, { content, images });
-            
-            // if (!post) {
-            //     return HttpResponse.sendNO(res, 404, "Post not found");
-            // }
 
             HttpResponse.sendYES(res, 200, "Post updated successfully", { post });
         } catch (err) {
@@ -79,10 +71,6 @@ export class DiscussionPostController {
     
             // Xóa bài viết
             const post = await DiscussionPostService.deletePost(postId);
-
-            // if (!post) {
-            //     return HttpResponse.sendNO(res, 404, "Post not found");
-            // }
         
             // Xóa hình ảnh liên quan
             

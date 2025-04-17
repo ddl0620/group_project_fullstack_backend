@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { DiscussionReplyService } from "../services/discussionReply.service";
 import { HttpResponse } from "../helpers/HttpResponse";
 import { AuthenticationRequest } from "../interfaces/authenticationRequest.interface";
+import {HttpError} from "../helpers/httpsError.helpers";
 
 export class DiscussionReplyController {
     // Tạo bình luận mới
@@ -11,6 +12,11 @@ export class DiscussionReplyController {
             const { postId } = req.params;
             const creator_id = req.user?.userId;
 
+            if (!creator_id) {
+                throw new HttpError("Creator ID is required", 400, "CREATOR_ID_REQUIRED");
+            }
+
+
             const reply = await DiscussionReplyService.createReply({
                 content,
                 images,
@@ -18,6 +24,8 @@ export class DiscussionReplyController {
                 post_id: postId,
                 parent_reply_id,
             });
+
+
             HttpResponse.sendYES(res, 201, "Reply created successfully", { reply });
         } catch (err) {
             next(err);
@@ -44,10 +52,6 @@ export class DiscussionReplyController {
             const { replyId } = req.params;
 
             const reply = await DiscussionReplyService.getReplyById(replyId);
-            
-            // if (!reply) {
-            //     return HttpResponse.sendNO(res, 404, "Reply not found");
-            // }
 
             HttpResponse.sendYES(res, 200, "Reply fetched successfully", { reply });
         } catch (err) {
@@ -63,9 +67,6 @@ export class DiscussionReplyController {
 
             const reply = await DiscussionReplyService.updateReply(replyId, { content, images });
             
-            // if (!reply) {
-            //     return HttpResponse.sendNO(res, 404, "Reply not found");
-            // }
 
             HttpResponse.sendYES(res, 200, "Reply updated successfully", { reply });
         } catch (err) {
@@ -79,10 +80,6 @@ export class DiscussionReplyController {
             const { replyId } = req.params;
 
             const reply = await DiscussionReplyService.deleteReply(replyId);
-            
-            // if (!reply) {
-            //     return HttpResponse.sendNO(res, 404, "Reply not found");
-            // }
 
             HttpResponse.sendYES(res, 200, "Reply deleted successfully", { reply });
         } catch (err) {
