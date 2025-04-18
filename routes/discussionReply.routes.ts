@@ -7,10 +7,17 @@ import { validateRequest } from "../middlewares/validation.middleware"
 
 const router = express.Router();
 
+// đã check --> oke roi
 router.post("/:postId", authenticationToken, validateRequest(createReplySchema), checkReplyParticipant, DiscussionReplyController.createReply);
-router.get("/:postId", authenticationToken, validateRequest(updateReplySchema), checkReplyParticipant, DiscussionReplyController.getReplies);
+
+// đã check --> oke roi
+router.get("/:postId", authenticationToken, checkReplyParticipant, DiscussionReplyController.getReplies);
+
+// đã check --> oke roi
 router.get("/:replyId/detail", authenticationToken, checkReplyParticipant, DiscussionReplyController.getReplyById);
-router.put("/:replyId", authenticationToken, checkReplyParticipant, DiscussionReplyController.updateReply);
+
+
+router.put("/:replyId", authenticationToken, validateRequest(updateReplySchema), checkReplyParticipant, DiscussionReplyController.updateReply);
 router.delete("/:replyId", authenticationToken, checkReplyParticipant, DiscussionReplyController.deleteReply);
 
 export default router;

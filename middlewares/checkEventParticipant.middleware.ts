@@ -8,7 +8,8 @@ export const checkEventParticipant = async (req: AuthenticationRequest, res: Res
         const { eventId } = req.params;
         const userId = req.user?.userId;
 
-        // Log giá trị để debug
+        // Log middleware call and values to debug
+        console.log("Middleware checkEventParticipant called");
         console.log("eventId:", eventId);
         console.log("userId:", userId);
 

@@ -33,7 +33,7 @@ export class DiscussionReplyController {
     }
 
     // Lấy danh sách bình luận
-    static async getReplies(req: Request, res: Response, next: NextFunction): Promise<void> {
+    static async getReplies(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
             const { postId } = req.params;
             const page = parseInt(req.query.page as string) || 1;
@@ -47,7 +47,7 @@ export class DiscussionReplyController {
     }
 
     // Lấy chi tiết bình luận
-    static async getReplyById(req: Request, res: Response, next: NextFunction): Promise<void> {
+    static async getReplyById(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
             const { replyId } = req.params;
 
