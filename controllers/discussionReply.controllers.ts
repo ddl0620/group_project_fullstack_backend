@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import { DiscussionReplyService } from "../services/discussionReply.service";
 import { HttpResponse } from "../helpers/HttpResponse";
 import { AuthenticationRequest } from "../interfaces/authenticationRequest.interface";
