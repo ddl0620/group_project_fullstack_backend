@@ -13,15 +13,16 @@ export const createReplySchema = Joi.object({
         "string.base": "Each image must be a string",
         "string.uri": "Each image must be a valid URL",
     }),
-    creator_id: Joi.string().required().messages({
+    creator_id: Joi.string().required().regex(/^[0-9a-fA-F]{24}$/).messages({
         "string.base": "Creator ID must be a string",
+        "string.pattern.base": "Creator ID must be a valid ObjectId",
         "any.required": "Creator ID is required",
     }),
     post_id: Joi.string().required().regex(/^[0-9a-fA-F]{24}$/).messages({
-        "string.pattern.base": "Post ID must be a valid ObjectId"
+        "string.pattern.base": "Post ID must be a valid ObjectId",
     }),
     parent_reply_id: Joi.string().allow(null).optional().regex(/^[0-9a-fA-F]{24}$/).messages({
-        "string.pattern.base": "Parent Reply ID must be a valid ObjectId or null"
+        "string.pattern.base": "Parent Reply ID must be a valid ObjectId or null",
     }),
 });
 
