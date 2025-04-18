@@ -75,8 +75,47 @@ export class EventService {
             $and: [
                 {
                     $or: [
+                        { isPublic: false },
                         { isPublic: true },
                         { organizer: userId },
+                        { 'participants.userId': userId },
+                    ],
+                },
+                { isDeleted: false }, // Loại bỏ sự kiện đã bị xóa
+            ],
+        };
+
+        const events = await EventModel.find(query)
+            .sort({ createdAt: sortOrder })
+            .skip(skip)
+            .limit(limit);
+
+        const totalEvents = await EventModel.countDocuments(query);
+
+        return {
+            events,
+            pagination: {
+                page,
+                limit,
+                totalPages: Math.ceil(totalEvents / limit),
+                totalEvents,
+            },
+        };
+    }
+
+    static async getJoinedEvent(
+        userId: string,
+        page: number = 1,
+        limit: number = 10,
+        sortBy: string = 'desc'
+    ): Promise<EventListResponse> {
+        const skip = (page - 1) * limit;
+        const sortOrder = sortBy.toLowerCase() === 'asc' ? 1 : -1;
+
+        const query = {
+            $and: [
+                {
+                    $or: [
                         { 'participants.userId': userId },
                     ],
                 },
@@ -207,12 +246,17 @@ export class EventService {
 
         const isJoined = event.participants?.some(
             (participant) => participant.userId?.toString() === userId
-        ) || userId === event.organizer?.toString();
+        );
+
+        const isOrganizer = event.organizer?.toString() === userId;
 
         if (isJoined) {
             throw new HttpError('User already joined or sent request to the event', 400, 'USER_ALREADY_JOINED');
         }
 
+        if(isOrganizer) {
+            throw new HttpError('Organizer cannot join their own event', 400, 'ORGANIZER_CANNOT_JOIN');
+        }
         const status = event.isPublic ? ParticipationStatus.ACCEPTED : ParticipationStatus.PENDING;
         const newParticipant: ParticipantInterface = {
             userId: new mongoose.Types.ObjectId(userId),
@@ -236,10 +280,12 @@ export class EventService {
         return updatedEvent;
     }
 
-    static async replyEvent(eventId: string, input: RespondJoinInput): Promise<EventInterface> {
+    static async replyEvent(eventId: string, userIdToken:string, input: RespondJoinInput): Promise<EventInterface> {
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
             throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
         }
+
+
 
         if (!mongoose.Types.ObjectId.isValid(input.userId)) {
             throw new HttpError('Invalid user ID format', 400, 'INVALID_USER_ID');
@@ -248,6 +294,10 @@ export class EventService {
         const event = await EventModel.findOne({ _id: eventId, isDeleted: false }); // Loại bỏ sự kiện đã bị xóa
         if (!event) {
             throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
+        }
+
+        if(userIdToken !== event.organizer.toString()) {
+            throw new HttpError('Only the organizer can respond to this event', 403, 'FORBIDDEN');
         }
 
         const participant = event.participants?.find(

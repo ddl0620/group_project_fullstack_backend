@@ -9,10 +9,12 @@ const userRoutes = Router();
 const controller = new UserController();
 
 userRoutes.get('/me', authenticationToken, controller.me);
-userRoutes.put('/:id', authenticationToken, onlySelf, validateRequest(updateUserSchema), controller.updateInfor);
 //admin only
-userRoutes.get('/all', authenticationToken, controller.getAllUsers);
 // userRoutes.get('/all', authenticationToken, adminOnlyMiddleware, controller.getAllUsers);
+userRoutes.get('/all', authenticationToken, controller.getAllUsers);
 
+userRoutes.put('/:id', authenticationToken, onlySelf, validateRequest(updateUserSchema), controller.updateInfor);
 userRoutes.delete('/:id', authenticationToken, onlySelf, controller.deleteUser);
+userRoutes.get("/:id", authenticationToken, controller.getUserById);
+
 export default userRoutes;

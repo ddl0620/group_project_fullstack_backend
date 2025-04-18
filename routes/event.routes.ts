@@ -14,6 +14,7 @@ const event = new EventController();
 
 eventRoutes.post('/add-event', authenticationToken, validateRequest(createEventSchema), event.addEvent);
 eventRoutes.get('/all-event', authenticationToken, event.getAllEvent);
+eventRoutes.get('/joined', authenticationToken, event.getJoinedEvent);
 eventRoutes.get('/my', authenticationToken, event.getMyEvent);
 
 eventRoutes.post('/:eventId/join', authenticationToken, validateRequest(joinEventSchema), event.joinEvent);

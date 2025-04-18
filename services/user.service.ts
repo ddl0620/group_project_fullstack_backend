@@ -94,6 +94,21 @@ export class UserService {
         };
     }
 
+    static async getUserById(
+        userId: string,
+    ): Promise<UserInterface> {
+
+        const user = await UserModel.findOne(
+            {
+                _id: userId,
+                isDeleted: false,
+            }
+        ).select('-password');
+
+
+        return user as UserInterface;
+    }
+
     // Update: Cập nhật thông tin user
     static async updateUser(
         userId: string,
