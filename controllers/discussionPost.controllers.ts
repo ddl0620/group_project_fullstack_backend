@@ -5,6 +5,7 @@ import { ImageDiscussionService } from "../services/imageDiscussion.service";
 import { AuthenticationRequest } from "../interfaces/authenticationRequest.interface";
 import {HttpError} from "../helpers/httpsError.helpers";
 import mongoose from "mongoose";
+import { DiscussionReplyService } from "../services/discussionReply.service";
 
 export class DiscussionPostController {
     // Tạo bài viết
@@ -74,18 +75,28 @@ export class DiscussionPostController {
         }
     }
 
-    static async deletePost(req: AuthenticationRequest, res: Response, next: NextFunction) {
+    static async deletePost(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
             const { postId } = req.params;
-    
-            // Xóa bài viết
+
+            // Kiểm tra định dạng postId
+            if (!mongoose.Types.ObjectId.isValid(postId)) {
+                throw new HttpError("Invalid post ID format", 400, "INVALID_POST_ID");
+            }
+
+            // Đánh dấu bài viết là isDeleted: true
             const post = await DiscussionPostService.deletePost(postId);
-        
-            // Xóa hình ảnh liên quan
-            
-            await ImageDiscussionService.deleteImagesByReference(postId, "post");
-    
-            HttpResponse.sendYES(res, 200, "Post deleted successfully", { post });
+            if (!post) {
+                throw new HttpError("Post not found", 404, "POST_NOT_FOUND");
+            }
+
+            // Đánh dấu tất cả các reply liên quan đến post_id là isDeleted: true
+            await DiscussionReplyService.softDeleteRepliesByPost(postId);
+
+            // Đánh dấu tất cả các hình ảnh liên quan đến post_id là isDeleted: true
+            // await ImageDiscussionService.softDeleteImagesByReference(postId, "post");
+
+            HttpResponse.sendYES(res, 200, "Post and related data soft deleted successfully", { post });
         } catch (err) {
             next(err);
         }
