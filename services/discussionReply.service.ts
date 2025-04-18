@@ -33,16 +33,34 @@ export class DiscussionReplyService {
         return await DiscussionReplyModel.findByIdAndUpdate(reply_id, updateData, { new: true });
     }
 
-    // Soft delete bình luận
-    static async deleteReply(reply_id: string): Promise<DiscussionReplyInterface | null> {
-        const reply = await DiscussionReplyModel.findById(reply_id);
-        if (!reply) {
-            throw new HttpError('Failed to delete comment', 500, 'DELETE_COMMENT_FAILED');
+    // Soft delete tất cả các reply liên quan đến post_id
+    static async softDeleteRepliesByPost(postId: string): Promise<void> {
+        const replies = await DiscussionReplyModel.find({ post_id: postId, isDeleted: false });
+
+        for (const reply of replies) {
+            await this.softDeleteRepliesByParent(String(reply._id)); // Ép kiểu _id thành string
         }
-        return await DiscussionReplyModel.findByIdAndUpdate(
-            reply_id,
-            { isDeleted: true },
-            { new: true }
-        );
+
+        await DiscussionReplyModel.updateMany({ post_id: postId }, { isDeleted: true });
+    }
+
+    // Soft delete tất cả các reply liên quan đến parent_reply_id
+    static async softDeleteRepliesByParent(parentReplyId: string): Promise<void> {
+        const replies = await DiscussionReplyModel.find({ parent_reply_id: parentReplyId, isDeleted: false });
+
+        for (const reply of replies) {
+            await this.softDeleteRepliesByParent(String(reply._id)); // Ép kiểu _id thành string
+        }
+
+        await DiscussionReplyModel.updateMany({ parent_reply_id: parentReplyId }, { isDeleted: true });
+    }
+
+    // Soft delete một reply cụ thể
+    static async deleteReply(replyId: string): Promise<DiscussionReplyInterface | null> {
+        const reply = await DiscussionReplyModel.findById(replyId);
+        if (!reply) {
+            throw new HttpError("Reply not found", 404, "REPLY_NOT_FOUND");
+        }
+        return await DiscussionReplyModel.findByIdAndUpdate(replyId, { isDeleted: true }, { new: true });
     }
 }

@@ -16,8 +16,9 @@ router.get("/:postId", authenticationToken, checkReplyParticipant, DiscussionRep
 // đã check --> oke roi
 router.get("/:replyId/detail", authenticationToken, checkReplyParticipant, DiscussionReplyController.getReplyById);
 
-
+// đã check --> oke roi
 router.put("/:replyId", authenticationToken, validateRequest(updateReplySchema), checkReplyParticipant, DiscussionReplyController.updateReply);
+
 router.delete("/:replyId", authenticationToken, checkReplyParticipant, DiscussionReplyController.deleteReply);
 
 export default router;
