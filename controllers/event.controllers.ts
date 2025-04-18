@@ -45,6 +45,20 @@ export class EventController {
         }
     }
 
+    async getJoinedEvent(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+            const sortBy = (req.query.sortBy as string) || 'desc';
+
+            const result = await EventService.getJoinedEvent(req.user?.userId as string, page, limit, sortBy);
+
+            HttpResponse.sendYES(res, 200, 'Event fetched successfully', result);
+        } catch (err) {
+            next(err);
+        }
+    }
+
     async getEventById(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
             const event = await EventService.getEventById(req.user?.userId as string, req.params.id);
@@ -93,7 +107,8 @@ export class EventController {
             const { userId, status } = req.body;
             const { eventId } = req.params;
 
-            const event = await EventService.replyEvent(eventId, { userId, status });
+
+            const event = await EventService.replyEvent(eventId, req.user?.userId as string, { userId, status });
 
             HttpResponse.sendYES(res, 201, 'Event responded successfully', { event });
         } catch (err) {

@@ -30,6 +30,16 @@ export class UserController {
         }
     }
 
+    async getUserById(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const user = await UserService.getUserById(req.params?.id as string);
+
+            HttpResponse.sendYES(res, 200, 'Users fetched successfully', user);
+        } catch (err) {
+            next(err);
+        }
+    }
+
     async updateInfor(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
             const updatedUser = await UserService.updateUser(req.user?.userId as string, req.body);

@@ -20,7 +20,6 @@ const server = http.createServer(app); // Tạo HTTP server
 // Middleware
 app.use(urlencoded({ extended: false }));
 app.use(express.static('public'));
-app.use(errorMiddleware);
 app.use(CookieParser());
 app.use(express.json());
 app.use(
@@ -35,13 +34,13 @@ app.use(
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/event", eventRoutes);
-
 app.use("/api/v1/invitation", invitationRoutes);
 app.use("/api/v1/notification", notificationRoutes)
 app.use("/api/v1/discussion-posts", discussionPostRoutes);
 app.use("/api/v1/discussion-replies", discussionReplyRoutes);
 app.use("/api/v1/images", imageDiscussionRoutes);
 
+app.use(errorMiddleware);
 
 // Root Route
 app.get("/", (_req: Request, res: Response): void => {
