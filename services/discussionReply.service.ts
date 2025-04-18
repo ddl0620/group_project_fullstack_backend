@@ -6,7 +6,11 @@ import { HttpError } from '../helpers/httpsError.helpers';
 export class DiscussionReplyService {
     // Tạo bình luận mới
     static async createReply(data: CreateReplyInput): Promise<DiscussionReplyInterface> {
-        return await DiscussionReplyModel.create(data);
+        const { parent_reply_id, ...rest } = data;
+        return await DiscussionReplyModel.create({
+            ...rest,
+            parent_reply_id: parent_reply_id || null, // Đảm bảo không ảnh hưởng đến các thuộc tính khác
+        });
     }
 
     // Lấy danh sách bình luận (chỉ lấy bình luận chưa bị xóa)

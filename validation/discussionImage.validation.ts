@@ -20,3 +20,10 @@ export const createImageSchema = Joi.object({
         "any.required": "Reference ID is required",
     }),
 });
+
+export const updateImageSchema = Joi.object({
+    reference_id: Joi.string().optional().regex(/^[0-9a-fA-F]{24}$/).messages({
+        "string.pattern.base": "Reference ID must be a valid ObjectId",
+    }),
+    isDeleted: Joi.boolean().optional(),
+});

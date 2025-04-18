@@ -2,15 +2,15 @@ import mongoose, { Schema, model } from "mongoose";
 import { DiscussionReplyInterface } from "../interfaces/discussionReply.interfaces";
 
 // Schema cho bình luận trong hệ thống Discussion
-const DiscussionReplySchema = new Schema<DiscussionReplyInterface>({
-    post_id: { type: mongoose.Schema.Types.ObjectId, ref: "DiscussionPost", required: true }, // Bài viết liên quan
-    creator_id: { type: mongoose.Schema.Types.ObjectId, ref: "user", required: true }, // Người tạo bình luận
-    parent_reply_id: { type: mongoose.Schema.Types.ObjectId, ref: "DiscussionReply", default: null }, // Bình luận cha (nếu có)
-    content: { type: String, required: true }, // Nội dung bình luận
-    images: [{ type: String }], // Danh sách URL hình ảnh
-    isDeleted: { type: Boolean, default: false }, // Soft delete
-    created_at: { type: Date, default: Date.now }, // Thời gian tạo bình luận
-    updated_at: { type: Date, default: Date.now }, // Thời gian cập nhật bình luận
+const DiscussionReplySchema = new Schema({
+    post_id: { type: mongoose.Schema.Types.ObjectId, ref: "DiscussionPost", required: true },
+    parent_reply_id: { type: mongoose.Schema.Types.ObjectId, ref: "DiscussionReply", default: null },
+    content: { type: String, required: true },
+    creator_id: { type: mongoose.Schema.Types.ObjectId, ref: "user", required: true }, // Tham chiếu đến User
+    images: [{ type: String }],
+    isDeleted: { type: Boolean, default: false },
+    created_at: { type: Date, default: Date.now },
+    updated_at: { type: Date, default: Date.now },
 });
 
 // Thêm index để tối ưu truy vấn

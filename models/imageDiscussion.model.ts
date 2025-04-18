@@ -14,4 +14,4 @@ const ImageDiscussionSchema = new Schema<ImageDiscussionInterface>({
 ImageDiscussionSchema.index({ reference_id: 1 });
 ImageDiscussionSchema.index({ type: 1, reference_id: 1 });
 
-export const ImageModel = model<ImageDiscussionInterface>("Image", ImageDiscussionSchema);
+export const ImageDicussionModel = model<ImageDiscussionInterface>("Image", ImageDiscussionSchema);
