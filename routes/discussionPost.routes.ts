@@ -20,6 +20,7 @@ router.get("/:eventId/posts/:postId", authenticationToken, checkEventParticipant
 router.put("/:postId", authenticationToken, validateRequest(updatePostSchema), checkEventParticipant, DiscussionPostController.updatePost);
 
 // input: eventId và postId --> oke roi
-router.delete("/:postId", authenticationToken, checkEventParticipant, DiscussionPostController.deletePost);
+router.delete("/:eventId/posts/:postId", authenticationToken, checkEventParticipant, DiscussionPostController.deletePost);
+
 
 export default router;
