@@ -3,11 +3,11 @@ import {InvitationInterface} from "../../interfaces/Invitation/invitation.interf
 
 const invitationSchema = new Schema<InvitationInterface>(
     {
-        sent_at: { type: Date, required: true, default: Date.now },
+        sentAt: { type: Date, required: true, default: Date.now },
         content: { type: String },
-        event_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
-        invitee_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-        invitor_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+        eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
+        inviteeId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+        invitorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
         isDeleted: { type: Boolean, required: true, default: false },
     },
     { timestamps: true }

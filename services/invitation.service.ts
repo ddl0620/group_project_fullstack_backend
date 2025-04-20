@@ -1,13 +1,12 @@
 import mongoose from 'mongoose';
 import { EventModel } from '../models/event.models';
 import { UserModel } from '../models/user.models';
-
 import { ParticipationStatus } from '../enums/participationStatus.enums';
-import {RSVPInterface, RSVPStatus} from "../interfaces/Invitation/rsvp.interface";
-import {InvitationInterface} from "../interfaces/Invitation/invitation.interface";
-import {HttpError} from "../helpers/httpsError.helpers";
-import {InvitationModel} from "../models/Invitation/invitation.models";
-import {RSVPModel} from "../models/Invitation/rsvp.models";
+import { RSVPInterface, RSVPStatus } from '../interfaces/Invitation/rsvp.interface';
+import { InvitationInterface } from '../interfaces/Invitation/invitation.interface';
+import { HttpError } from '../helpers/httpsError.helpers';
+import { InvitationModel } from '../models/Invitation/invitation.models';
+import { RSVPModel } from '../models/Invitation/rsvp.models';
 
 interface CreateInvitationInput {
     content?: string;
@@ -40,14 +39,30 @@ interface RSVPListResponse {
 }
 
 export class InvitationService {
-    // Tạo lời mời mới
+    /**
+     * Create a new invitation
+     * @param invitorId ID of the user sending the invitation
+     * @param input Invitation details
+     * @returns Created invitation
+     */
     static async createInvitation(
         invitorId: string,
         input: CreateInvitationInput
     ): Promise<InvitationInterface> {
         const { content, eventId, inviteeId } = input;
 
-        // Kiểm tra event tồn tại và invitor là organizer
+        // Validate IDs
+        if (!mongoose.Types.ObjectId.isValid(eventId)) {
+            throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
+        }
+        if (!mongoose.Types.ObjectId.isValid(inviteeId)) {
+            throw new HttpError('Invalid invitee ID format', 400, 'INVALID_INVITEE_ID');
+        }
+        if (!mongoose.Types.ObjectId.isValid(invitorId)) {
+            throw new HttpError('Invalid invitor ID format', 400, 'INVALID_INVITOR_ID');
+        }
+
+        // Check if event exists and invitor is the organizer
         const event = await EventModel.findOne({ _id: eventId, isDeleted: false });
         if (!event) {
             throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
@@ -57,7 +72,7 @@ export class InvitationService {
             throw new HttpError('Only the organizer can send invitations', 403, 'FORBIDDEN');
         }
 
-        // Kiểm tra invitee tồn tại
+        // Check if invitee exists
         const invitee = await UserModel.findOne({
             _id: inviteeId,
             isDeleted: false,
@@ -66,15 +81,17 @@ export class InvitationService {
             throw new HttpError('Invitee not found', 404, 'NOT_FOUND_USER');
         }
 
-        // Kiểm tra invitee đã là participant và có trạng thái ACCEPTED
-        const isParticipant = event.participants?.some(
-            (p) => p.userId.toString() === inviteeId && p.status === ParticipationStatus.ACCEPTED
-        );
-        if (!isParticipant) {
+        // Check if invitee is an accepted participant
+        if (
+            !event.participants ||
+            !event.participants.some(
+                (p) => p.userId.toString() === inviteeId && p.status === ParticipationStatus.ACCEPTED
+            )
+        ) {
             throw new HttpError('Invitee must be an accepted participant of the event', 400, 'INVALID_INVITEE');
         }
 
-        // Kiểm tra xem lời mời đã tồn tại chưa
+        // Check if invitation already exists
         const existingInvitation = await InvitationModel.findOne({
             eventId: eventId,
             inviteeId: inviteeId,
@@ -86,37 +103,55 @@ export class InvitationService {
 
         try {
             const invitation = await InvitationModel.create({
-                sent_at: new Date(),
+                sentAt: new Date(),
                 content,
-                event_id: eventId,
-                invitor_id: invitorId,
-                invitee_id: inviteeId
+                eventId: eventId,
+                invitorId: invitorId,
+                inviteeId: inviteeId,
             });
+            // Send notification to the invitee (optional)
             return invitation;
-        } catch (err) {
-            console.log(err)
-            throw new HttpError('Failed to create invitation', 500, 'CREATE_INVITATION_FAILED');
+        } catch (err: any) {
+            throw new HttpError(
+                `Failed to create invitation: ${err.message}`,
+                500,
+                'CREATE_INVITATION_FAILED'
+            );
         }
     }
 
-    // Lấy danh sách lời mời của user (những lời mời gửi đến user)
+    /**
+     * Get list of invitations for a user
+     * @param userId ID of the user
+     * @param page Page number
+     * @param limit Number of items per page
+     * @param sortBy Sort order ('asc' or 'desc')
+     * @returns List of invitations with pagination
+     */
     static async getInvitations(
         userId: string,
         page: number = 1,
         limit: number = 10,
         sortBy: string = 'desc'
     ): Promise<InvitationListResponse> {
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            throw new HttpError('Invalid user ID format', 400, 'INVALID_USER_ID');
+        }
+
         const skip = (page - 1) * limit;
         const sortOrder = sortBy.toLowerCase() === 'asc' ? 1 : -1;
 
         const query = {
             $and: [
-                { invitee_id: userId },
+                { inviteeId: userId },
                 { isDeleted: false },
             ],
         };
 
         const invitations = await InvitationModel.find(query)
+            .populate('eventId', 'title description')
+            .populate('invitorId', 'name email')
+            .populate('inviteeId', 'name email')
             .sort({ createdAt: sortOrder })
             .skip(skip)
             .limit(limit);
@@ -134,21 +169,33 @@ export class InvitationService {
         };
     }
 
-    // Lấy lời mời theo ID
+    /**
+     * Get an invitation by ID
+     * @param userId ID of the user
+     * @param invitationId ID of the invitation
+     * @returns Invitation details
+     */
     static async getInvitationById(userId: string, invitationId: string): Promise<InvitationInterface> {
         if (!mongoose.Types.ObjectId.isValid(invitationId)) {
             throw new HttpError('Invalid invitation ID format', 400, 'INVALID_INVITATION_ID');
         }
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            throw new HttpError('Invalid user ID format', 400, 'INVALID_USER_ID');
+        }
 
-        const invitation = await InvitationModel.findOne({ _id: invitationId, isDeleted: false });
+        const invitation = await InvitationModel.findOne({ _id: invitationId, isDeleted: false })
+            .populate('eventId', 'title description')
+            .populate('invitorId', 'name email')
+            .populate('inviteeId', 'name email');
+
         if (!invitation) {
             throw new HttpError('Invitation not found', 404, 'NOT_FOUND_INVITATION');
         }
 
-        // Chỉ cho phép invitor hoặc invitee xem lời mời
+        // Only invitor or invitee can view the invitation
         if (
-            invitation.invitor_id.toString() !== userId &&
-            invitation.invitee_id.toString() !== userId
+            invitation.invitorId.toString() !== userId &&
+            invitation.inviteeId.toString() !== userId
         ) {
             throw new HttpError('Access denied to this invitation', 403, 'ACCESS_DENIED');
         }
@@ -156,10 +203,18 @@ export class InvitationService {
         return invitation;
     }
 
-    // Xóa lời mời (soft delete)
+    /**
+     * Delete an invitation (soft delete)
+     * @param userId ID of the user
+     * @param invitationId ID of the invitation
+     * @returns Deleted invitation
+     */
     static async deleteInvitation(userId: string, invitationId: string): Promise<InvitationInterface> {
         if (!mongoose.Types.ObjectId.isValid(invitationId)) {
             throw new HttpError('Invalid invitation ID format', 400, 'INVALID_INVITATION_ID');
+        }
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            throw new HttpError('Invalid user ID format', 400, 'INVALID_USER_ID');
         }
 
         const invitation = await InvitationModel.findOne({ _id: invitationId, isDeleted: false });
@@ -167,8 +222,8 @@ export class InvitationService {
             throw new HttpError('Invitation not found', 404, 'NOT_FOUND_INVITATION');
         }
 
-        // Chỉ invitor (organizer) được xóa lời mời
-        if (invitation.invitor_id.toString() !== userId) {
+        // Only invitor can delete the invitation
+        if (invitation.invitorId.toString() !== userId) {
             throw new HttpError('Only the invitor can delete this invitation', 403, 'FORBIDDEN');
         }
 
@@ -185,7 +240,13 @@ export class InvitationService {
         return deletedInvitation;
     }
 
-    // Tạo RSVP (phản hồi lời mời)
+    /**
+     * Create an RSVP for an invitation
+     * @param userId ID of the user
+     * @param invitationId ID of the invitation
+     * @param input RSVP details
+     * @returns Created RSVP
+     */
     static async createRSVP(
         userId: string,
         invitationId: string,
@@ -194,63 +255,127 @@ export class InvitationService {
         if (!mongoose.Types.ObjectId.isValid(invitationId)) {
             throw new HttpError('Invalid invitation ID format', 400, 'INVALID_INVITATION_ID');
         }
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            throw new HttpError('Invalid user ID format', 400, 'INVALID_USER_ID');
+        }
 
-        // Kiểm tra lời mời tồn tại
+        // Validate RSVP response
+        if (!Object.values(RSVPStatus).includes(input.response)) {
+            throw new HttpError('Invalid RSVP response', 400, 'INVALID_RSVP_RESPONSE');
+        }
+
+        // Check if invitation exists
         const invitation = await InvitationModel.findOne({ _id: invitationId, isDeleted: false });
         if (!invitation) {
             throw new HttpError('Invitation not found', 404, 'NOT_FOUND_INVITATION');
         }
 
-        // Chỉ invitee được phản hồi
-        if (invitation.invitee_id.toString() !== userId) {
+        // Only invitee can respond
+        if (invitation.inviteeId.toString() !== userId) {
             throw new HttpError('Only the invitee can respond to this invitation', 403, 'FORBIDDEN');
         }
 
-        // Kiểm tra xem đã có RSVP chưa
-        const existingRSVP = await RSVPModel.findOne({ invitation_id: invitationId, isDeleted: false });
+        // Check if RSVP already exists
+        const existingRSVP = await RSVPModel.findOne({ invitationId: invitationId, isDeleted: false });
         if (existingRSVP) {
             throw new HttpError('RSVP already exists for this invitation', 400, 'RSVP_EXISTS');
         }
 
         try {
             const rsvp = await RSVPModel.create({
-                invitation_id: invitationId,
+                invitationId: invitationId,
                 response: input.response,
-                responded_at: new Date(),
+                respondedAt: new Date(),
             });
             return rsvp;
-        } catch (err) {
-            throw new HttpError('Failed to create RSVP', 500, 'CREATE_RSVP_FAILED');
+        } catch (err: any) {
+            throw new HttpError(`Failed to create RSVP: ${err.message}`, 500, 'CREATE_RSVP_FAILED');
         }
     }
 
-    // Lấy danh sách RSVP của user
+    /**
+     * Get list of RSVPs for a user
+     * @param userId ID of the user
+     * @param page Page number
+     * @param limit Number of items per page
+     * @param sortBy Sort order ('asc' or 'desc')
+     * @returns List of RSVPs with pagination
+     */
     static async getRSVPs(
         userId: string,
         page: number = 1,
         limit: number = 10,
         sortBy: string = 'desc'
     ): Promise<RSVPListResponse> {
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            throw new HttpError('Invalid user ID format', 400, 'INVALID_USER_ID');
+        }
+
         const skip = (page - 1) * limit;
         const sortOrder = sortBy.toLowerCase() === 'asc' ? 1 : -1;
 
-        // Lấy danh sách RSVP của user (dựa trên invitation mà user là invitee)
-        const invitations = await InvitationModel.find({ invitee_id: userId, isDeleted: false });
-        const invitationIds = invitations.map((inv) => inv._id);
+        // Define the aggregation pipeline with explicit types
+        const pipeline: mongoose.PipelineStage[] = [
+            {
+                $match: {
+                    inviteeId: new mongoose.Types.ObjectId(userId),
+                    isDeleted: false,
+                },
+            },
+            {
+                $lookup: {
+                    from: 'rsvps', // Collection name in MongoDB
+                    localField: '_id',
+                    foreignField: 'invitationId',
+                    as: 'rsvp',
+                },
+            },
+            {
+                $unwind: {
+                    path: '$rsvp',
+                    preserveNullAndEmptyArrays: false,
+                },
+            },
+            {
+                $match: {
+                    'rsvp.isDeleted': false,
+                },
+            },
+            {
+                $sort: {
+                    'rsvp.createdAt': sortOrder,
+                },
+            },
+            {
+                $skip: skip,
+            },
+            {
+                $limit: limit,
+            },
+            {
+                $project: {
+                    _id: '$rsvp._id',
+                    invitationId: '$rsvp.invitationId',
+                    response: '$rsvp.response',
+                    respondedAt: '$rsvp.respondedAt',
+                    isDeleted: '$rsvp.isDeleted',
+                    createdAt: '$rsvp.createdAt',
+                    updatedAt: '$rsvp.updatedAt',
+                },
+            },
+        ];
 
-        const query = {
-            $and: [
-                { invitation_id: { $in: invitationIds } },
-                { isDeleted: false },
-            ],
-        };
+        const rsvps = await InvitationModel.aggregate(pipeline).exec();
 
-        const rsvps = await RSVPModel.find(query)
-            .sort({ createdAt: sortOrder })
-            .skip(skip)
-            .limit(limit);
-
-        const totalRSVP = await RSVPModel.countDocuments(query);
+        // Calculate total RSVPs for pagination
+        const totalRSVP = await RSVPModel.countDocuments({
+            invitationId: {
+                $in: (
+                    await InvitationModel.find({ inviteeId: userId, isDeleted: false }).select('_id')
+                ).map((inv) => inv._id),
+            },
+            isDeleted: false,
+        });
 
         return {
             rsvps,
@@ -263,10 +388,18 @@ export class InvitationService {
         };
     }
 
-    // Lấy RSVP theo ID
+    /**
+     * Get an RSVP by ID
+     * @param userId ID of the user
+     * @param rsvpId ID of the RSVP
+     * @returns RSVP details
+     */
     static async getRSVPById(userId: string, rsvpId: string): Promise<RSVPInterface> {
         if (!mongoose.Types.ObjectId.isValid(rsvpId)) {
             throw new HttpError('Invalid RSVP ID format', 400, 'INVALID_RSVP_ID');
+        }
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            throw new HttpError('Invalid user ID format', 400, 'INVALID_USER_ID');
         }
 
         const rsvp = await RSVPModel.findOne({ _id: rsvpId, isDeleted: false });
@@ -274,15 +407,15 @@ export class InvitationService {
             throw new HttpError('RSVP not found', 404, 'NOT_FOUND_RSVP');
         }
 
-        // Kiểm tra quyền truy cập: Chỉ invitor hoặc invitee của invitation liên quan được xem RSVP
-        const invitation = await InvitationModel.findById(rsvp.invitation_id);
+        // Check access: Only invitor or invitee of the related invitation can view RSVP
+        const invitation = await InvitationModel.findById(rsvp.invitationId);
         if (!invitation) {
             throw new HttpError('Associated invitation not found', 404, 'NOT_FOUND_INVITATION');
         }
 
         if (
-            invitation.invitor_id.toString() !== userId &&
-            invitation.invitee_id.toString() !== userId
+            invitation.invitorId.toString() !== userId &&
+            invitation.inviteeId.toString() !== userId
         ) {
             throw new HttpError('Access denied to this RSVP', 403, 'ACCESS_DENIED');
         }
@@ -290,10 +423,18 @@ export class InvitationService {
         return rsvp;
     }
 
-    // Xóa RSVP (soft delete)
+    /**
+     * Delete an RSVP (soft delete)
+     * @param userId ID of the user
+     * @param rsvpId ID of the RSVP
+     * @returns Deleted RSVP
+     */
     static async deleteRSVP(userId: string, rsvpId: string): Promise<RSVPInterface> {
         if (!mongoose.Types.ObjectId.isValid(rsvpId)) {
             throw new HttpError('Invalid RSVP ID format', 400, 'INVALID_RSVP_ID');
+        }
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            throw new HttpError('Invalid user ID format', 400, 'INVALID_USER_ID');
         }
 
         const rsvp = await RSVPModel.findOne({ _id: rsvpId, isDeleted: false });
@@ -301,13 +442,13 @@ export class InvitationService {
             throw new HttpError('RSVP not found', 404, 'NOT_FOUND_RSVP');
         }
 
-        // Kiểm tra quyền: Chỉ invitee được xóa RSVP của họ
-        const invitation = await InvitationModel.findById(rsvp.invitation_id);
+        // Check access: Only invitee can delete their RSVP
+        const invitation = await InvitationModel.findById(rsvp.invitationId);
         if (!invitation) {
             throw new HttpError('Associated invitation not found', 404, 'NOT_FOUND_INVITATION');
         }
 
-        if (invitation.invitee_id.toString() !== userId) {
+        if (invitation.inviteeId.toString() !== userId) {
             throw new HttpError('Only the invitee can delete this RSVP', 403, 'FORBIDDEN');
         }
 
@@ -322,5 +463,68 @@ export class InvitationService {
         }
 
         return deletedRSVP;
+    }
+
+    /**
+     * Get list of invitations sent for a specific event (organizer only)
+     * @param userId ID of the user (must be organizer)
+     * @param eventId ID of the event
+     * @param page Page number
+     * @param limit Number of items per page
+     * @param sortBy Sort order ('asc' or 'desc')
+     * @returns List of invitations with pagination
+     */
+    static async getInvitationsByEventId(
+        userId: string,
+        eventId: string,
+        page: number = 1,
+        limit: number = 10,
+        sortBy: string = 'desc'
+    ): Promise<InvitationListResponse> {
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            throw new HttpError('Invalid user ID format', 400, 'INVALID_USER_ID');
+        }
+        if (!mongoose.Types.ObjectId.isValid(eventId)) {
+            throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
+        }
+
+        // Check if event exists and user is the organizer
+        const event = await EventModel.findOne({ _id: eventId, isDeleted: false });
+        if (!event) {
+            throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
+        }
+        if (event.organizer.toString() !== userId) {
+            throw new HttpError('Only the organizer can view invitations for this event', 403, 'FORBIDDEN');
+        }
+
+        const skip = (page - 1) * limit;
+        const sortOrder = sortBy.toLowerCase() === 'asc' ? 1 : -1;
+
+        const query = {
+            $and: [
+                { eventId: eventId },
+                { isDeleted: false },
+            ],
+        };
+
+        const invitations = await InvitationModel.find(query)
+            .populate('eventId', 'title description')
+            .populate('invitorId', 'name email')
+            .populate('inviteeId', 'name email')
+            .sort({ createdAt: sortOrder })
+            .skip(skip)
+            .limit(limit);
+
+        const totalInvitations = await InvitationModel.countDocuments(query);
+
+        return {
+            invitations,
+            pagination: {
+                page,
+                limit,
+                totalPages: Math.ceil(totalInvitations / limit),
+                totalInvitations,
+            },
+        };
     }
 }
