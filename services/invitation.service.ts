@@ -20,12 +20,9 @@ interface CreateRSVPInput {
 
 interface InvitationListResponse {
     invitations: InvitationInterface[];
-    pagination: {
-        page: number;
-        limit: number;
-        totalPages: number;
-        totalInvitations: number;
-    };
+    total: number;
+    page: number;
+    limit: number;
 }
 
 interface RSVPListResponse {
@@ -39,19 +36,12 @@ interface RSVPListResponse {
 }
 
 export class InvitationService {
-    /**
-     * Create a new invitation
-     * @param invitorId ID of the user sending the invitation
-     * @param input Invitation details
-     * @returns Created invitation
-     */
     static async createInvitation(
         invitorId: string,
         input: CreateInvitationInput
     ): Promise<InvitationInterface> {
         const { content, eventId, inviteeId } = input;
 
-        // Validate IDs
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
             throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
         }
@@ -62,7 +52,6 @@ export class InvitationService {
             throw new HttpError('Invalid invitor ID format', 400, 'INVALID_INVITOR_ID');
         }
 
-        // Check if event exists and invitor is the organizer
         const event = await EventModel.findOne({ _id: eventId, isDeleted: false });
         if (!event) {
             throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
@@ -72,7 +61,6 @@ export class InvitationService {
             throw new HttpError('Only the organizer can send invitations', 403, 'FORBIDDEN');
         }
 
-        // Check if invitee exists
         const invitee = await UserModel.findOne({
             _id: inviteeId,
             isDeleted: false,
@@ -81,7 +69,6 @@ export class InvitationService {
             throw new HttpError('Invitee not found', 404, 'NOT_FOUND_USER');
         }
 
-        // Check if invitee is an accepted participant
         if (
             !event.participants ||
             !event.participants.some(
@@ -91,7 +78,6 @@ export class InvitationService {
             throw new HttpError('Invitee must be an accepted participant of the event', 400, 'INVALID_INVITEE');
         }
 
-        // Check if invitation already exists
         const existingInvitation = await InvitationModel.findOne({
             eventId: eventId,
             inviteeId: inviteeId,
@@ -109,7 +95,6 @@ export class InvitationService {
                 invitorId: invitorId,
                 inviteeId: inviteeId,
             });
-            // Send notification to the invitee (optional)
             return invitation;
         } catch (err: any) {
             throw new HttpError(
@@ -120,14 +105,6 @@ export class InvitationService {
         }
     }
 
-    /**
-     * Get list of invitations for a user
-     * @param userId ID of the user
-     * @param page Page number
-     * @param limit Number of items per page
-     * @param sortBy Sort order ('asc' or 'desc')
-     * @returns List of invitations with pagination
-     */
     static async getInvitations(
         userId: string,
         page: number = 1,
@@ -156,25 +133,16 @@ export class InvitationService {
             .skip(skip)
             .limit(limit);
 
-        const totalInvitations = await InvitationModel.countDocuments(query);
+        const total = await InvitationModel.countDocuments(query);
 
         return {
             invitations,
-            pagination: {
-                page,
-                limit,
-                totalPages: Math.ceil(totalInvitations / limit),
-                totalInvitations,
-            },
+            total,
+            page,
+            limit,
         };
     }
 
-    /**
-     * Get an invitation by ID
-     * @param userId ID of the user
-     * @param invitationId ID of the invitation
-     * @returns Invitation details
-     */
     static async getInvitationById(userId: string, invitationId: string): Promise<InvitationInterface> {
         if (!mongoose.Types.ObjectId.isValid(invitationId)) {
             throw new HttpError('Invalid invitation ID format', 400, 'INVALID_INVITATION_ID');
@@ -192,7 +160,6 @@ export class InvitationService {
             throw new HttpError('Invitation not found', 404, 'NOT_FOUND_INVITATION');
         }
 
-        // Only invitor or invitee can view the invitation
         if (
             invitation.invitorId.toString() !== userId &&
             invitation.inviteeId.toString() !== userId
@@ -203,12 +170,6 @@ export class InvitationService {
         return invitation;
     }
 
-    /**
-     * Delete an invitation (soft delete)
-     * @param userId ID of the user
-     * @param invitationId ID of the invitation
-     * @returns Deleted invitation
-     */
     static async deleteInvitation(userId: string, invitationId: string): Promise<InvitationInterface> {
         if (!mongoose.Types.ObjectId.isValid(invitationId)) {
             throw new HttpError('Invalid invitation ID format', 400, 'INVALID_INVITATION_ID');
@@ -222,7 +183,6 @@ export class InvitationService {
             throw new HttpError('Invitation not found', 404, 'NOT_FOUND_INVITATION');
         }
 
-        // Only invitor can delete the invitation
         if (invitation.invitorId.toString() !== userId) {
             throw new HttpError('Only the invitor can delete this invitation', 403, 'FORBIDDEN');
         }
@@ -240,13 +200,6 @@ export class InvitationService {
         return deletedInvitation;
     }
 
-    /**
-     * Create an RSVP for an invitation
-     * @param userId ID of the user
-     * @param invitationId ID of the invitation
-     * @param input RSVP details
-     * @returns Created RSVP
-     */
     static async createRSVP(
         userId: string,
         invitationId: string,
@@ -259,23 +212,19 @@ export class InvitationService {
             throw new HttpError('Invalid user ID format', 400, 'INVALID_USER_ID');
         }
 
-        // Validate RSVP response
         if (!Object.values(RSVPStatus).includes(input.response)) {
             throw new HttpError('Invalid RSVP response', 400, 'INVALID_RSVP_RESPONSE');
         }
 
-        // Check if invitation exists
         const invitation = await InvitationModel.findOne({ _id: invitationId, isDeleted: false });
         if (!invitation) {
             throw new HttpError('Invitation not found', 404, 'NOT_FOUND_INVITATION');
         }
 
-        // Only invitee can respond
         if (invitation.inviteeId.toString() !== userId) {
             throw new HttpError('Only the invitee can respond to this invitation', 403, 'FORBIDDEN');
         }
 
-        // Check if RSVP already exists
         const existingRSVP = await RSVPModel.findOne({ invitationId: invitationId, isDeleted: false });
         if (existingRSVP) {
             throw new HttpError('RSVP already exists for this invitation', 400, 'RSVP_EXISTS');
@@ -293,14 +242,6 @@ export class InvitationService {
         }
     }
 
-    /**
-     * Get list of RSVPs for a user
-     * @param userId ID of the user
-     * @param page Page number
-     * @param limit Number of items per page
-     * @param sortBy Sort order ('asc' or 'desc')
-     * @returns List of RSVPs with pagination
-     */
     static async getRSVPs(
         userId: string,
         page: number = 1,
@@ -314,7 +255,6 @@ export class InvitationService {
         const skip = (page - 1) * limit;
         const sortOrder = sortBy.toLowerCase() === 'asc' ? 1 : -1;
 
-        // Define the aggregation pipeline with explicit types
         const pipeline: mongoose.PipelineStage[] = [
             {
                 $match: {
@@ -324,7 +264,7 @@ export class InvitationService {
             },
             {
                 $lookup: {
-                    from: 'rsvps', // Collection name in MongoDB
+                    from: 'rsvps',
                     localField: '_id',
                     foreignField: 'invitationId',
                     as: 'rsvp',
@@ -367,7 +307,6 @@ export class InvitationService {
 
         const rsvps = await InvitationModel.aggregate(pipeline).exec();
 
-        // Calculate total RSVPs for pagination
         const totalRSVP = await RSVPModel.countDocuments({
             invitationId: {
                 $in: (
@@ -388,12 +327,6 @@ export class InvitationService {
         };
     }
 
-    /**
-     * Get an RSVP by ID
-     * @param userId ID of the user
-     * @param rsvpId ID of the RSVP
-     * @returns RSVP details
-     */
     static async getRSVPById(userId: string, rsvpId: string): Promise<RSVPInterface> {
         if (!mongoose.Types.ObjectId.isValid(rsvpId)) {
             throw new HttpError('Invalid RSVP ID format', 400, 'INVALID_RSVP_ID');
@@ -407,7 +340,6 @@ export class InvitationService {
             throw new HttpError('RSVP not found', 404, 'NOT_FOUND_RSVP');
         }
 
-        // Check access: Only invitor or invitee of the related invitation can view RSVP
         const invitation = await InvitationModel.findById(rsvp.invitationId);
         if (!invitation) {
             throw new HttpError('Associated invitation not found', 404, 'NOT_FOUND_INVITATION');
@@ -423,12 +355,6 @@ export class InvitationService {
         return rsvp;
     }
 
-    /**
-     * Delete an RSVP (soft delete)
-     * @param userId ID of the user
-     * @param rsvpId ID of the RSVP
-     * @returns Deleted RSVP
-     */
     static async deleteRSVP(userId: string, rsvpId: string): Promise<RSVPInterface> {
         if (!mongoose.Types.ObjectId.isValid(rsvpId)) {
             throw new HttpError('Invalid RSVP ID format', 400, 'INVALID_RSVP_ID');
@@ -442,7 +368,6 @@ export class InvitationService {
             throw new HttpError('RSVP not found', 404, 'NOT_FOUND_RSVP');
         }
 
-        // Check access: Only invitee can delete their RSVP
         const invitation = await InvitationModel.findById(rsvp.invitationId);
         if (!invitation) {
             throw new HttpError('Associated invitation not found', 404, 'NOT_FOUND_INVITATION');
@@ -465,15 +390,6 @@ export class InvitationService {
         return deletedRSVP;
     }
 
-    /**
-     * Get list of invitations sent for a specific event (organizer only)
-     * @param userId ID of the user (must be organizer)
-     * @param eventId ID of the event
-     * @param page Page number
-     * @param limit Number of items per page
-     * @param sortBy Sort order ('asc' or 'desc')
-     * @returns List of invitations with pagination
-     */
     static async getInvitationsByEventId(
         userId: string,
         eventId: string,
@@ -488,7 +404,6 @@ export class InvitationService {
             throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
         }
 
-        // Check if event exists and user is the organizer
         const event = await EventModel.findOne({ _id: eventId, isDeleted: false });
         if (!event) {
             throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
@@ -515,16 +430,38 @@ export class InvitationService {
             .skip(skip)
             .limit(limit);
 
-        const totalInvitations = await InvitationModel.countDocuments(query);
+        const total = await InvitationModel.countDocuments(query);
+        console.log('Backend total:', total); // Debug
 
         return {
             invitations,
-            pagination: {
-                page,
-                limit,
-                totalPages: Math.ceil(totalInvitations / limit),
-                totalInvitations,
-            },
+            total,
+            page,
+            limit,
         };
+    }
+
+    static async getRSVPByInvitationId(userId: string, invitationId: string): Promise<RSVPInterface | { invitationId: string; response: string }> {
+        if (!mongoose.Types.ObjectId.isValid(invitationId)) {
+            throw new HttpError('Invalid invitation ID format', 400, 'INVALID_INVITATION_ID');
+        }
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            throw new HttpError('Invalid user ID format', 400, 'INVALID_USER_ID');
+        }
+
+        const invitation = await InvitationModel.findOne({
+            _id: invitationId,
+            $or: [{ inviteeId: userId }, { invitorId: userId }],
+            isDeleted: false,
+        });
+        if (!invitation) {
+            throw new HttpError('Invitation not found or not authorized', 404, 'INVITATION_NOT_FOUND');
+        }
+
+        const rsvp = await RSVPModel.findOne({ invitationId, isDeleted: false }).populate({
+            path: 'userId',
+            select: 'name email',
+        });
+        return rsvp || { invitationId, response: 'PENDING' };
     }
 }

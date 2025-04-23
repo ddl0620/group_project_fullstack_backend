@@ -4,6 +4,7 @@ import { InvitationService } from '../services/invitation.service';
 import { AuthenticationRequest } from '../interfaces/authenticationRequest.interface';
 import Joi from 'joi';
 import {HttpError} from "../helpers/httpsError.helpers";
+import {getInvitationsByEventIdSchema} from "../validation/invitation.validation";
 
 export class InvitationController {
     private createInvitationSchema = Joi.object({
@@ -19,12 +20,12 @@ export class InvitationController {
             .required(),
     });
 
-    private getInvitationsByEventIdSchema = Joi.object({
-        eventId: Joi.string().required(),
-        page: Joi.number().integer().min(1).optional().default(1),
-        limit: Joi.number().integer().min(1).optional().default(10),
-        sortBy: Joi.string().valid('asc', 'desc').optional().default('desc'),
-    });
+    // private getInvitationsByEventIdSchema = Joi.object({
+    //     eventId: Joi.string().required(),
+    //     page: Joi.number().integer().min(1).optional().default(1),
+    //     limit: Joi.number().integer().min(1).optional().default(10),
+    //     sortBy: Joi.string().valid('asc', 'desc').optional().default('desc'),
+    // });
 
 
     /**
@@ -187,13 +188,14 @@ export class InvitationController {
     /**
      * Get list of invitations sent for a specific event (organizer only)
      */
+
     async getInvitationsByEventId(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
             if (!req.user?.userId) {
                 throw new HttpError('Unauthorized', 401, 'UNAUTHORIZED');
             }
 
-            const { error } = this.getInvitationsByEventIdSchema.validate(req.query);
+            const { error } = getInvitationsByEventIdSchema.validate(req.query);
             if (error) {
                 throw new HttpError(error.details[0].message, 400, 'INVALID_INPUT');
             }
@@ -212,7 +214,32 @@ export class InvitationController {
                 parseInt(limit) || 10,
                 sortBy || 'desc'
             );
-            HttpResponse.sendYES(res, 200, 'Invitations fetched successfully', result);
+            console.log('Controller result:', result); // Debug
+            HttpResponse.sendYES(res, 200, 'Invitations fetched successfully', {
+                invitations: result.invitations,
+                total: result.total,
+                page: result.page,
+                limit: result.limit,
+            });
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    /**
+     * Get RSVP for a specific invitation
+     */
+    async getRSVPByInvitationId(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+        try {
+            if (!req.user?.userId) {
+                throw new HttpError('Unauthorized', 401, 'UNAUTHORIZED');
+            }
+            if (!req.params.invitationId) {
+                throw new HttpError('Missing invitation ID', 400, 'MISSING_INVITATION_ID');
+            }
+
+            const rsvp = await InvitationService.getRSVPByInvitationId(req.user.userId, req.params.invitationId);
+            HttpResponse.sendYES(res, 200, 'RSVP fetched successfully', { rsvp });
         } catch (err) {
             next(err);
         }

@@ -23,6 +23,21 @@ invitationRoutes.get(
     controller.getInvitations
 );
 
+// Lấy danh sách lời mời theo eventId (organizer only): GET /invitations/event
+invitationRoutes.get(
+    '/invitations/event',
+    authenticationToken,
+    validateRequest(getInvitationsByEventIdSchema, 'query'),
+    controller.getInvitationsByEventId
+);
+
+// Lấy danh sách RSVP của user: GET /rsvps
+invitationRoutes.get(
+    '/rsvps',
+    authenticationToken,
+    controller.getRSVPs
+);
+
 // Lấy lời mời theo ID: GET /invitations/:id
 invitationRoutes.get(
     '/invitations/:id',
@@ -45,12 +60,7 @@ invitationRoutes.post(
     controller.createRSVP
 );
 
-// Lấy danh sách RSVP của user: GET /rsvps
-invitationRoutes.get(
-    '/rsvps',
-    authenticationToken,
-    controller.getRSVPs
-);
+
 
 // Lấy RSVP theo ID: GET /rsvps/:id
 invitationRoutes.get(
@@ -66,12 +76,13 @@ invitationRoutes.delete(
     controller.deleteRSVP
 );
 
-// Lấy danh sách lời mời theo eventId (organizer only): GET /invitations/event
+
+
+// Lấy RSVP theo invitationId: GET /invitations/:invitationId/rsvp
 invitationRoutes.get(
-    '/invitations/event',
+    '/invitations/:invitationId/rsvp',
     authenticationToken,
-    validateRequest(getInvitationsByEventIdSchema, 'query'),
-    controller.getInvitationsByEventId
+    controller.getRSVPByInvitationId
 );
 
 export default invitationRoutes;

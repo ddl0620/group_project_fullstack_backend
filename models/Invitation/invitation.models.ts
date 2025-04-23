@@ -6,8 +6,8 @@ const invitationSchema = new Schema<InvitationInterface>(
         sentAt: { type: Date, required: true, default: Date.now },
         content: { type: String },
         eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
-        inviteeId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-        invitorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+        inviteeId: { type: mongoose.Schema.Types.ObjectId, ref: 'user', required: true },
+        invitorId: { type: mongoose.Schema.Types.ObjectId, ref: 'user', required: true },
         isDeleted: { type: Boolean, required: true, default: false },
     },
     { timestamps: true }
