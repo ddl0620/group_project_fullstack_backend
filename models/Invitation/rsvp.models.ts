@@ -3,9 +3,9 @@ import {RSVPInterface, RSVPStatus} from "../../interfaces/Invitation/rsvp.interf
 
 const rsvpSchema = new Schema<RSVPInterface>(
     {
-        invitation_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Invitation', required: true },
+        invitationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Invitation', required: true },
         response: { type: String, enum: Object.values(RSVPStatus), required: true, default: RSVPStatus.PENDING },
-        responded_at: { type: Date },
+        respondedAt: { type: Date },
         isDeleted: { type: Boolean, required: true, default: false },
     },
     { timestamps: true }

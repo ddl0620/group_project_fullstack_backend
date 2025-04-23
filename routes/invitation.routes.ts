@@ -1,25 +1,9 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import { InvitationController } from '../controllers/invitation.controller';
 import { authenticationToken } from '../middlewares/auth.middleware';
 import { validateRequest } from '../middlewares/validation.middleware';
-import {AuthenticationRequest} from "../interfaces/authenticationRequest.interface";
-import {createInvitationSchema} from "../validation/invitation.validation";
-import {createRSVPSchema} from "../validation/rsvp.validation";
-
-
-// Định nghĩa kiểu cho middleware
-type Middleware = (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => void;
-
-// Định nghĩa kiểu cho handler đã được bảo vệ bởi authenticationToken
-type AuthenticatedHandler = (
-    req: AuthenticationRequest,
-    res: Response,
-    next: NextFunction
-) => Promise<void>;
+import { createInvitationSchema, getInvitationsByEventIdSchema } from '../validation/invitation.validation';
+import { createRSVPSchema } from '../validation/rsvp.validation';
 
 const invitationRoutes = Router();
 const controller = new InvitationController();
@@ -27,59 +11,78 @@ const controller = new InvitationController();
 // Tạo lời mời mới: POST /invitations
 invitationRoutes.post(
     '/invitations',
-    authenticationToken as Middleware,
+    authenticationToken,
     validateRequest(createInvitationSchema),
-    controller.createInvitation as unknown as AuthenticatedHandler
+    controller.createInvitation
 );
 
 // Lấy danh sách lời mời của user: GET /invitations
 invitationRoutes.get(
     '/invitations',
-    authenticationToken as Middleware,
-    controller.getInvitations as unknown as AuthenticatedHandler
+    authenticationToken,
+    controller.getInvitations
 );
 
-// Lấy lời mời theo ID: GET /invitations/:id
+// Lấy danh sách lời mời theo eventId (organizer only): GET /invitations/event
 invitationRoutes.get(
-    '/invitations/:id',
-    authenticationToken as Middleware,
-    controller.getInvitationById as unknown as AuthenticatedHandler
-);
-
-// Xóa lời mời: DELETE /invitations/:id
-invitationRoutes.delete(
-    '/invitations/:id',
-    authenticationToken as Middleware,
-    controller.deleteInvitation as unknown as AuthenticatedHandler
-);
-
-// Tạo RSVP: POST /invitations/:invitationId/rsvp
-invitationRoutes.post(
-    '/invitations/:invitationId/rsvp',
-    authenticationToken as Middleware,
-    validateRequest(createRSVPSchema),
-    controller.createRSVP as unknown as AuthenticatedHandler
+    '/invitations/event',
+    authenticationToken,
+    validateRequest(getInvitationsByEventIdSchema, 'query'),
+    controller.getInvitationsByEventId
 );
 
 // Lấy danh sách RSVP của user: GET /rsvps
 invitationRoutes.get(
     '/rsvps',
-    authenticationToken as Middleware,
-    controller.getRSVPs as unknown as AuthenticatedHandler
+    authenticationToken,
+    controller.getRSVPs
 );
+
+// Lấy lời mời theo ID: GET /invitations/:id
+invitationRoutes.get(
+    '/invitations/:id',
+    authenticationToken,
+    controller.getInvitationById
+);
+
+// Xóa lời mời: DELETE /invitations/:id
+invitationRoutes.delete(
+    '/invitations/:id',
+    authenticationToken,
+    controller.deleteInvitation
+);
+
+// Tạo RSVP: POST /invitations/:invitationId/rsvp
+invitationRoutes.post(
+    '/invitations/:invitationId/rsvp',
+    authenticationToken,
+    validateRequest(createRSVPSchema),
+    controller.createRSVP
+);
+
+
 
 // Lấy RSVP theo ID: GET /rsvps/:id
 invitationRoutes.get(
     '/rsvps/:id',
-    authenticationToken as Middleware,
-    controller.getRSVPById as unknown as AuthenticatedHandler
+    authenticationToken,
+    controller.getRSVPById
 );
 
 // Xóa RSVP: DELETE /rsvps/:id
 invitationRoutes.delete(
     '/rsvps/:id',
-    authenticationToken as Middleware,
-    controller.deleteRSVP as unknown as AuthenticatedHandler
+    authenticationToken,
+    controller.deleteRSVP
+);
+
+
+
+// Lấy RSVP theo invitationId: GET /invitations/:invitationId/rsvp
+invitationRoutes.get(
+    '/invitations/:invitationId/rsvp',
+    authenticationToken,
+    controller.getRSVPByInvitationId
 );
 
 export default invitationRoutes;
