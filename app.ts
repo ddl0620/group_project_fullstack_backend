@@ -13,6 +13,7 @@ import discussionReplyRoutes from "./routes/discussionReply.routes";
 import http from "http"; // Import HTTP server
 import invitationRoutes from "./routes/invitation.routes"; // Import Socket.IO instance setter
 import imageDiscussionRoutes from "./routes/imageDiscussion.routes";
+import userStatisRoutes from "./routes/userStatisRoutes";
 
 const app: Express = express();
 const server = http.createServer(app); // Tạo HTTP server
@@ -39,6 +40,7 @@ app.use("/api/v1/notification", notificationRoutes)
 app.use("/api/v1/discussion-posts", discussionPostRoutes);
 app.use("/api/v1/discussion-replies", discussionReplyRoutes);
 app.use("/api/v1/images", imageDiscussionRoutes);
+app.use("/api/v1/userstatis", userStatisRoutes);
 
 app.use(errorMiddleware);
 

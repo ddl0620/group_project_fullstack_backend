@@ -1,7 +1,6 @@
 import {Response, NextFunction } from "express";
 import { DiscussionPostService } from "../services/discussionPost.service";
 import { HttpResponse } from "../helpers/HttpResponse";
-import { ImageDiscussionService } from "../services/imageDiscussion.service";
 import { AuthenticationRequest } from "../interfaces/authenticationRequest.interface";
 import {HttpError} from "../helpers/httpsError.helpers";
 import mongoose from "mongoose";

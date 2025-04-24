@@ -4,7 +4,6 @@ import { HttpResponse } from "../helpers/HttpResponse";
 import { AuthenticationRequest } from "../interfaces/authenticationRequest.interface";
 import { HttpError } from "../helpers/httpsError.helpers";
 import mongoose from "mongoose";
-import { ImageDiscussionService } from "../services/imageDiscussion.service";
 
 export class DiscussionReplyController {
     // Tạo bình luận mới
