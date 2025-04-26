@@ -8,7 +8,7 @@ import { validateRequest } from "../middlewares/validation.middleware";
 const router = express.Router();
 
 // input: eventId là string nhé --> oke roi
-router.post("/:eventId", authenticationToken, validateRequest(createPostSchema), checkEventParticipant, DiscussionPostController.createPost);
+router.post("/:eventId", authenticationToken, checkEventParticipant, DiscussionPostController.createPost);
 
 // input: eventId là string nhé --> oke roi
 router.get("/:eventId", authenticationToken, checkEventParticipant, DiscussionPostController.getPosts);

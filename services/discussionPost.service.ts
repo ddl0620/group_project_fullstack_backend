@@ -24,7 +24,7 @@ export class DiscussionPostService {
             .limit(limit)
             .sort({ created_at: -1 });
 
-        if (!posts || posts.length === 0) {
+        if (!posts) {
             throw new HttpError("No posts found for this event", 404, "NO_POSTS_FOUND");
         }
 
