@@ -16,11 +16,11 @@ export class DiscussionReplyService {
     // Lấy danh sách bình luận (chỉ lấy bình luận chưa bị xóa)
     static async getReplies(post_id: string, page: number, limit: number): Promise<DiscussionReplyInterface[]> {
         const skip = (page - 1) * limit;
-        return await DiscussionReplyModel.find({ post_id, isDeleted: false })
+        return DiscussionReplyModel.find({post_id, isDeleted: false})
             .populate("creator_id", "username")
             .skip(skip)
             .limit(limit)
-            .sort({ created_at: -1 });
+            .sort({created_at: -1});
     }
 
     // Lấy chi tiết bình luận
@@ -61,6 +61,6 @@ export class DiscussionReplyService {
         if (!reply) {
             throw new HttpError("Reply not found", 404, "REPLY_NOT_FOUND");
         }
-        return await DiscussionReplyModel.findByIdAndUpdate(replyId, { isDeleted: true }, { new: true });
+        return DiscussionReplyModel.findByIdAndUpdate(replyId, {isDeleted: true}, {new: true});
     }
 }

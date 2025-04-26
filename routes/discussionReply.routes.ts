@@ -8,7 +8,8 @@ import { validateRequest } from "../middlewares/validation.middleware"
 const router = express.Router();
 
 // đã check --> oke roi
-router.post("/:postId", authenticationToken, validateRequest(createReplySchema), checkReplyParticipant, DiscussionReplyController.createReply);
+router.post("/:postId", authenticationToken, checkReplyParticipant, DiscussionReplyController.createReply);
+// router.post("/:postId", authenticationToken, validateRequest(createReplySchema), checkReplyParticipant, DiscussionReplyController.createReply);
 
 // đã check --> oke roi
 router.get("/:postId", authenticationToken, checkReplyParticipant, DiscussionReplyController.getReplies);
