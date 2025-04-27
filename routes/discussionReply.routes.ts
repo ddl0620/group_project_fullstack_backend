@@ -2,7 +2,7 @@ import express from "express";
 import { DiscussionReplyController } from "../controllers/discussionReply.controllers";
 import { authenticationToken } from "../middlewares/auth.middleware";
 import {checkReplyParticipant } from "../middlewares/checkReplyParticipant.middleware";
-import { createReplySchema, updateReplySchema } from "../validation/discussionReply.validation";
+import {updateReplySchema } from "../validation/discussionReply.validation";
 import { validateRequest } from "../middlewares/validation.middleware"
 
 const router = express.Router();

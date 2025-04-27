@@ -2,6 +2,7 @@ import { Response, NextFunction } from "express";
 import { EventModel } from "../models/event.models";
 import { HttpError } from "../helpers/httpsError.helpers";
 import { AuthenticationRequest } from "../interfaces/authenticationRequest.interface";
+import mongoose from "mongoose";
 
 export const checkEventParticipant = async (req: AuthenticationRequest, res: Response, next: NextFunction) => {
     try {
@@ -14,7 +15,7 @@ export const checkEventParticipant = async (req: AuthenticationRequest, res: Res
         console.log("userId:", userId);
 
         // Validate eventId format
-        if (!eventId.match(/^[0-9a-fA-F]{24}$/)) {
+        if (!mongoose.isValidObjectId(eventId)) {
             throw new HttpError("Invalid event ID format", 400, "INVALID_EVENT_ID");
         }
 
