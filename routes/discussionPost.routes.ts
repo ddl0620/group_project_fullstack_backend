@@ -17,7 +17,7 @@ router.get("/:eventId", authenticationToken, checkEventParticipant, DiscussionPo
 router.get("/:eventId/posts/:postId", authenticationToken, checkEventParticipant, DiscussionPostController.getPostById);
 
 // --> oke roi
-router.put("/:postId", authenticationToken, validateRequest(updatePostSchema), checkEventParticipant, DiscussionPostController.updatePost);
+router.put("/:postId", authenticationToken, DiscussionPostController.updatePost);
 
 // input: eventId và postId --> oke roi
 router.delete("/:eventId/posts/:postId", authenticationToken, checkEventParticipant, DiscussionPostController.deletePost);
