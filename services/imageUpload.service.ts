@@ -43,4 +43,35 @@ export class ImageUploadService {
         const uploadPromises = inputs.map(input => this.uploadImage(input));
         return await Promise.all(uploadPromises);
     }
+
+    /**
+     * Delete multiple images from Cloudinary by their URLs
+     * @param urls Array of Cloudinary URLs to delete
+     * @param folder Folder path used in Cloudinary (e.g., 'discussionPosts/{postId}')
+     */
+    static async deleteImages(urls: string[], folder: string): Promise<void> {
+        try {
+            const deletePromises = urls.map(async (url) => {
+                try {
+                    // Extract public_id from URL
+                    const urlParts = url.split('/');
+                    const fileName = urlParts.pop()?.split('.')[0]; // Get filename without extension
+                    if (!fileName) {
+                        throw new Error('Invalid URL format');
+                    }
+                    const publicId = `${folder}/${fileName}`; // e.g., 'discussionPosts/{postId}/{fileName}'
+
+                    await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+                } catch (err: any) {
+                    console.error(`Failed to delete Cloudinary image ${url}:`, err.message);
+                    // Continue with other deletions
+                }
+            });
+
+            await Promise.all(deletePromises);
+        } catch (err: any) {
+            console.error('Error during bulk image deletion:', err.message);
+            // Do not throw to avoid blocking the main operation
+        }
+    }
 }

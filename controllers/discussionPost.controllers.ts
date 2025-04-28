@@ -106,39 +106,65 @@ export class DiscussionPostController {
             }
 
             const { postId } = req.params;
-            const { content } = req.body;
+            const { content, existingImages } = req.body;
             const files = req.files as Express.Multer.File[] | undefined;
 
-            // Lấy bài viết hiện tại để lấy danh sách ảnh cũ
             const currentPost = await DiscussionPostService.getPostById(postId);
             if (!currentPost) {
                 throw new HttpError('Post not found', 404, 'POST_NOT_FOUND');
             }
 
-            // Danh sách URL ảnh sẽ giữ nguyên ảnh cũ nếu không có file mới
-            let imageUrls: string[] = currentPost.images || [];
+            // Parse existingImages
+            let retainedImages: string[] = [];
+            if (existingImages) {
+                try {
+                    retainedImages = Array.isArray(existingImages)
+                        ? existingImages
+                        : typeof existingImages === 'string'
+                            ? JSON.parse(existingImages)
+                            : [];
+                    if (!Array.isArray(retainedImages)) {
+                        throw new Error('existingImages must be an array');
+                    }
+                } catch (err) {
+                    throw new HttpError('Invalid existingImages format', 400, 'INVALID_EXISTING_IMAGES');
+                }
+            }
 
-            // Nếu có file ảnh mới, upload lên Cloudinary
+            // Identify removed images for Cloudinary cleanup
+            const removedImages = (currentPost.images || []).filter(url => !retainedImages.includes(url));
+
+            // Handle new file uploads
+            let newImageUrls: string[] = [];
             if (files && files.length > 0) {
                 const uploadInputs = files.map(file => ({
                     file: file.path,
                     folder: `discussionPosts/${postId}`,
                 }));
-
-                const cloudinaryUrls = await ImageUploadService.uploadImages(uploadInputs);
-                imageUrls = [...imageUrls, ...cloudinaryUrls]; // Thêm ảnh mới vào danh sách ảnh cũ
+                newImageUrls = await ImageUploadService.uploadImages(uploadInputs);
             }
 
+            // Combine retained images and new uploads
+            const updatedImages = [...retainedImages, ...newImageUrls];
+
+            // Update post
             const post = await DiscussionPostService.updatePost(postId, {
                 content,
-                images: imageUrls.length > 0 ? imageUrls : undefined,
+                images: updatedImages.length > 0 ? updatedImages : [],
             });
+
+            // Delete removed images from Cloudinary
+            if (removedImages.length > 0) {
+                await ImageUploadService.deleteImages(removedImages, `discussionPosts/${postId}`);
+            }
 
             HttpResponse.sendYES(res, 200, 'Post updated successfully', { post });
         } catch (err) {
             next(err);
         }
     }
+
+
     static async deletePost(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
             const { postId } = req.params;
