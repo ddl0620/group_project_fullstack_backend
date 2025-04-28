@@ -8,19 +8,11 @@ export const createPostSchema = Joi.object({
         "string.min": "Content must be at least 1 character long",
         "any.required": "Content is required",
     }),
-    images: Joi.array().items(Joi.string()).optional().messages({
+    images: Joi.optional().messages({
         "array.base": "Images must be an array of strings",
         "string.base": "Each image must be a string",
-        "string.uri": "Each image must be a valid URL",             //  CHECK KĨ 
-    }),
-    creator_id: Joi.string().required().messages({
-        "string.base": "Creator ID must be a string",
-        "any.required": "Creator ID is required",   
-    }),
-    event_id: Joi.string().required().messages({
-        "string.base": "Event ID must be a string",
-        "any.required": "Event ID is required",
-    }),
+        "string.uri": "Each image must be a valid URL",             //  CHECK KĨ
+    })
 });
 
 // Validation schema cho cập nhật bài viết
@@ -30,11 +22,16 @@ export const updatePostSchema = Joi.object({
         "string.empty": "Content cannot be empty",
         "string.min": "Content must be at least 1 character long",
     }),
-    images: Joi.array().items(Joi.string()).optional().messages({
+    images: Joi.optional().messages({
         "array.base": "Images must be an array of strings",
         "string.base": "Each image must be a string",
         "string.uri": "Each image must be a valid URL",     //  CHECK KĨ 
     }),
+    existingImages: Joi.optional().messages({
+        "array.base": "Existing images must be an array of strings",
+        "string.base": "Each existing image must be a string",
+        "string.uri": "Each existing image must be a valid URL",     //  CHECK KĨ
+    })
 }).min(1).messages({
     "object.min": "At least one field must be provided for update",
 });

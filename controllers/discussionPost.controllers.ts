@@ -5,22 +5,59 @@ import { AuthenticationRequest } from "../interfaces/authenticationRequest.inter
 import {HttpError} from "../helpers/httpsError.helpers";
 import mongoose from "mongoose";
 import { DiscussionReplyService } from "../services/discussionReply.service";
-
+import {ImageUploadService} from "../services/imageUpload.service";
+import {createPostSchema, updatePostSchema} from "../validation/discussionPost.validation";
+// import multer from 'multer';
 export class DiscussionPostController {
     // Tạo bài viết
     static async createPost(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
-            const { content, images } = req.body;
+            // Validate dữ liệu (bỏ qua images vì không dùng URL)
+            const { error } = createPostSchema.validate(req.body);
+            if (error) {
+                throw new HttpError(error.details[0].message, 400, 'INVALID_INPUT');
+            }
+
+            const { content } = req.body;
             const { eventId } = req.params;
             const creator_id = req.user?.userId;
-
-            if (!creator_id){
-                throw new HttpError("Creator ID is required", 400, "CREATOR_ID_REQUIRED");
+            const files = req.files as Express.Multer.File[] | undefined;
+            if (!creator_id) {
+                throw new HttpError('Creator ID is required', 400, 'CREATOR_ID_REQUIRED');
             }
-            
-            const post = await DiscussionPostService.createPost({ content, images, creator_id, event_id: eventId });
-            
-            HttpResponse.sendYES(res, 201, "Post created successfully", { post });
+
+            // Tạo bài viết trước
+            const post = await DiscussionPostService.createPost({
+                content,
+                images: [], // Tạm thời để trống, sẽ cập nhật sau khi xử lý ảnh
+                creator_id,
+                event_id: eventId,
+            });
+
+            if(!post) {
+                throw new HttpError(`Failed to create post`);
+            }
+
+            // Danh sách URL ảnh từ Cloudinary
+            let imageUrls: string[] = [];
+
+            // Nếu có file ảnh, upload lên Cloudinary
+            if (files && files.length > 0) {
+                const uploadInputs = files.map(file => ({
+                    file: file.path,
+                    folder: `discussionPosts/${post._id}`,
+                }));
+
+                imageUrls = await ImageUploadService.uploadImages(uploadInputs);
+
+                // Cập nhật bài viết với danh sách URL ảnh
+            }
+            const newPost = await DiscussionPostService.updatePost(post._id as string, { images: imageUrls });
+
+
+            // Lấy lại bài viết đã cập nhật
+
+            HttpResponse.sendYES(res, 201, 'Post created successfully', { post: newPost });
         } catch (err) {
             next(err);
         }
@@ -63,16 +100,70 @@ export class DiscussionPostController {
 
     static async updatePost(req: AuthenticationRequest, res: Response, next: NextFunction) {
         try {
+            const { error } = updatePostSchema.validate(req.body);
+            if (error) {
+                throw new HttpError(error.details[0].message, 400, 'INVALID_INPUT');
+            }
+
             const { postId } = req.params;
-            const { content, images } = req.body;
+            const { content, existingImages } = req.body;
+            const files = req.files as Express.Multer.File[] | undefined;
 
-            const post = await DiscussionPostService.updatePost(postId, { content, images });
+            const currentPost = await DiscussionPostService.getPostById(postId);
+            if (!currentPost) {
+                throw new HttpError('Post not found', 404, 'POST_NOT_FOUND');
+            }
 
-            HttpResponse.sendYES(res, 200, "Post updated successfully", { post });
+            // Parse existingImages
+            let retainedImages: string[] = [];
+            if (existingImages) {
+                try {
+                    retainedImages = Array.isArray(existingImages)
+                        ? existingImages
+                        : typeof existingImages === 'string'
+                            ? JSON.parse(existingImages)
+                            : [];
+                    if (!Array.isArray(retainedImages)) {
+                        throw new Error('existingImages must be an array');
+                    }
+                } catch (err) {
+                    throw new HttpError('Invalid existingImages format', 400, 'INVALID_EXISTING_IMAGES');
+                }
+            }
+
+            // Identify removed images for Cloudinary cleanup
+            const removedImages = (currentPost.images || []).filter(url => !retainedImages.includes(url));
+
+            // Handle new file uploads
+            let newImageUrls: string[] = [];
+            if (files && files.length > 0) {
+                const uploadInputs = files.map(file => ({
+                    file: file.path,
+                    folder: `discussionPosts/${postId}`,
+                }));
+                newImageUrls = await ImageUploadService.uploadImages(uploadInputs);
+            }
+
+            // Combine retained images and new uploads
+            const updatedImages = [...retainedImages, ...newImageUrls];
+
+            // Update post
+            const post = await DiscussionPostService.updatePost(postId, {
+                content,
+                images: updatedImages.length > 0 ? updatedImages : [],
+            });
+
+            // Delete removed images from Cloudinary
+            if (removedImages.length > 0) {
+                await ImageUploadService.deleteImages(removedImages, `discussionPosts/${postId}`);
+            }
+
+            HttpResponse.sendYES(res, 200, 'Post updated successfully', { post });
         } catch (err) {
             next(err);
         }
     }
+
 
     static async deletePost(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {

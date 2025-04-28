@@ -6,4 +6,6 @@ export interface AuthenticationRequest extends Request {
         userId: string;
         role?: USER_ROLE; // Thêm userRole
     };
+    // files?: Express.Multer.File[]; // Thêm files để hỗ trợ upload file
+
 }
