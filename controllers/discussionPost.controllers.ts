@@ -22,6 +22,7 @@ export class DiscussionPostController {
             const { eventId } = req.params;
             const creator_id = req.user?.userId;
             const files = req.files as Express.Multer.File[] | undefined;
+
             if (!creator_id) {
                 throw new HttpError('Creator ID is required', 400, 'CREATOR_ID_REQUIRED');
             }
