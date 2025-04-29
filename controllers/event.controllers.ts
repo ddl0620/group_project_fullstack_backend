@@ -1,15 +1,27 @@
 import { Response, NextFunction } from 'express';
 import { HttpResponse } from '../helpers/HttpResponse';
 import { EventService } from '../services/event.service';
-import {AuthenticationRequest} from "../interfaces/authenticationRequest.interface";
+import { AuthenticationRequest } from '../interfaces/authenticationRequest.interface';
+import { createEventSchema, updateEventSchema } from '../validation/event.validation';
+import { HttpError } from '../helpers/httpsError.helpers';
 
 export class EventController {
     async addEvent(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
-            const newEvent = await EventService.addEvent(req.user?.userId as string, {
-                ...req.body,
-                organizer: req.user?.userId,
-            });
+            console.log(req.body);
+            const { error } = createEventSchema.validate(req.body);
+            if (error) {
+                throw new HttpError(error.details[0].message, 400, 'INVALID_INPUT');
+            }
+
+            const newEvent = await EventService.addEvent(
+                req.user?.userId as string,
+                {
+                    ...req.body,
+                    organizer: req.user?.userId,
+                },
+                req.files as Express.Multer.File[],
+            );
 
             HttpResponse.sendYES(res, 201, 'Event added successfully', { event: newEvent });
         } catch (err) {
@@ -23,7 +35,12 @@ export class EventController {
             const limit = parseInt(req.query.limit as string) || 10;
             const sortBy = (req.query.sortBy as string) || 'desc';
 
-            const result = await EventService.getMyEvents(req.user?.userId as string, page, limit, sortBy);
+            const result = await EventService.getMyEvents(
+                req.user?.userId as string,
+                page,
+                limit,
+                sortBy,
+            );
 
             HttpResponse.sendYES(res, 200, 'Event fetched successfully', result);
         } catch (err) {
@@ -31,13 +48,22 @@ export class EventController {
         }
     }
 
-    async getAllEvent(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+    async getAllEvent(
+        req: AuthenticationRequest,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> {
         try {
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
             const sortBy = (req.query.sortBy as string) || 'desc';
 
-            const result = await EventService.getAllEvents(req.user?.userId as string, page, limit, sortBy);
+            const result = await EventService.getAllEvents(
+                req.user?.userId as string,
+                page,
+                limit,
+                sortBy,
+            );
 
             HttpResponse.sendYES(res, 200, 'Event fetched successfully', result);
         } catch (err) {
@@ -45,13 +71,22 @@ export class EventController {
         }
     }
 
-    async getJoinedEvent(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+    async getJoinedEvent(
+        req: AuthenticationRequest,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> {
         try {
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
             const sortBy = (req.query.sortBy as string) || 'desc';
 
-            const result = await EventService.getJoinedEvent(req.user?.userId as string, page, limit, sortBy);
+            const result = await EventService.getJoinedEvent(
+                req.user?.userId as string,
+                page,
+                limit,
+                sortBy,
+            );
 
             HttpResponse.sendYES(res, 200, 'Event fetched successfully', result);
         } catch (err) {
@@ -59,9 +94,16 @@ export class EventController {
         }
     }
 
-    async getEventById(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+    async getEventById(
+        req: AuthenticationRequest,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> {
         try {
-            const event = await EventService.getEventById(req.user?.userId as string, req.params.id);
+            const event = await EventService.getEventById(
+                req.user?.userId as string,
+                req.params.id,
+            );
 
             HttpResponse.sendYES(res, 200, 'Event found successfully', { event });
         } catch (err) {
@@ -69,9 +111,26 @@ export class EventController {
         }
     }
 
-    async updateEvent(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+    async updateEvent(
+        req: AuthenticationRequest,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> {
         try {
-            const updatedEvent = await EventService.updateEvent(req.user?.userId as string, req.params.id, req.body);
+            const { error } = updateEventSchema.validate(req.body);
+            if (error) {
+                new HttpError(error.details[0].message, 400, 'INVALID_INPUT');
+            }
+
+            const { existingImages } = req.body;
+
+            const updatedEvent = await EventService.updateEvent(
+                req.user?.userId as string,
+                req.params.id,
+                req.files as Express.Multer.File[],
+                existingImages,
+                req.body,
+            );
 
             HttpResponse.sendYES(res, 200, 'Event updated successfully', { event: updatedEvent });
         } catch (err) {
@@ -79,9 +138,16 @@ export class EventController {
         }
     }
 
-    async deleteEvent(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+    async deleteEvent(
+        req: AuthenticationRequest,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> {
         try {
-            const deletedEvent = await EventService.deleteEvent(req.user?.userId as string, req.params.id);
+            const deletedEvent = await EventService.deleteEvent(
+                req.user?.userId as string,
+                req.params.id,
+            );
 
             HttpResponse.sendYES(res, 200, 'Event deleted successfully', { event: deletedEvent });
         } catch (err) {
@@ -102,13 +168,19 @@ export class EventController {
         }
     }
 
-    async respondEvent(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+    async respondEvent(
+        req: AuthenticationRequest,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> {
         try {
             const { userId, status } = req.body;
             const { eventId } = req.params;
 
-
-            const event = await EventService.replyEvent(eventId, req.user?.userId as string, { userId, status });
+            const event = await EventService.replyEvent(eventId, req.user?.userId as string, {
+                userId,
+                status,
+            });
 
             HttpResponse.sendYES(res, 201, 'Event responded successfully', { event });
         } catch (err) {

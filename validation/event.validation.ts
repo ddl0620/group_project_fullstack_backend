@@ -65,16 +65,18 @@ export const updateEventSchema = Joi.object({
     location: Joi.string().optional().messages({
         'string.base': 'Location must be a string',
     }),
-    images: Joi.array().items(Joi.string()).optional().messages({
-        'array.base': 'Images must be an array of strings',
+    existingImages: Joi.array().items(Joi.string()).optional().messages({
+        'array.base': 'existingImages must be an array of strings',
         'string.base': 'Each image must be a string',
     }),
     isPublic: Joi.boolean().optional().messages({
         'boolean.base': 'isPublic must be a boolean',
     }),
-}).min(1).messages({
-    'object.min': 'At least one field must be provided for update',
-});
+})
+    .min(1)
+    .messages({
+        'object.min': 'At least one field must be provided for update',
+    });
 
 export const joinEventSchema = Joi.object({
     userId: Joi.string().required().messages({
