@@ -3,24 +3,37 @@ import { EventModel } from '../models/event.models';
 import { UserModel } from '../models/user.models';
 import { HttpError } from '../helpers/httpsError.helpers';
 import { EventInterface } from '../interfaces/event.interfaces';
-import { CreateEventInput, EventListResponse, RespondJoinInput, UpdateEventInput } from '../types/event.type';
+import {
+    CreateEventInput,
+    EventListResponse,
+    RespondJoinInput,
+    UpdateEventInput,
+} from '../types/event.type';
 import { ParticipationStatus } from '../enums/participationStatus.enums';
 import { ParticipantInterface } from '../interfaces/participant.interfaces';
-import {decodeToken} from "../helpers/decodeToken";
+import { ImageUploadService, UploadImageInput } from './imageUpload.service';
+import { updateEventSchema } from '../validation/event.validation';
 
 export class EventService {
-    static async addEvent(userId: string, eventData: CreateEventInput): Promise<EventInterface> {
+    static async addEvent(
+        userId: string,
+        eventData: CreateEventInput,
+        files: Express.Multer.File[],
+    ): Promise<EventInterface> {
         const user = await UserModel.findById(userId).select('-password');
 
         if (!user) {
             throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
         }
 
+        const imgUrls = await ImageUploadService.convertFileToURL(files, 'event', userId);
+
         try {
             const newEvent = await EventModel.create({
                 ...eventData,
                 organizer: userId,
                 participants: [],
+                images: imgUrls,
             });
             return newEvent;
         } catch (err) {
@@ -32,7 +45,7 @@ export class EventService {
         userId: string,
         page: number = 1,
         limit: number = 10,
-        sortBy: string = 'desc'
+        sortBy: string = 'desc',
     ): Promise<EventListResponse> {
         const skip = (page - 1) * limit;
         const sortOrder = sortBy.toLowerCase() === 'asc' ? 1 : -1;
@@ -66,7 +79,7 @@ export class EventService {
         userId: string,
         page: number = 1,
         limit: number = 10,
-        sortBy: string = 'desc'
+        sortBy: string = 'desc',
     ): Promise<EventListResponse> {
         const skip = (page - 1) * limit;
         const sortOrder = sortBy.toLowerCase() === 'asc' ? 1 : -1;
@@ -107,7 +120,7 @@ export class EventService {
         userId: string,
         page: number = 1,
         limit: number = 10,
-        sortBy: string = 'desc'
+        sortBy: string = 'desc',
     ): Promise<EventListResponse> {
         const skip = (page - 1) * limit;
         const sortOrder = sortBy.toLowerCase() === 'asc' ? 1 : -1;
@@ -115,9 +128,7 @@ export class EventService {
         const query = {
             $and: [
                 {
-                    $or: [
-                        { 'participants.userId': userId },
-                    ],
+                    $or: [{ 'participants.userId': userId }],
                 },
                 { isDeleted: false }, // Loại bỏ sự kiện đã bị xóa
             ],
@@ -153,9 +164,10 @@ export class EventService {
 
         if (!event.isPublic) {
             const isOrganizer = event.organizer?.toString() === userId;
-            const isParticipant = event.participants?.some(
-                (participant) => participant.userId?.toString() === userId
-            ) || false;
+            const isParticipant =
+                event.participants?.some(
+                    participant => participant.userId?.toString() === userId,
+                ) || false;
 
             if (!isOrganizer && !isParticipant) {
                 throw new HttpError('Access denied to private event', 403, 'ACCESS_DENIED');
@@ -168,7 +180,9 @@ export class EventService {
     static async updateEvent(
         userId: string,
         eventId: string,
-        updateData: UpdateEventInput
+        files: Express.Multer.File[],
+        existingImages: string[],
+        updateData: UpdateEventInput,
     ): Promise<EventInterface> {
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
             throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
@@ -183,10 +197,20 @@ export class EventService {
             throw new HttpError('Only the organizer can update this event', 403, 'FORBIDDEN');
         }
 
+        const images = await ImageUploadService.updateImagesList(
+            files,
+            existingImages,
+            event,
+            'event',
+            eventId,
+        );
+
+        updateData.images = images;
+
         const updatedEvent = await EventModel.findByIdAndUpdate(
             eventId,
             { $set: updateData },
-            { new: true, runValidators: true }
+            { new: true, runValidators: true },
         );
 
         if (!updatedEvent) {
@@ -214,7 +238,7 @@ export class EventService {
         const deletedEvent = await EventModel.findByIdAndUpdate(
             eventId,
             { $set: { isDeleted: true } },
-            { new: true }
+            { new: true },
         );
 
         if (!deletedEvent) {
@@ -238,24 +262,31 @@ export class EventService {
             throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
         }
 
-
         const user = await UserModel.findById(userId);
         if (!user) {
             throw new HttpError('User not found', 404, 'NOT_FOUND_USER');
         }
 
         const isJoined = event.participants?.some(
-            (participant) => participant.userId?.toString() === userId
+            participant => participant.userId?.toString() === userId,
         );
 
         const isOrganizer = event.organizer?.toString() === userId;
 
         if (isJoined) {
-            throw new HttpError('User already joined or sent request to the event', 400, 'USER_ALREADY_JOINED');
+            throw new HttpError(
+                'User already joined or sent request to the event',
+                400,
+                'USER_ALREADY_JOINED',
+            );
         }
 
-        if(isOrganizer) {
-            throw new HttpError('Organizer cannot join their own event', 400, 'ORGANIZER_CANNOT_JOIN');
+        if (isOrganizer) {
+            throw new HttpError(
+                'Organizer cannot join their own event',
+                400,
+                'ORGANIZER_CANNOT_JOIN',
+            );
         }
         const status = event.isPublic ? ParticipationStatus.ACCEPTED : ParticipationStatus.PENDING;
         const newParticipant: ParticipantInterface = {
@@ -270,7 +301,7 @@ export class EventService {
             {
                 $push: { participants: newParticipant },
             },
-            { new: true }
+            { new: true },
         );
 
         if (!updatedEvent) {
@@ -280,12 +311,14 @@ export class EventService {
         return updatedEvent;
     }
 
-    static async replyEvent(eventId: string, userIdToken:string, input: RespondJoinInput): Promise<EventInterface> {
+    static async replyEvent(
+        eventId: string,
+        userIdToken: string,
+        input: RespondJoinInput,
+    ): Promise<EventInterface> {
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
             throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
         }
-
-
 
         if (!mongoose.Types.ObjectId.isValid(input.userId)) {
             throw new HttpError('Invalid user ID format', 400, 'INVALID_USER_ID');
@@ -296,13 +329,11 @@ export class EventService {
             throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
         }
 
-        if(userIdToken !== event.organizer.toString()) {
+        if (userIdToken !== event.organizer.toString()) {
             throw new HttpError('Only the organizer can respond to this event', 403, 'FORBIDDEN');
         }
 
-        const participant = event.participants?.find(
-            (p) => p.userId?.toString() === input.userId
-        );
+        const participant = event.participants?.find(p => p.userId?.toString() === input.userId);
 
         if (!participant) {
             throw new HttpError('Participant not found', 404, 'NOT_FOUND_PARTICIPANT');
@@ -316,11 +347,14 @@ export class EventService {
             { _id: eventId, 'participants.userId': input.userId },
             {
                 $set: {
-                    'participants.$.status': input.status === 'ACCEPTED' ? ParticipationStatus.ACCEPTED : ParticipationStatus.DENIED,
+                    'participants.$.status':
+                        input.status === 'ACCEPTED'
+                            ? ParticipationStatus.ACCEPTED
+                            : ParticipationStatus.DENIED,
                     'participants.$.respondedAt': new Date(),
                 },
             },
-            { new: true }
+            { new: true },
         );
 
         if (!updatedEvent) {
