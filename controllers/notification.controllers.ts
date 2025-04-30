@@ -46,5 +46,20 @@ export class NotificationController {
             next(error);
         }
     }
+
+    async markNotificationAsRead(
+        req: AuthenticationRequest,
+        res: Response,
+        next: NextFunction
+    ) : Promise<void> {
+        try {
+            const notificationId = req.params.id;
+            const updatedNotification = await NotificationService.markNotificationAsRead(notificationId);
+            HttpResponse.sendYES(res, 200, 'Notification marked as read successfully', { notification: updatedNotification });
+        }
+        catch (error) {
+            next(error);
+        }
+    }
 }
 

@@ -7,6 +7,7 @@ const NotificationSchema = new Schema<NotificationInterface>({
     content: { type: String, required: true },
     type: { type: String, enum: Object.values(NotificationType), required: true },
     createdAt: { type: Date, default: Date.now },
+    isRead: { type: Boolean, default: false },
     isDelete: { type: Boolean, default: false },
 });
 

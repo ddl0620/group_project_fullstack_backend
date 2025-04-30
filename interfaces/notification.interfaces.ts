@@ -6,6 +6,7 @@ export interface NotificationInterface extends Document {
     content: string;
     type: NotificationType;
     createdAt: Date;
+    isRead: boolean;
     isDelete: boolean;
 }
 

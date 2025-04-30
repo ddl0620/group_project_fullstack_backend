@@ -12,6 +12,7 @@ const notification = new NotificationController();
 
 notificationRoutes.post('/create-notification', authenticationToken, validateRequest(createNotificationSchema), notification.createNotification);
 notificationRoutes.delete('/delete-notification/:id', authenticationToken, notification.deleteNotification);
-notificationRoutes.get('/get-notifications', authenticationToken, notification.getUserNotifications);
+notificationRoutes.get('/get-notifications', authenticationToken, notification.getUserNotifications)
+notificationRoutes.patch('/mark-notification-as-read/:id', authenticationToken, notification.markNotificationAsRead);
 
 export default notificationRoutes;

@@ -31,4 +31,9 @@ export const createNotificationSchema = Joi.object({
     isDelete: Joi.boolean().optional().messages({
         'boolean.base': 'isDelete must be a boolean',
     }),
+
+    isRead: Joi.boolean().optional().messages({
+        'boolean.base': 'isRead must be a boolean',
+    }),
+
 });

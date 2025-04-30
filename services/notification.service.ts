@@ -80,4 +80,20 @@ export class NotificationService {
             );
         }
     }
+
+    static async markNotificationAsRead(notificationId: string): Promise<NotificationInterface | null> {
+        try {
+            const updatedNotification = await NotificationModel.findByIdAndUpdate(
+                notificationId,
+                { isRead: true },
+                { new: true },
+            );
+            if (!updatedNotification) {
+                throw new HttpError('Notification not found', 404, 'NOTIFICATION_NOT_FOUND');
+            }
+            return updatedNotification;
+        } catch (error) {
+            throw new HttpError('Failed to mark notification as read', 500, 'MARK_NOTIFICATION_READ_FAILED');
+        }
+    }
 }
