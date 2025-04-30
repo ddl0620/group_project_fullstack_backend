@@ -3,21 +3,15 @@ import { HttpResponse } from '../helpers/HttpResponse';
 import { InvitationService } from '../services/invitation.service';
 import { AuthenticationRequest } from '../interfaces/authenticationRequest.interface';
 import Joi from 'joi';
-import {HttpError} from "../helpers/httpsError.helpers";
-import {getInvitationsByEventIdSchema} from "../validation/invitation.validation";
+import { HttpError } from '../helpers/httpsError.helpers';
+import { getInvitationsByEventIdSchema } from '../validation/invitation.validation';
+import { createRSVPSchema } from '../validation/rsvp.validation';
 
 export class InvitationController {
     private createInvitationSchema = Joi.object({
         content: Joi.string().optional().allow(''),
         eventId: Joi.string().required(),
         inviteeId: Joi.string().required(),
-    });
-
-
-    private createRSVPSchema = Joi.object({
-        response: Joi.string()
-            .valid('PENDING', 'ACCEPTED', 'DENIED')
-            .required(),
     });
 
     // private getInvitationsByEventIdSchema = Joi.object({
@@ -27,11 +21,14 @@ export class InvitationController {
     //     sortBy: Joi.string().valid('asc', 'desc').optional().default('desc'),
     // });
 
-
     /**
      * Create a new invitation
      */
-    async createInvitation(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+    async createInvitation(
+        req: AuthenticationRequest,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> {
         try {
             if (!req.user?.userId) {
                 throw new HttpError('Unauthorized', 401, 'UNAUTHORIZED');
@@ -47,7 +44,11 @@ export class InvitationController {
     /**
      * Get list of invitations for the authenticated user
      */
-    async getInvitations(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+    async getAllReceivedInvitations(
+        req: AuthenticationRequest,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> {
         try {
             if (!req.user?.userId) {
                 throw new HttpError('Unauthorized', 401, 'UNAUTHORIZED');
@@ -57,8 +58,35 @@ export class InvitationController {
             const limit = parseInt(req.query.limit as string) || 10;
             const sortBy = (req.query.sortBy as string) || 'desc';
 
-            const result = await InvitationService.getInvitations(req.user.userId, page, limit, sortBy);
+            const result = await InvitationService.getReceivedInvitations(
+                req.user.userId,
+                page,
+                limit,
+                sortBy,
+            );
             HttpResponse.sendYES(res, 200, 'Invitations fetched successfully', result);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    async getReceivedInvitationByEventId(
+        req: AuthenticationRequest,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> {
+        try {
+            if (!req.user?.userId) {
+                throw new HttpError('Unauthorized', 401, 'UNAUTHORIZED');
+            }
+
+            const result = await InvitationService.getReceivedInvitationById(
+                req.user.userId,
+                req.params.eventId,
+            );
+            HttpResponse.sendYES(res, 200, 'Invitations fetched successfully', {
+                invitation: result,
+            });
         } catch (err) {
             next(err);
         }
@@ -67,7 +95,11 @@ export class InvitationController {
     /**
      * Get an invitation by ID
      */
-    async getInvitationById(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+    async getInvitationById(
+        req: AuthenticationRequest,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> {
         try {
             if (!req.user?.userId) {
                 throw new HttpError('Unauthorized', 401, 'UNAUTHORIZED');
@@ -76,7 +108,10 @@ export class InvitationController {
                 throw new HttpError('Missing invitation ID', 400, 'MISSING_INVITATION_ID');
             }
 
-            const invitation = await InvitationService.getInvitationById(req.user.userId, req.params.id);
+            const invitation = await InvitationService.getInvitationById(
+                req.user.userId,
+                req.params.id,
+            );
             HttpResponse.sendYES(res, 200, 'Invitation found successfully', { invitation });
         } catch (err) {
             next(err);
@@ -86,7 +121,11 @@ export class InvitationController {
     /**
      * Delete an invitation
      */
-    async deleteInvitation(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+    async deleteInvitation(
+        req: AuthenticationRequest,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> {
         try {
             if (!req.user?.userId) {
                 throw new HttpError('Unauthorized', 401, 'UNAUTHORIZED');
@@ -95,8 +134,13 @@ export class InvitationController {
                 throw new HttpError('Missing invitation ID', 400, 'MISSING_INVITATION_ID');
             }
 
-            const deletedInvitation = await InvitationService.deleteInvitation(req.user.userId, req.params.id);
-            HttpResponse.sendYES(res, 200, 'Invitation deleted successfully', { invitation: deletedInvitation });
+            const deletedInvitation = await InvitationService.deleteInvitation(
+                req.user.userId,
+                req.params.id,
+            );
+            HttpResponse.sendYES(res, 200, 'Invitation deleted successfully', {
+                invitation: deletedInvitation,
+            });
         } catch (err) {
             next(err);
         }
@@ -114,12 +158,16 @@ export class InvitationController {
                 throw new HttpError('Missing invitation ID', 400, 'MISSING_INVITATION_ID');
             }
 
-            const { error } = this.createRSVPSchema.validate(req.body);
+            const { error } = createRSVPSchema.validate(req.body);
             if (error) {
                 throw new HttpError(error.details[0].message, 400, 'INVALID_INPUT');
             }
 
-            const rsvp = await InvitationService.createRSVP(req.user.userId, req.params.invitationId, req.body);
+            const rsvp = await InvitationService.createRSVP(
+                req.user.userId,
+                req.params.invitationId,
+                req.body,
+            );
             HttpResponse.sendYES(res, 201, 'RSVP created successfully', { rsvp });
         } catch (err) {
             next(err);
@@ -131,7 +179,6 @@ export class InvitationController {
      */
     async getRSVPs(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
-
             if (!req.user?.userId) {
                 throw new HttpError('Unauthorized', 401, 'UNAUTHORIZED');
             }
@@ -150,7 +197,11 @@ export class InvitationController {
     /**
      * Get an RSVP by ID
      */
-    async getRSVPById(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+    async getRSVPById(
+        req: AuthenticationRequest,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> {
         try {
             if (!req.user?.userId) {
                 throw new HttpError('Unauthorized', 401, 'UNAUTHORIZED');
@@ -189,7 +240,11 @@ export class InvitationController {
      * Get list of invitations sent for a specific event (organizer only)
      */
 
-    async getInvitationsByEventId(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+    async getInvitationsByEventId(
+        req: AuthenticationRequest,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> {
         try {
             if (!req.user?.userId) {
                 throw new HttpError('Unauthorized', 401, 'UNAUTHORIZED');
@@ -212,15 +267,10 @@ export class InvitationController {
                 eventId,
                 parseInt(page) || 1,
                 parseInt(limit) || 10,
-                sortBy || 'desc'
+                sortBy || 'desc',
             );
             console.log('Controller result:', result); // Debug
-            HttpResponse.sendYES(res, 200, 'Invitations fetched successfully', {
-                invitations: result.invitations,
-                total: result.total,
-                page: result.page,
-                limit: result.limit,
-            });
+            HttpResponse.sendYES(res, 200, 'Invitations fetched successfully', result);
         } catch (err) {
             next(err);
         }
@@ -229,7 +279,11 @@ export class InvitationController {
     /**
      * Get RSVP for a specific invitation
      */
-    async getRSVPByInvitationId(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+    async getRSVPByInvitationId(
+        req: AuthenticationRequest,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> {
         try {
             if (!req.user?.userId) {
                 throw new HttpError('Unauthorized', 401, 'UNAUTHORIZED');
@@ -238,7 +292,10 @@ export class InvitationController {
                 throw new HttpError('Missing invitation ID', 400, 'MISSING_INVITATION_ID');
             }
 
-            const rsvp = await InvitationService.getRSVPByInvitationId(req.user.userId, req.params.invitationId);
+            const rsvp = await InvitationService.getRSVPByInvitationId(
+                req.user.userId,
+                req.params.invitationId,
+            );
             HttpResponse.sendYES(res, 200, 'RSVP fetched successfully', { rsvp });
         } catch (err) {
             next(err);
