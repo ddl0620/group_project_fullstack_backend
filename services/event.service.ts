@@ -13,6 +13,7 @@ import { ParticipationStatus } from '../enums/participationStatus.enums';
 import { ParticipantInterface } from '../interfaces/participant.interfaces';
 import { ImageUploadService, UploadImageInput } from './imageUpload.service';
 import { updateEventSchema } from '../validation/event.validation';
+import { NotificationService } from './notification.service';
 
 export class EventService {
     static async addEvent(
@@ -308,6 +309,14 @@ export class EventService {
             throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
         }
 
+        await NotificationService.createNotification({
+            ...NotificationService.requestJoinNotificationContent(
+                user.name || 'User',
+                event.title || 'Event',
+            ),
+            userIds: [event.organizer?.toString() || ''],
+        });
+
         return updatedEvent;
     }
 
@@ -360,6 +369,16 @@ export class EventService {
         if (!updatedEvent) {
             throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
         }
+
+        const notiContent =
+            input.status === 'ACCEPTED'
+                ? NotificationService.requestAcceptNotificationContent(event.title)
+                : NotificationService.requestDeniedNotificationContent(event.title);
+
+        await NotificationService.createNotification({
+            ...notiContent,
+            userIds: [input.userId],
+        });
 
         return updatedEvent;
     }

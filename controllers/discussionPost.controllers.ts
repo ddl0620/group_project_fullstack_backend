@@ -7,6 +7,9 @@ import mongoose from 'mongoose';
 import { DiscussionReplyService } from '../services/discussionReply.service';
 import { ImageUploadService } from '../services/imageUpload.service';
 import { createPostSchema, updatePostSchema } from '../validation/discussionPost.validation';
+import { NotificationService } from '../services/notification.service';
+import { EventModel } from '../models/event.models';
+import { EventInterface } from '../interfaces/event.interfaces';
 // import multer from 'multer';
 export class DiscussionPostController {
     // Tạo bài viết
@@ -56,6 +59,14 @@ export class DiscussionPostController {
             // Lấy lại bài viết đã cập nhật
 
             HttpResponse.sendYES(res, 201, 'Post created successfully', { post: newPost });
+
+            const event: EventInterface | null = await EventModel.findById(eventId);
+            const userIds: string[] =
+                event?.participants?.map(member => member.userId.toString()) || [];
+            await NotificationService.createNotification({
+                ...NotificationService.newPostNotificationContent(event?.title as string),
+                userIds,
+            });
         } catch (err) {
             next(err);
         }
