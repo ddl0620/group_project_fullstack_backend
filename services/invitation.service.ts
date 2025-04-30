@@ -8,6 +8,8 @@ import { HttpError } from '../helpers/httpsError.helpers';
 import { InvitationModel } from '../models/Invitation/invitation.models';
 import { RSVPModel } from '../models/Invitation/rsvp.models';
 import { EventService } from './event.service';
+import { NotificationService } from './notification.service';
+import { EventInterface } from '../interfaces/event.interfaces';
 
 interface CreateInvitationInput {
     content?: string;
@@ -55,7 +57,10 @@ export class InvitationService {
             throw new HttpError('Invalid invitor ID format', 400, 'INVALID_INVITOR_ID');
         }
 
-        const event = await EventModel.findOne({ _id: eventId, isDeleted: false });
+        const event: EventInterface | null = await EventModel.findOne({
+            _id: eventId,
+            isDeleted: false,
+        });
         if (!event) {
             throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
         }
@@ -102,6 +107,12 @@ export class InvitationService {
                 invitorId: invitorId,
                 inviteeId: inviteeId,
             });
+
+            await NotificationService.createNotification({
+                ...NotificationService.invitationNotificationContent(event.title),
+                userIds: [inviteeId],
+            });
+
             return invitation;
         } catch (err: any) {
             throw new HttpError(
@@ -280,12 +291,26 @@ export class InvitationService {
             throw new HttpError('RSVP already exists for this invitation', 400, 'RSVP_EXISTS');
         }
 
+        const tmpInvitation: InvitationInterface | null =
+            await InvitationModel.findById(invitationId).select('eventId');
+        const event: EventInterface | null = await EventModel.findById(tmpInvitation?.eventId);
+
         try {
             const rsvp = await RSVPModel.create({
                 invitationId: invitationId,
                 response: input.response,
                 respondedAt: new Date(),
             });
+            const notiContent =
+                input.response === RSVPStatus.ACCEPTED
+                    ? NotificationService.rsvpAcceptNotificationContent(event?.title || 'Event')
+                    : NotificationService.rsvpDeniedNotificationContent(event?.title || 'Event');
+
+            await NotificationService.createNotification({
+                ...notiContent,
+                userIds: [invitation.invitorId.toString()],
+            });
+
             return rsvp;
         } catch (err: any) {
             throw new HttpError(`Failed to create RSVP: ${err.message}`, 500, 'CREATE_RSVP_FAILED');

@@ -14,13 +14,6 @@ export class InvitationController {
         inviteeId: Joi.string().required(),
     });
 
-    // private getInvitationsByEventIdSchema = Joi.object({
-    //     eventId: Joi.string().required(),
-    //     page: Joi.number().integer().min(1).optional().default(1),
-    //     limit: Joi.number().integer().min(1).optional().default(10),
-    //     sortBy: Joi.string().valid('asc', 'desc').optional().default('desc'),
-    // });
-
     /**
      * Create a new invitation
      */

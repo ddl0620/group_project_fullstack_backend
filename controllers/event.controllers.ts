@@ -1,9 +1,11 @@
-import { Response, NextFunction } from 'express';
+import { NextFunction, Response } from 'express';
 import { HttpResponse } from '../helpers/HttpResponse';
 import { EventService } from '../services/event.service';
 import { AuthenticationRequest } from '../interfaces/authenticationRequest.interface';
 import { createEventSchema, updateEventSchema } from '../validation/event.validation';
 import { HttpError } from '../helpers/httpsError.helpers';
+import { NotificationService } from '../services/notification.service';
+import { NotificationType } from '../enums/notificationType.enums';
 
 export class EventController {
     async addEvent(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
@@ -132,6 +134,18 @@ export class EventController {
                 req.body,
             );
 
+            if (!updatedEvent) {
+                throw new HttpError('Event not found', 404, 'EVENT_NOT_FOUND');
+            }
+
+            const userId = (updatedEvent.participants || []).map(participant =>
+                participant.userId.toString(),
+            );
+            await NotificationService.createNotification({
+                ...NotificationService.eventUpdateNotificationContent(updatedEvent.title),
+                userIds: userId,
+            });
+
             HttpResponse.sendYES(res, 200, 'Event updated successfully', { event: updatedEvent });
         } catch (err) {
             next(err);
@@ -150,6 +164,13 @@ export class EventController {
             );
 
             HttpResponse.sendYES(res, 200, 'Event deleted successfully', { event: deletedEvent });
+            const userId = (deletedEvent.participants || []).map(participant =>
+                participant.userId.toString(),
+            );
+            await NotificationService.createNotification({
+                ...NotificationService.deleteEventNotificationContent(deletedEvent.title),
+                userIds: userId,
+            });
         } catch (err) {
             next(err);
         }
