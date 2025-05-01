@@ -11,4 +11,5 @@ export type SignUpType = {
     password: string;
     confirmPassword: string;
     role: USER_ROLE;
+    dateOfBirth: Date;
 };

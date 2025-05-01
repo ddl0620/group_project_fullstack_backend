@@ -6,13 +6,9 @@ import { HttpResponse } from '../helpers/HttpResponse';
 import { SignInType, SignUpType } from '../types/auth.type';
 
 export class AuthControllers {
-    async signUp(
-        request: Request,
-        response: Response,
-        nextFunction: NextFunction
-    ): Promise<void> {
+    async signUp(request: Request, response: Response, nextFunction: NextFunction): Promise<void> {
         try {
-            const { name, email, password, role } = request.body as SignUpType;
+            const { name, email, password, role, dateOfBirth } = request.body as SignUpType;
 
             const newUser: UserInterface = await AuthService.createUser({
                 name,
@@ -20,6 +16,7 @@ export class AuthControllers {
                 password,
                 confirmPassword: password,
                 role,
+                dateOfBirth,
             });
 
             HttpResponse.sendYES(response, 201, 'User created successfully', {
@@ -30,11 +27,7 @@ export class AuthControllers {
         }
     }
 
-    async signIn(
-        request: Request,
-        response: Response,
-        nextFunction: NextFunction
-    ): Promise<void> {
+    async signIn(request: Request, response: Response, nextFunction: NextFunction): Promise<void> {
         try {
             const { email, password } = request.body as SignInType;
 

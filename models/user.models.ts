@@ -1,6 +1,6 @@
 // src/models/candidate.model.ts
 import { Schema, model } from 'mongoose';
-import {UserInterface} from "../interfaces/user.interfaces";
+import { UserInterface } from '../interfaces/user.interfaces';
 
 const userSchema = new Schema<UserInterface>(
     {
@@ -22,21 +22,27 @@ const userSchema = new Schema<UserInterface>(
             required: [true, 'Mật khẩu là bắt buộc'],
             minlength: [6, 'Mật khẩu phải có ít nhất 6 ký tự'],
         },
+        dateOfBirth: {
+            type: Date,
+            required: [true, 'Ngày sinh là bắt buộc'],
+        },
+        avatar: {
+            type: String,
+        },
         role: {
             type: String,
             default: 'user',
-            enum: ['user', 'admin']
+            enum: ['user', 'admin'],
         },
         isDeleted: {
             required: true,
             type: Boolean,
             default: false,
-        }
+        },
     },
     {
         timestamps: true,
-    }
+    },
 );
 
 export const UserModel = model<UserInterface>('user', userSchema);
-

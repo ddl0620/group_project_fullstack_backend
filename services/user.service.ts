@@ -3,10 +3,13 @@ import { UserModel } from '../models/user.models';
 import { HttpError } from '../helpers/httpsError.helpers';
 import { UserInterface } from '../interfaces/user.interfaces';
 import bcrypt from 'bcryptjs';
+import { SignUpType } from '../types/auth.type';
+import { ImageUploadService } from './imageUpload.service';
 
 interface UpdateUserInput {
     name?: string;
     email?: string;
+    dateOfBirth?: Date;
 }
 
 interface UserListResponse {
@@ -21,17 +24,13 @@ interface UserListResponse {
 
 export class UserService {
     // Create: Tạo user mới (chuyển từ auth.service.ts)
-    static async createUser(data: {
-        name: string;
-        email: string;
-        password: string;
-        role: string;
-    }): Promise<UserInterface> {
+    static async createUser(data: SignUpType): Promise<UserInterface> {
         const { name, email, password, role } = data;
 
         // Kiểm tra email đã tồn tại
         const existingUser = await UserModel.findOne({
-            email: email});
+            email: email,
+        });
         console.log(existingUser);
         if (existingUser) {
             throw new HttpError('Email already exists', 400, 'EMAIL_EXISTS');
@@ -46,7 +45,9 @@ export class UserService {
                 name,
                 email,
                 password: hashedPassword,
+                dateOfBirth: data.dateOfBirth,
                 role,
+                avatar: '',
             });
             return newUser;
         } catch (err) {
@@ -70,7 +71,7 @@ export class UserService {
     static async getAllUsers(
         page: number = 1,
         limit: number = 10,
-        sortBy: string = 'desc'
+        sortBy: string = 'desc',
     ): Promise<UserListResponse> {
         const skip = (page - 1) * limit;
         const sortOrder = sortBy.toLowerCase() === 'asc' ? 1 : -1;
@@ -94,57 +95,111 @@ export class UserService {
         };
     }
 
-    static async getUserById(
-        userId: string,
-    ): Promise<UserInterface> {
-
-        const user = await UserModel.findOne(
-            {
-                _id: userId,
-                isDeleted: false,
-            }
-        ).select('-password');
-
+    static async getUserById(userId: string): Promise<UserInterface> {
+        const user = await UserModel.findOne({
+            _id: userId,
+            isDeleted: false,
+        }).select('-password');
 
         return user as UserInterface;
     }
 
     // Update: Cập nhật thông tin user
-    static async updateUser(
+    static async updateBasicInformation(
         userId: string,
-        updateData: UpdateUserInput
+        updateData: UpdateUserInput,
+        avatar: Express.Multer.File[] | null,
     ): Promise<UserInterface> {
         const notAllowedFields = ['password', 'userId', 'role', 'confirmPassword'];
         const updatedFields = Object.keys(updateData);
-        const isValidOperation = updatedFields.every(
-            (field) => !notAllowedFields.includes(field)
-        );
+        const isValidOperation = updatedFields.every(field => !notAllowedFields.includes(field));
 
         if (!isValidOperation) {
             throw new HttpError('Cannot update restricted fields', 400, 'INVALID_UPDATE_FIELD');
         }
 
-        if (updateData.email) {
-            const existingUser = await UserModel.findOne({
-                email: updateData.email,
-                _id: { $ne: userId },
-            });
-            if (existingUser) {
-                throw new HttpError('Email already exists', 400, 'EMAIL_EXISTS');
-            }
-        }
+        // if (updateData.email) {
+        //     const existingUser = await UserModel.findOne({
+        //         email: updateData.email,
+        //         _id: { $ne: userId },
+        //     });
+        //     if (existingUser) {
+        //         throw new HttpError('Email already exists', 400, 'EMAIL_EXISTS');
+        //     }
+        // }
 
-        const user = await UserModel.findByIdAndUpdate(
-            userId,
-            { $set: updateData },
-            { new: true, runValidators: true }
-        ).select('-password');
+        const files: Express.Multer.File[] | null = avatar;
+
+        const user: UserInterface | null = await UserModel.findOne({
+            email: updateData.email,
+        });
 
         if (!user) {
             throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
         }
 
-        return user;
+        let newAvatar: string = user.avatar;
+        if (files && files.length > 0) {
+            const converted: string[] = await ImageUploadService.convertFileToURL(
+                files,
+                'user',
+                userId,
+            );
+            newAvatar = converted[0];
+        }
+
+        const updatedUser = await UserModel.findByIdAndUpdate(
+            userId,
+            {
+                $set: {
+                    ...updateData,
+                    avatar: newAvatar,
+                },
+            },
+            { new: true, runValidators: true },
+        ).select('-password');
+
+        if (!updatedUser) {
+            throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
+        }
+
+        return updatedUser;
+    }
+
+    static async updatePassword(
+        userId: string,
+        currentPassword: string,
+        newPassword: string,
+        confirmPassword: string,
+    ): Promise<UserInterface> {
+        const user: UserInterface | null = await UserModel.findById(userId);
+        if (!user) {
+            throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
+        }
+
+        const isMatchPassword: boolean = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatchPassword) {
+            throw new HttpError('Current password is incorrect', 400, 'INVALID_PASSWORD');
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+
+        const updatedUser = await UserModel.findByIdAndUpdate(
+            userId,
+            {
+                $set: {
+                    password: hashedNewPassword,
+                },
+            },
+            { new: true, runValidators: true },
+        ).select('-password');
+
+        if (!updatedUser) {
+            throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
+        }
+
+        return updatedUser;
     }
 
     // Delete: Xóa user
@@ -165,7 +220,7 @@ export class UserService {
         const deletedUser = await UserModel.findByIdAndUpdate(
             userId,
             { isDeleted: true },
-            { new: true, runValidators: true }
+            { new: true, runValidators: true },
         ).select('-password');
 
         if (!deletedUser) {

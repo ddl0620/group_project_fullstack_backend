@@ -71,7 +71,7 @@ export class NotificationService {
                         userNotification.notificationId as unknown as NotificationInterface,
                 );
 
-            return notifications.length > 0 ? notifications : null;
+            return notifications;
         } catch (error) {
             console.error('Error in getUserNotifications:', error); // Log the original error
             throw new HttpError(

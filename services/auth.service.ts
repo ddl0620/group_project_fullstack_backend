@@ -10,6 +10,13 @@ export class AuthService {
 
     static async createUser(data: SignUpType): Promise<UserInterface> {
         const { name, email, password, role } = data;
-        return await UserService.createUser({ name, email, password, role });
+        return await UserService.createUser({
+            name,
+            email,
+            password,
+            role,
+            dateOfBirth: data.dateOfBirth,
+            confirmPassword: password,
+        });
     }
 }
