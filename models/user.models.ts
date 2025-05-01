@@ -34,6 +34,14 @@ const userSchema = new Schema<UserInterface>(
             default: 'user',
             enum: ['user', 'admin'],
         },
+        maxEventCreate: {
+            type: Number,
+            default: 10,
+        },
+        maxParticipantPerEvent: {
+            type: Number,
+            default: 10,
+        },
         isDeleted: {
             required: true,
             type: Boolean,
