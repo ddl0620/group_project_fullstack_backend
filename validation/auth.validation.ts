@@ -30,4 +30,8 @@ export const signUpSchema = Joi.object({
     role: Joi.string().required().messages({
         'any.required': 'Role is required',
     }),
+    dateOfBirth: Joi.date().required().messages({
+        'date.base': 'Date of birth must be a valid date',
+        'any.required': 'Date of birth is required',
+    }),
 });
