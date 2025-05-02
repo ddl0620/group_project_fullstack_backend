@@ -5,6 +5,13 @@ import { adminOnlyMiddleware, authenticationToken } from '../../middlewares/auth
 const UserRouter = Router();
 
 UserRouter.get('/', authenticationToken, adminOnlyMiddleware, UserManagementController.getAllUsers);
+UserRouter.post(
+    '/',
+    authenticationToken,
+    adminOnlyMiddleware,
+    UserManagementController.createNewUser,
+);
+
 UserRouter.put(
     '/:id',
     authenticationToken,

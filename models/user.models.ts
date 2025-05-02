@@ -27,6 +27,7 @@ const userSchema = new Schema<UserInterface>(
             required: [true, 'Ngày sinh là bắt buộc'],
         },
         avatar: {
+            default: '',
             type: String,
         },
         role: {

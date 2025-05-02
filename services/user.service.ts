@@ -14,6 +14,7 @@ interface UpdateUserInput {
     role?: string;
     maxEventCreate?: number;
     maxParticipantPerEvent?: number;
+    isDeleted?: boolean;
 }
 
 interface UserListResponse {
@@ -46,11 +47,8 @@ export class UserService {
 
         try {
             const newUser = await UserModel.create({
-                name,
-                email,
+                ...data,
                 password: hashedPassword,
-                dateOfBirth: data.dateOfBirth,
-                role,
                 avatar: '',
             });
             return newUser;

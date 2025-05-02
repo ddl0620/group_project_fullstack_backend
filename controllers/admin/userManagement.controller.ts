@@ -2,6 +2,9 @@ import { NextFunction, Request, Response } from 'express';
 import { UserService } from '../../services/user.service';
 import { HttpResponse } from '../../helpers/HttpResponse';
 import { AuthenticationRequest } from '../../interfaces/authenticationRequest.interface';
+import { signUpSchema, signUpSchemaAdmin } from '../../validation/auth.validation';
+import { HttpError } from '../../helpers/httpsError.helpers';
+import { UserInterface } from '../../interfaces/user.interfaces';
 
 export class UserManagementController {
     // Method to get all users
@@ -14,6 +17,25 @@ export class UserManagementController {
             const result = await UserService.getAllUsers(page, limit, sortBy);
 
             HttpResponse.sendYES(res, 200, 'Users fetched successfully', result);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    static async createNewUser(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { error } = signUpSchemaAdmin.validate(req.body);
+            if (error) {
+                throw new HttpError(
+                    error.details[0].message || 'Invalid input',
+                    400,
+                    'INVALID_INPUT',
+                    res,
+                );
+            }
+            const user: UserInterface = await UserService.createUser(req.body);
+
+            HttpResponse.sendYES(res, 200, 'Users created successfully', { user: user });
         } catch (err) {
             next(err);
         }

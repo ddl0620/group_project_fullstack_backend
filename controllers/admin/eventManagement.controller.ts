@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { EventService } from '../../services/event.service';
+import { HttpResponse } from '../../helpers/HttpResponse';
 
 export class EventManagementController {
     static async getAllEvents(request: Request, response: Response, nextFunction: NextFunction) {
@@ -11,10 +12,7 @@ export class EventManagementController {
             // Assuming you have a service to fetch events
             const result = await EventService.getAll(page, limit, sortBy);
 
-            response.status(200).json({
-                message: 'Events fetched successfully',
-                events: result,
-            });
+            HttpResponse.sendYES(response, 200, 'Events fetched successfully', result);
         } catch (error) {
             nextFunction(error);
         }
@@ -39,10 +37,7 @@ export class EventManagementController {
                 sortBy,
             );
 
-            response.status(200).json({
-                message: 'Events fetched successfully',
-                events: result,
-            });
+            HttpResponse.sendYES(response, 200, 'Events fetched successfully', result);
         } catch (error) {
             nextFunction(error);
         }
