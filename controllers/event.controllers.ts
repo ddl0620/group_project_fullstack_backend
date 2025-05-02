@@ -37,7 +37,7 @@ export class EventController {
             const limit = parseInt(req.query.limit as string) || 10;
             const sortBy = (req.query.sortBy as string) || 'desc';
 
-            const result = await EventService.getMyEvents(
+            const result = await EventService.getOrganizedEvents(
                 req.user?.userId as string,
                 page,
                 limit,
@@ -60,7 +60,7 @@ export class EventController {
             const limit = parseInt(req.query.limit as string) || 10;
             const sortBy = (req.query.sortBy as string) || 'desc';
 
-            const result = await EventService.getAllEvents(
+            const result = await EventService.getAllVisibleEvent(
                 req.user?.userId as string,
                 page,
                 limit,

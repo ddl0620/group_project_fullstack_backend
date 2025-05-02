@@ -10,6 +10,10 @@ interface UpdateUserInput {
     name?: string;
     email?: string;
     dateOfBirth?: Date;
+    password?: string;
+    role?: string;
+    maxEventCreate?: number;
+    maxParticipantPerEvent?: number;
 }
 
 interface UserListResponse {
@@ -76,8 +80,7 @@ export class UserService {
         const skip = (page - 1) * limit;
         const sortOrder = sortBy.toLowerCase() === 'asc' ? 1 : -1;
 
-        const users = await UserModel.find()
-            .select('-password')
+        const users: UserInterface[] | null = await UserModel.find()
             .sort({ createdAt: sortOrder })
             .skip(skip)
             .limit(limit);
@@ -109,8 +112,15 @@ export class UserService {
         userId: string,
         updateData: UpdateUserInput,
         avatar: Express.Multer.File[] | null,
+        notAllowedFields: string[],
     ): Promise<UserInterface> {
-        const notAllowedFields = ['password', 'userId', 'role', 'confirmPassword'];
+        // const notAllowedFields = [
+        //     'password',
+        //     'userId',
+        //     'role',
+        //     'maxEventCreate',
+        //     'maxParticipantPerEvent',
+        // ];
         const updatedFields = Object.keys(updateData);
         const isValidOperation = updatedFields.every(field => !notAllowedFields.includes(field));
 
@@ -118,21 +128,9 @@ export class UserService {
             throw new HttpError('Cannot update restricted fields', 400, 'INVALID_UPDATE_FIELD');
         }
 
-        // if (updateData.email) {
-        //     const existingUser = await UserModel.findOne({
-        //         email: updateData.email,
-        //         _id: { $ne: userId },
-        //     });
-        //     if (existingUser) {
-        //         throw new HttpError('Email already exists', 400, 'EMAIL_EXISTS');
-        //     }
-        // }
-
         const files: Express.Multer.File[] | null = avatar;
 
-        const user: UserInterface | null = await UserModel.findOne({
-            email: updateData.email,
-        });
+        const user: UserInterface | null = await UserModel.findById(userId);
 
         if (!user) {
             throw new HttpError('User not found', 404, 'USER_NOT_FOUND');

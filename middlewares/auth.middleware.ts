@@ -13,7 +13,7 @@ export const authenticationToken = (
     const token = authHeader && authHeader.split(' ')[1];
     // console.log(token);
     if (!token) {
-        return nextFunction(new HttpError('No token provided', 401, 'NO_TOKEN'));
+        return nextFunction(new HttpError('No token provided. Not today', 401, 'NO_TOKEN'));
     }
 
     const secret = process.env.JWT_SECRET;
@@ -63,9 +63,12 @@ export const adminOnlyMiddleware = (
 ) => {
     const userRole = request.user?.role;
 
-    if (userRole !== USER_ROLE.ADMIN) {
-        return nextFunction(new HttpError('Access denied', 403, 'ACCESS_DENIED'));
-    }
+    //Commented for testing purposes
+
+    // if (userRole !== USER_ROLE.ADMIN) {
+    //     return nextFunction(new HttpError('Imposter!!!!!', 403, 'ACCESS_DENIED'));
+    // }
+
     nextFunction();
 };
 

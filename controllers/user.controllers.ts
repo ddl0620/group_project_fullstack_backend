@@ -55,10 +55,18 @@ export class UserController {
         next: NextFunction,
     ): Promise<void> {
         try {
+            const notAllowedFields = [
+                'password',
+                'userId',
+                'role',
+                'maxEventCreate',
+                'maxParticipantPerEvent',
+            ];
             const updatedUser = await UserService.updateBasicInformation(
                 req.user?.userId as string,
                 req.body,
                 req.files as Express.Multer.File[],
+                notAllowedFields,
             );
 
             HttpResponse.sendYES(res, 200, 'User updated successfully', {

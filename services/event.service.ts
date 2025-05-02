@@ -42,7 +42,7 @@ export class EventService {
         }
     }
 
-    static async getMyEvents(
+    static async getOrganizedEvents(
         userId: string,
         page: number = 1,
         limit: number = 10,
@@ -76,7 +76,8 @@ export class EventService {
         };
     }
 
-    static async getAllEvents(
+    //Note: Visible events: joined, organizer, or public, not deleted, private
+    static async getAllVisibleEvent(
         userId: string,
         page: number = 1,
         limit: number = 10,
@@ -105,6 +106,68 @@ export class EventService {
             .limit(limit);
 
         const totalEvents = await EventModel.countDocuments(query);
+
+        return {
+            events,
+            pagination: {
+                page,
+                limit,
+                totalPages: Math.ceil(totalEvents / limit),
+                totalEvents,
+            },
+        };
+    }
+
+    static async getJoinedAndOrganizedEvents(
+        userId: string,
+        page: number = 1,
+        limit: number = 10,
+        sortBy: string = 'desc',
+    ): Promise<EventListResponse> {
+        const skip = (page - 1) * limit;
+        const sortOrder = sortBy.toLowerCase() === 'asc' ? 1 : -1;
+
+        const query = {
+            $and: [
+                {
+                    $or: [{ organizer: userId }, { 'participants.userId': userId }],
+                },
+                { isDeleted: false }, // Loại bỏ sự kiện đã bị xóa
+            ],
+        };
+
+        const events = await EventModel.find(query)
+            .sort({ createdAt: sortOrder })
+            .skip(skip)
+            .limit(limit);
+
+        const totalEvents = await EventModel.countDocuments(query);
+
+        return {
+            events,
+            pagination: {
+                page,
+                limit,
+                totalPages: Math.ceil(totalEvents / limit),
+                totalEvents,
+            },
+        };
+    }
+
+    static async getAll(
+        page: number = 1,
+        limit: number = 10,
+        sortBy: string = 'desc',
+    ): Promise<EventListResponse> {
+        const skip = (page - 1) * limit;
+        const sortOrder = sortBy.toLowerCase() === 'asc' ? 1 : -1;
+
+        const events = await EventModel.find()
+            .sort({ createdAt: sortOrder })
+            .skip(skip)
+            .limit(limit);
+
+        const totalEvents = await EventModel.countDocuments();
 
         return {
             events,

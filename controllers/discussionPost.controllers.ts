@@ -19,7 +19,6 @@ export class DiscussionPostController {
         next: NextFunction,
     ): Promise<void> {
         try {
-            // Validate dữ liệu (bỏ qua images vì không dùng URL)
             const { error } = createPostSchema.validate(req.body);
             if (error) {
                 throw new HttpError(error.details[0].message, 400, 'INVALID_INPUT');
@@ -27,46 +26,21 @@ export class DiscussionPostController {
 
             const { content } = req.body;
             const { eventId } = req.params;
-            const creator_id = req.user?.userId;
-            const files = req.files as Express.Multer.File[] | undefined;
-
-            if (!creator_id) {
-                throw new HttpError('Creator ID is required', 400, 'CREATOR_ID_REQUIRED');
-            }
+            const creator_id: string = req.user?.userId as string;
+            const files = req.files as Express.Multer.File[];
 
             // Tạo bài viết trước
-            const post = await DiscussionPostService.createPost({
-                content,
-                images: [], // Tạm thời để trống, sẽ cập nhật sau khi xử lý ảnh
-                creator_id,
-                event_id: eventId,
-            });
-
-            if (!post) {
-                throw new HttpError(`Failed to create post`);
-            }
-
-            const imageUrls = await ImageUploadService.convertFileToURL(
+            const post = await DiscussionPostService.createPost(
+                {
+                    content,
+                    images: [], // Tạm thời để trống, sẽ cập nhật sau khi xử lý ảnh
+                    creator_id,
+                    event_id: eventId,
+                },
                 files,
-                'discussionPost',
-                creator_id,
             );
 
-            const newPost = await DiscussionPostService.updatePost(post._id as string, {
-                images: imageUrls,
-            });
-
-            // Lấy lại bài viết đã cập nhật
-
-            HttpResponse.sendYES(res, 201, 'Post created successfully', { post: newPost });
-
-            const event: EventInterface | null = await EventModel.findById(eventId);
-            const userIds: string[] =
-                event?.participants?.map(member => member.userId.toString()) || [];
-            await NotificationService.createNotification({
-                ...NotificationService.newPostNotificationContent(event?.title as string),
-                userIds,
-            });
+            HttpResponse.sendYES(res, 201, 'Post created successfully', { post: post });
         } catch (err) {
             next(err);
         }
@@ -88,18 +62,7 @@ export class DiscussionPostController {
     static async getPostById(req: AuthenticationRequest, res: Response, next: NextFunction) {
         try {
             const { postId } = req.params;
-
-            // Kiểm tra định dạng postId
-            if (!mongoose.Types.ObjectId.isValid(postId)) {
-                throw new HttpError('Invalid post ID format', 400, 'INVALID_POST_ID');
-            }
-
             const post = await DiscussionPostService.getPostById(postId);
-
-            if (!post) {
-                throw new HttpError('Post not found', 404, 'POST_NOT_FOUND');
-            }
-
             HttpResponse.sendYES(res, 200, 'Post fetched successfully', { post });
         } catch (err) {
             next(err);
@@ -117,23 +80,9 @@ export class DiscussionPostController {
             const { content, existingImages } = req.body;
             const files = req.files as Express.Multer.File[] | undefined;
 
-            const currentPost = await DiscussionPostService.getPostById(postId);
-            if (!currentPost) {
-                throw new HttpError('Post not found', 404, 'POST_NOT_FOUND');
-            }
-
-            const updatedImages = await ImageUploadService.updateImagesList(
-                files,
-                existingImages,
-                currentPost,
-                'discussionPosts',
-                postId,
-            );
-
             // Update post
-            const post = await DiscussionPostService.updatePost(postId, {
+            const post = await DiscussionPostService.updatePost(postId, files, existingImages, {
                 content,
-                images: updatedImages.length > 0 ? updatedImages : [],
             });
 
             HttpResponse.sendYES(res, 200, 'Post updated successfully', { post });
