@@ -27,12 +27,21 @@ const userSchema = new Schema<UserInterface>(
             required: [true, 'Ngày sinh là bắt buộc'],
         },
         avatar: {
+            default: '',
             type: String,
         },
         role: {
             type: String,
             default: 'user',
             enum: ['user', 'admin'],
+        },
+        maxEventCreate: {
+            type: Number,
+            default: 10,
+        },
+        maxParticipantPerEvent: {
+            type: Number,
+            default: 10,
         },
         isDeleted: {
             required: true,

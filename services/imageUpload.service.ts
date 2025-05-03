@@ -153,6 +153,7 @@ export class ImageUploadService {
 
         // Delete removed images from Cloudinary
         if (removedImages.length > 0 && folder && id) {
+            console.log('iam deleting');
             await ImageUploadService.deleteImages(removedImages, folder);
         }
 
