@@ -11,15 +11,14 @@ import {
 } from '../types/event.type';
 import { ParticipationStatus } from '../enums/participationStatus.enums';
 import { ParticipantInterface } from '../interfaces/participant.interfaces';
-import { ImageUploadService, UploadImageInput } from './imageUpload.service';
-import { updateEventSchema } from '../validation/event.validation';
+import { ImageUploadService } from './imageUpload.service';
 import { NotificationService } from './notification.service';
 
 export class EventService {
     static async addEvent(
         userId: string,
         eventData: CreateEventInput,
-        files: Express.Multer.File[],
+        files: Express.Multer.File[] | undefined | null,
     ): Promise<EventInterface> {
         const user = await UserModel.findById(userId).select('-password');
 
@@ -27,7 +26,10 @@ export class EventService {
             throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
         }
 
-        const imgUrls = await ImageUploadService.convertFileToURL(files, 'event', userId);
+        let imgUrls: string[] = [];
+        if (files && files.length > 0) {
+            imgUrls = await ImageUploadService.convertFileToURL(files, 'event', userId);
+        }
 
         try {
             const newEvent = await EventModel.create({
@@ -252,16 +254,29 @@ export class EventService {
             throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
         }
 
-        const event = await EventModel.findOne({ _id: eventId, isDeleted: false }); // Loại bỏ sự kiện đã bị xóa
+        const event = await EventModel.findById(eventId); // Loại bỏ sự kiện đã bị xóa
+
         if (!event) {
             throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
         }
 
-        if (!event.organizer || event.organizer.toString() !== userId) {
+        if (updateData.organizer) {
+            if (updateData.organizer !== event.organizer) {
+                const newOrganizer = await UserModel.findOne({
+                    _id: updateData.organizer,
+                    isDeleted: false,
+                });
+
+                if (!newOrganizer) {
+                    throw new HttpError('New organizer not found', 404, 'NOT_FOUND_USER');
+                }
+            }
+        } else if (!event.organizer || event.organizer.toString() !== userId) {
             throw new HttpError('Only the organizer can update this event', 403, 'FORBIDDEN');
         }
 
-        const images = await ImageUploadService.updateImagesList(
+        console.log('existingImages', existingImages);
+        updateData.images = await ImageUploadService.updateImagesList(
             files,
             existingImages,
             event,
@@ -269,7 +284,7 @@ export class EventService {
             eventId,
         );
 
-        updateData.images = images;
+        console.log('updateData.images', updateData.images);
 
         const updatedEvent = await EventModel.findByIdAndUpdate(
             eventId,
@@ -284,12 +299,16 @@ export class EventService {
         return updatedEvent;
     }
 
-    static async deleteEvent(userId: string, eventId: string): Promise<EventInterface> {
+    static async setActiveStatus(
+        userId: string,
+        eventId: string,
+        isActive: boolean,
+    ): Promise<EventInterface> {
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
             throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
         }
 
-        const event = await EventModel.findOne({ _id: eventId, isDeleted: false }); // Loại bỏ sự kiện đã bị xóa
+        const event = await EventModel.findById(eventId); // Loại bỏ sự kiện đã bị xóa
         if (!event) {
             throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
         }
@@ -301,7 +320,7 @@ export class EventService {
         // Soft delete: Đánh dấu isDeleted = true
         const deletedEvent = await EventModel.findByIdAndUpdate(
             eventId,
-            { $set: { isDeleted: true } },
+            { $set: { isDeleted: isActive } },
             { new: true },
         );
 
