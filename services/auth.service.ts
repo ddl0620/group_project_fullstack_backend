@@ -1,22 +1,17 @@
 import { UserInterface } from '../interfaces/user.interfaces';
-import { SignInType, SignUpType } from '../types/auth.type';
+import { SignInResponse, SignInType, SignUpResponse, SignUpType } from '../types/auth.type';
 import { UserService } from './user.service';
 
 export class AuthService {
-    static async validateCredentials(input: SignInType): Promise<UserInterface> {
+    static async validateCredentials(input: SignInType): Promise<SignInResponse> {
         const { email, password } = input;
         return await UserService.validateCredentials(email, password);
     }
 
-    static async createUser(data: SignUpType): Promise<UserInterface> {
-        const { name, email, password, role } = data;
+    static async createUser(data: SignUpType): Promise<SignUpResponse> {
         return await UserService.createUser({
-            name,
-            email,
-            password,
-            role,
-            dateOfBirth: data.dateOfBirth,
-            confirmPassword: password,
+            ...data,
+            confirmPassword: data.password,
         });
     }
 }

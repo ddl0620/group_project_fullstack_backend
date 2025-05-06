@@ -27,12 +27,7 @@ export class EventManagementController {
         try {
             const { error } = createEventAdminSchema.validate(request.body);
             if (error) {
-                new HttpError(
-                    error.details[0].message || 'Invalid input',
-                    400,
-                    'VALIDATION_ERROR',
-                    response,
-                );
+                new HttpError(error.details[0].message || 'Invalid input', 400, 'VALIDATION_ERROR');
             }
             const userId: string = request.params.userId;
             const files: Express.Multer.File[] = request.files as Express.Multer.File[];

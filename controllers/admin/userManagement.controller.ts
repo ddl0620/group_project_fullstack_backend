@@ -5,6 +5,7 @@ import { AuthenticationRequest } from '../../interfaces/authenticationRequest.in
 import { signUpSchema, signUpSchemaAdmin } from '../../validation/auth.validation';
 import { HttpError } from '../../helpers/httpsError.helpers';
 import { UserInterface } from '../../interfaces/user.interfaces';
+import { SignUpResponse } from '../../types/auth.type';
 
 export class UserManagementController {
     // Method to get all users
@@ -30,12 +31,11 @@ export class UserManagementController {
                     error.details[0].message || 'Invalid input',
                     400,
                     'INVALID_INPUT',
-                    res,
                 );
             }
-            const user: UserInterface = await UserService.createUser(req.body);
+            const user: SignUpResponse = await UserService.createUser(req.body);
 
-            HttpResponse.sendYES(res, 200, 'Users created successfully', { user: user });
+            HttpResponse.sendYES(res, 200, 'Users created successfully', user);
         } catch (err) {
             next(err);
         }
