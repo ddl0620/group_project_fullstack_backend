@@ -1,27 +1,21 @@
 import { NextFunction, Request, Response } from 'express';
-import { generateToken } from '../helpers/jwtGenerate.helper';
-import { UserInterface } from '../interfaces/user.interfaces';
 import { AuthService } from '../services/auth.service';
 import { HttpResponse } from '../helpers/HttpResponse';
-import { SignInType, SignUpType } from '../types/auth.type';
+import { SignInResponse, SignInType, SignUpResponse, SignUpType } from '../types/auth.type';
+import { signInSchema, signUpSchema } from '../validation/auth.validation';
+import { validateInput } from '../helpers/validateInput';
 
 export class AuthControllers {
     async signUp(request: Request, response: Response, nextFunction: NextFunction): Promise<void> {
         try {
-            const { name, email, password, role, dateOfBirth } = request.body as SignUpType;
+            validateInput(signUpSchema, request.body);
 
-            const newUser: UserInterface = await AuthService.createUser({
-                name,
-                email,
-                password,
-                confirmPassword: password,
-                role,
-                dateOfBirth,
+            const newUser: SignUpResponse = await AuthService.createUser({
+                ...(request.body as SignUpType),
+                confirmPassword: request.body.password,
             });
 
-            HttpResponse.sendYES(response, 201, 'User created successfully', {
-                user: newUser,
-            });
+            HttpResponse.sendYES(response, 201, 'User created successfully', newUser);
         } catch (err) {
             nextFunction(err);
         }
@@ -29,18 +23,14 @@ export class AuthControllers {
 
     async signIn(request: Request, response: Response, nextFunction: NextFunction): Promise<void> {
         try {
+            validateInput(signInSchema, request.body);
             const { email, password } = request.body as SignInType;
-
-            const user: UserInterface = await AuthService.validateCredentials({
+            const result: SignInResponse = await AuthService.validateCredentials({
                 email,
                 password,
             });
 
-            const token: string = generateToken(user.id.toString());
-            HttpResponse.sendYES(response, 200, 'Login successful', {
-                user,
-                token,
-            });
+            HttpResponse.sendYES(response, 200, 'Login successful', result);
         } catch (err) {
             nextFunction(err);
         }

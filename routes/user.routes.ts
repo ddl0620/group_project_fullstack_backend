@@ -10,9 +10,6 @@ const userRoutes = Router();
 const controller = new UserController();
 
 userRoutes.get('/me', authenticationToken, controller.me);
-//admin only
-// userRoutes.get('/all', authenticationToken, adminOnlyMiddleware, controller.getAllUsers);
-userRoutes.get('/all', authenticationToken, controller.getAllUsers);
 
 userRoutes.put(
     '/basicInfo/:id',
@@ -23,7 +20,6 @@ userRoutes.put(
 );
 
 userRoutes.put('/password/:id', authenticationToken, onlySelf, controller.updatePassword);
-
 userRoutes.delete('/:id', authenticationToken, onlySelf, controller.deleteUser);
 userRoutes.get('/:id', authenticationToken, controller.getUserById);
 

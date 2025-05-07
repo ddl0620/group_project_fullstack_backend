@@ -3,27 +3,33 @@ import { HttpError } from '../helpers/httpsError.helpers';
 import jwt from 'jsonwebtoken';
 import { AuthenticationRequest } from '../interfaces/authenticationRequest.interface';
 import { USER_ROLE } from '../enums/role.enum';
+import { StatusCode } from '../enums/statusCode.enums';
+import { ErrorCode } from '../enums/errorCode.enums';
 
 export const authenticationToken = (
     request: AuthenticationRequest,
     response: Response,
     nextFunction: NextFunction,
 ) => {
-    const authHeader = request.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    // console.log(token);
+    const authHeader: string | undefined = request.headers['authorization'];
+    const token: string | undefined = authHeader && authHeader.split(' ')[1];
     if (!token) {
-        return nextFunction(new HttpError('No token provided. Not today', 401, 'NO_TOKEN'));
+        return nextFunction(
+            new HttpError(
+                'No token provided. Not today',
+                StatusCode.UNAUTHORIZED,
+                ErrorCode.NO_TOKEN,
+            ),
+        );
     }
 
-    const secret = process.env.JWT_SECRET;
-    // console.log("JWT SECRET", secret);
+    const secret: string | undefined = process.env.JWT_SECRET;
     if (!secret) {
         return nextFunction(
             new HttpError(
                 'Server configuration error: JWT secret not set',
-                500,
-                'SERVER_CONFIG_ERROR',
+                StatusCode.FORBIDDEN,
+                ErrorCode.NO_SECRET_JWT,
             ),
         );
     }
@@ -38,7 +44,11 @@ export const authenticationToken = (
             typeof encoded.userId !== 'string'
         ) {
             return nextFunction(
-                new HttpError('Invalid token payload', 401, 'INVALID_TOKEN_PAYLOAD'),
+                new HttpError(
+                    'Invalid token payload',
+                    StatusCode.UNAUTHORIZED,
+                    ErrorCode.INVALID_TOKEN_PAYLOAD,
+                ),
             );
         }
 
@@ -61,14 +71,19 @@ export const adminOnlyMiddleware = (
     response: Response,
     nextFunction: NextFunction,
 ) => {
-    const userRole = request.user?.role;
+    const userRole: USER_ROLE | undefined = request.user?.role;
 
     //Commented for testing purposes
 
-    // if (userRole !== USER_ROLE.ADMIN) {
-    //     return nextFunction(new HttpError('Imposter!!!!!', 403, 'ACCESS_DENIED'));
-    // }
-
+    if (userRole !== USER_ROLE.ADMIN && userRole) {
+        return nextFunction(
+            new HttpError(
+                'Only admin are allow to access this route!',
+                StatusCode.UNAUTHORIZED,
+                ErrorCode.ACCESS_DENIED,
+            ),
+        );
+    }
     nextFunction();
 };
 

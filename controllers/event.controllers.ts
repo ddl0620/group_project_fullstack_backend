@@ -166,6 +166,8 @@ export class EventController {
             );
 
             HttpResponse.sendYES(res, 200, 'Event deleted successfully', { event: deletedEvent });
+
+            //Send notification to participants
             const userId = (deletedEvent.participants || []).map(participant =>
                 participant.userId.toString(),
             );

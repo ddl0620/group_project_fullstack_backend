@@ -3,8 +3,9 @@ import { UserModel } from '../models/user.models';
 import { HttpError } from '../helpers/httpsError.helpers';
 import { UserInterface } from '../interfaces/user.interfaces';
 import bcrypt from 'bcryptjs';
-import { SignUpType } from '../types/auth.type';
+import { SignInResponse, SignUpResponse, SignUpType } from '../types/auth.type';
 import { ImageUploadService } from './imageUpload.service';
+import { generateToken } from '../helpers/jwtGenerate.helper';
 
 interface UpdateUserInput {
     name?: string;
@@ -29,12 +30,10 @@ interface UserListResponse {
 
 export class UserService {
     // Create: Tạo user mới (chuyển từ auth.service.ts)
-    static async createUser(data: SignUpType): Promise<UserInterface> {
-        const { name, email, password, role } = data;
-
+    static async createUser(data: SignUpType): Promise<SignUpResponse> {
         // Kiểm tra email đã tồn tại
         const existingUser = await UserModel.findOne({
-            email: email,
+            email: data.email.toLowerCase(),
         });
         console.log(existingUser);
         if (existingUser) {
@@ -43,7 +42,7 @@ export class UserService {
 
         // Mã hóa mật khẩu
         const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        const hashedPassword = await bcrypt.hash(data.password, salt);
 
         try {
             const newUser = await UserModel.create({
@@ -51,7 +50,12 @@ export class UserService {
                 password: hashedPassword,
                 avatar: '',
             });
-            return newUser;
+            const token: string = generateToken(newUser.id.toString());
+
+            return {
+                user: newUser,
+                token,
+            };
         } catch (err) {
             throw new HttpError('Failed to create user', 500, 'CREATE_USER_FAILED');
         }
@@ -227,7 +231,7 @@ export class UserService {
     }
 
     // Validate credentials (chuyển từ auth.service.ts)
-    static async validateCredentials(email: string, password: string): Promise<UserInterface> {
+    static async validateCredentials(email: string, password: string): Promise<SignInResponse> {
         const user = await UserModel.findOne({
             email: email.toLowerCase(),
             isDeleted: false,
@@ -240,7 +244,11 @@ export class UserService {
         if (!isValidPassword) {
             throw new HttpError('Invalid password', 401, 'INVALID_PASSWORD');
         }
+        const token: string = generateToken(user.id.toString());
 
-        return user;
+        return {
+            user,
+            token,
+        };
     }
 }

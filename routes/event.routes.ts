@@ -2,12 +2,7 @@ import { Router } from 'express';
 import { EventController } from '../controllers/event.controllers';
 import { authenticationToken } from '../middlewares/auth.middleware';
 import { validateRequest } from '../middlewares/validation.middleware';
-import {
-    createEventSchema,
-    joinEventSchema,
-    respondEventSchema,
-    updateEventSchema,
-} from '../validation/event.validation';
+import { joinEventSchema, respondEventSchema } from '../validation/event.validation';
 import upload from '../uploads/multer.config';
 
 const eventRoutes = Router();
