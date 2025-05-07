@@ -3,16 +3,16 @@ import { adminOnlyMiddleware, authenticationToken } from '../../middlewares/auth
 import { EventManagementController } from '../../controllers/admin/eventManagement.controller';
 import upload from '../../uploads/multer.config';
 
-const EventRouter = Router();
+const AdminEventRouter = Router();
 
-EventRouter.get(
+AdminEventRouter.get(
     '/',
     authenticationToken,
     adminOnlyMiddleware,
     EventManagementController.getAllEvents,
 );
 
-EventRouter.post(
+AdminEventRouter.post(
     '/:userId',
     authenticationToken,
     adminOnlyMiddleware,
@@ -20,7 +20,7 @@ EventRouter.post(
     EventManagementController.createNewEvent,
 );
 
-EventRouter.put(
+AdminEventRouter.put(
     '/:eventId',
     authenticationToken,
     adminOnlyMiddleware,
@@ -28,18 +28,18 @@ EventRouter.put(
     EventManagementController.updateEvent,
 );
 
-EventRouter.put(
+AdminEventRouter.put(
     '/active/:eventId',
     authenticationToken,
     adminOnlyMiddleware,
     EventManagementController.updateActiveStatus,
 );
 
-EventRouter.get(
+AdminEventRouter.get(
     '/:id',
     authenticationToken,
     adminOnlyMiddleware,
     EventManagementController.getAllEventByUserId,
 );
 
-export default EventRouter;
+export default AdminEventRouter;
