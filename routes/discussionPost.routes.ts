@@ -1,7 +1,7 @@
 import express from 'express';
 import { DiscussionPostController } from '../controllers/discussionPost.controllers';
 import { authenticationToken } from '../middlewares/auth.middleware';
-import { checkEventParticipant } from '../middlewares/checkEventParticipant.middleware';
+import { allowedUserMiddleware } from '../middlewares/checkEventParticipant.middleware';
 import upload from '../uploads/multer.config';
 
 const router = express.Router();
@@ -9,7 +9,7 @@ const router = express.Router();
 router.post(
     '/:eventId',
     authenticationToken,
-    checkEventParticipant,
+    allowedUserMiddleware,
     upload.array('images', 10),
     DiscussionPostController.createPost,
 );
@@ -17,14 +17,14 @@ router.post(
 router.get(
     '/:eventId',
     authenticationToken,
-    checkEventParticipant,
+    allowedUserMiddleware,
     DiscussionPostController.getPosts,
 );
 
 router.get(
     '/:eventId/posts/:postId',
     authenticationToken,
-    checkEventParticipant,
+    allowedUserMiddleware,
     DiscussionPostController.getPostById,
 );
 
@@ -38,7 +38,7 @@ router.put(
 router.delete(
     '/:eventId/posts/:postId',
     authenticationToken,
-    checkEventParticipant,
+    allowedUserMiddleware,
     DiscussionPostController.deletePost,
 );
 

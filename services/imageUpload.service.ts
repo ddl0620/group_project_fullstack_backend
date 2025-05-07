@@ -1,8 +1,8 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { HttpError } from '../helpers/httpsError.helpers';
-import { embertest } from 'globals';
+import { StatusCode } from '../enums/statusCode.enums';
+import { ErrorCode } from '../enums/errorCode.enums';
 
-// Cấu hình Cloudinary
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
@@ -35,8 +35,8 @@ export class ImageUploadService {
         } catch (err: any) {
             throw new HttpError(
                 `Failed to upload image: ${err.message}`,
-                500,
-                'UPLOAD_IMAGE_FAILED',
+                StatusCode.INTERNAL_SERVER_ERROR,
+                ErrorCode.UPLOAD_IMAGE_FAILED,
             );
         }
     }
@@ -59,10 +59,14 @@ export class ImageUploadService {
             const deletePromises = urls.map(async url => {
                 try {
                     // Extract public_id from URL
-                    const urlParts = url.split('/');
+                    const urlParts: string[] = url.split('/');
                     const fileName = urlParts.pop()?.split('.')[0]; // Get filename without extension
                     if (!fileName) {
-                        throw new Error('Invalid URL format');
+                        throw new HttpError(
+                            'Invalid URL format',
+                            StatusCode.URI_TOO_LONG,
+                            ErrorCode.INVALID_INPUT,
+                        );
                     }
                     const publicId = `${folder}/${fileName}`; // e.g., 'discussionPosts/{postId}/{fileName}'
 
@@ -136,7 +140,9 @@ export class ImageUploadService {
 
         // Identify removed images for Cloudinary cleanup
         const entityImages: string[] = entity?.images;
-        const removedImages = (entityImages || []).filter(url => !retainedImages.includes(url));
+        const removedImages: string[] = (entityImages || []).filter(
+            url => !retainedImages.includes(url),
+        );
 
         // Handle new file uploads
         let newImageUrls: string[] = [];
@@ -153,7 +159,6 @@ export class ImageUploadService {
 
         // Delete removed images from Cloudinary
         if (removedImages.length > 0 && folder && id) {
-            console.log('iam deleting');
             await ImageUploadService.deleteImages(removedImages, folder);
         }
 
