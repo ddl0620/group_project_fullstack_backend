@@ -26,6 +26,19 @@ export class EventService {
             throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
         }
 
+        const userEventCount = await EventModel.countDocuments({
+            organizer: userId,
+            isDeleted: false
+        });
+
+        if (user.maxEventCreate !== undefined && userEventCount >= user.maxEventCreate) {
+            throw new HttpError(
+                `You have reached your limit of ${user.maxEventCreate} events. You cannot create more events.`,
+                403,
+                'MAX_EVENT_LIMIT_REACHED'
+            );
+        }
+
         let imgUrls: string[] = [];
         if (files && files.length > 0) {
             imgUrls = await ImageUploadService.convertFileToURL(files, 'event', userId);
@@ -371,6 +384,31 @@ export class EventService {
                 'ORGANIZER_CANNOT_JOIN',
             );
         }
+
+        if (event.isPublic) {
+            const organizer = await UserModel.findById(event.organizer);
+            if (!organizer) {
+                throw new HttpError('Event organizer not found', 404, 'ORGANIZER_NOT_FOUND');
+            }
+            
+            // Count current accepted participants
+            const acceptedParticipantsCount = event.participants?.filter(
+                p => p.status === ParticipationStatus.ACCEPTED
+            ).length || 0;
+            
+            // Check if joining would exceed the limit
+            if (
+                organizer.maxParticipantPerEvent !== undefined && 
+                acceptedParticipantsCount >= organizer.maxParticipantPerEvent
+            ) {
+                throw new HttpError(
+                    `Event has reached the maximum limit of ${organizer.maxParticipantPerEvent} participants`,
+                    403,
+                    'MAX_PARTICIPANT_LIMIT_REACHED'
+                );
+            }
+        }
+
         const status = event.isPublic ? ParticipationStatus.ACCEPTED : ParticipationStatus.PENDING;
         const newParticipant: ParticipantInterface = {
             userId: new mongoose.Types.ObjectId(userId),
@@ -422,6 +460,32 @@ export class EventService {
 
         if (userIdToken !== event.organizer.toString()) {
             throw new HttpError('Only the organizer can respond to this event', 403, 'FORBIDDEN');
+        }
+
+        //get user (organizer), if not found user => cut, kiem tra event hien tai bao nhieu thang tham gia ? event.participant.accepted
+        //user.maxparticipant event - confirm > 1 cho phep tao, ko thi notify error  throw new HttpError('Only the organizer can respond to this event', 403, 'FORBIDDEN');
+        if (input.status === 'ACCEPTED') {
+            const organizer = await UserModel.findById(userIdToken);
+            if (!organizer) {
+                throw new HttpError('Organizer not found', 404, 'USER_NOT_FOUND');
+            }
+            
+            // Count current accepted participants
+            const acceptedParticipantsCount = event.participants?.filter(
+                p => p.status === ParticipationStatus.ACCEPTED
+            ).length || 0;
+            
+            // Check if accepting this participant would exceed the limit
+            if (
+                organizer.maxParticipantPerEvent !== undefined && 
+                acceptedParticipantsCount >= organizer.maxParticipantPerEvent
+            ) {
+                throw new HttpError(
+                    `Event has reached the maximum limit of ${organizer.maxParticipantPerEvent} participants`,
+                    403,
+                    'MAX_PARTICIPANT_LIMIT_REACHED'
+                );
+            }
         }
 
         const participant = event.participants?.find(p => p.userId?.toString() === input.userId);
