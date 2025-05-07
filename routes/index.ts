@@ -17,6 +17,8 @@ import discussionPostRoutes from './discussionPost.routes';
 import discussionReplyRoutes from './discussionReply.routes';
 import imageDiscussionRoutes from './imageDiscussion.routes';
 
+import adminStatisticsRoutes from './adminStatistics.routes'
+
 const applyRoutes = (app: Express) => {
     app.use('/api/v1/auth', authRoutes);
 
@@ -31,6 +33,8 @@ const applyRoutes = (app: Express) => {
     app.use('/api/v1/discussion-posts', discussionPostRoutes);
     app.use('/api/v1/discussion-replies', discussionReplyRoutes);
     app.use('/api/v1/images', imageDiscussionRoutes);
+
+    app.use('/api/v1/adminstatis', adminStatisticsRoutes);
 };
 
 export default applyRoutes;
