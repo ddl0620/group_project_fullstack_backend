@@ -6,7 +6,6 @@ import { HttpError } from '../helpers/httpsError.helpers';
 import mongoose from 'mongoose';
 import { ImageUploadService } from '../services/imageUpload.service';
 import { createReplySchema, updateReplySchema } from '../validation/discussionReply.validation';
-import { CreateNotificationInput } from '../types/notification.type';
 import { NotificationService } from '../services/notification.service';
 import { UserModel } from '../models/user.models';
 import { UserInterface } from '../interfaces/user.interfaces';
@@ -22,9 +21,6 @@ export class DiscussionReplyController {
         next: NextFunction,
     ): Promise<void> {
         try {
-            // Log req.body for debugging
-            console.log('req.body:', req.body);
-
             const { content, parent_reply_id } = req.body;
             const files = req.files as Express.Multer.File[] | undefined;
             const { postId } = req.params;

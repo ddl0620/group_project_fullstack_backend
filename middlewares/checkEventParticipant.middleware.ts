@@ -1,27 +1,31 @@
-import { Response, NextFunction } from "express";
-import { EventModel } from "../models/event.models";
-import { HttpError } from "../helpers/httpsError.helpers";
-import { AuthenticationRequest } from "../interfaces/authenticationRequest.interface";
-import mongoose from "mongoose";
+import { Response, NextFunction } from 'express';
+import { EventModel } from '../models/event.models';
+import { HttpError } from '../helpers/httpsError.helpers';
+import { AuthenticationRequest } from '../interfaces/authenticationRequest.interface';
+import mongoose from 'mongoose';
 
-export const checkEventParticipant = async (req: AuthenticationRequest, res: Response, next: NextFunction) => {
+export const allowedUserMiddleware = async (
+    req: AuthenticationRequest,
+    res: Response,
+    next: NextFunction,
+) => {
     try {
         const { eventId } = req.params;
         const userId = req.user?.userId;
 
         // Log middleware call and values to debug
-        console.log("Middleware checkEventParticipant called");
-        console.log("eventId:", eventId);
-        console.log("userId:", userId);
+        console.log('Middleware checkEventParticipant called');
+        console.log('eventId:', eventId);
+        console.log('userId:', userId);
 
         // Validate eventId format
         if (!mongoose.isValidObjectId(eventId)) {
-            throw new HttpError("Invalid event ID format", 400, "INVALID_EVENT_ID");
+            throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
         }
 
         // Validate userId
         if (!userId) {
-            throw new HttpError("User ID is missing", 401, "USER_ID_MISSING");
+            throw new HttpError('User ID is missing', 401, 'USER_ID_MISSING');
         }
 
         // Check event access
@@ -30,19 +34,19 @@ export const checkEventParticipant = async (req: AuthenticationRequest, res: Res
             isDeleted: false,
             $or: [
                 { organizer: userId },
-                { "participants": { $elemMatch: { userId, status: "ACCEPTED" } } }
-            ]
+                { participants: { $elemMatch: { userId, status: 'ACCEPTED' } } },
+            ],
         });
 
         // Log kết quả query
         if (!event) {
-            console.log("Event not found or isDeleted is true");
+            console.log('Event not found or isDeleted is true');
         } else {
-            console.log("Event found:", event);
+            console.log('Event found:', event);
         }
 
         if (!event) {
-            throw new HttpError("You are not authorized to access this event", 403, "UNAUTHORIZED");
+            throw new HttpError('You are not authorized to access this event', 403, 'UNAUTHORIZED');
         }
 
         next();

@@ -5,17 +5,24 @@ import { HttpError } from '../helpers/httpsError.helpers';
 import { CreateNotificationInput } from '../types/notification.type';
 import { UserModel } from '../models/user.models';
 import { NotificationType } from '../enums/notificationType.enums';
+import { UserInterface } from '../interfaces/user.interfaces';
+import { StatusCode } from '../enums/statusCode.enums';
+import { ErrorCode } from '../enums/errorCode.enums';
 
 export class NotificationService {
     static async createNotification(
         notificationData: CreateNotificationInput,
     ): Promise<NotificationInterface> {
-        const users = await UserModel.find({ _id: { $in: notificationData.userIds } }).select(
-            '_id',
-        );
+        const users: UserInterface[] | null = await UserModel.find({
+            _id: { $in: notificationData.userIds },
+        }).select('_id');
 
         if (users.length !== notificationData.userIds.length) {
-            throw new HttpError('Some users not found', 404, 'USER_NOT_FOUND');
+            throw new HttpError(
+                'Some users not found',
+                StatusCode.NOT_FOUND,
+                ErrorCode.USER_NOT_FOUND,
+            );
         }
 
         try {
@@ -25,7 +32,7 @@ export class NotificationService {
                 title: notificationData.title,
             });
 
-            const savedNotification = await notification.save();
+            const savedNotification: NotificationInterface = await notification.save();
 
             const userNotifications = notificationData.userIds.map(userId => ({
                 userId: new mongoose.Types.ObjectId(userId),
@@ -34,7 +41,11 @@ export class NotificationService {
             await UserNotificationModel.insertMany(userNotifications);
             return savedNotification;
         } catch (err) {
-            throw new HttpError('Failed to create notification', 500, 'CREATE_NOTIFICATION_FAILED');
+            throw new HttpError(
+                'Failed to create notification',
+                StatusCode.BAD_REQUEST,
+                ErrorCode.CAN_NOT_CREATE,
+            );
         }
     }
 
@@ -49,7 +60,7 @@ export class NotificationService {
                 throw new HttpError('Notification not found', 404, 'NOTIFICATION_NOT_FOUND');
             }
             return deletedNotification;
-        } catch (error) {
+        } catch (err) {
             throw new HttpError('Failed to delete notification', 500, 'DELETE_NOTIFICATION_FAILED');
         }
     }
@@ -64,14 +75,12 @@ export class NotificationService {
                 .exec();
 
             // Filter out null notificationId and map to notificationId
-            const notifications = userNotifications
+            return userNotifications
                 .filter(userNotification => userNotification.notificationId) // Ensure notificationId exists
                 .map(
                     userNotification =>
                         userNotification.notificationId as unknown as NotificationInterface,
                 );
-
-            return notifications;
         } catch (error) {
             console.error('Error in getUserNotifications:', error); // Log the original error
             throw new HttpError(
@@ -83,21 +92,19 @@ export class NotificationService {
     }
 
     static eventUpdateNotificationContent = (eventTitle: string) => {
-        const data = {
+        return {
             type: NotificationType.UPDATE_EVENT,
             title: 'Event Details Updated!',
             content: `Dear participants, we would like to inform you that the event "${eventTitle}" you registered for, has been updated by the organizer.Please check the event details for the latest information.If you have any questions, feel free to contact the event organizer.`,
         };
-        return data;
     };
 
     static invitationNotificationContent = (eventTitle: string) => {
-        const data = {
+        return {
             type: NotificationType.INVITATION,
             title: 'You’re Invited!',
             content: `You have been invited to the event "${eventTitle}".Join us for an exciting experience! Please check the event details and RSVP at your earliest convenience.`,
         };
-        return data;
     };
 
     static replyNotificationContent = (eventTitle: string, commenter: string, userName: string) => {
@@ -121,70 +128,63 @@ export class NotificationService {
     };
 
     static newPostNotificationContent = (eventTitle: string) => {
-        const data = {
+        return {
             type: NotificationType.NEW_POST,
             title: 'New Post Available!',
             content: `A new post has been added to the event "${eventTitle}". Visit the event page to stay updated with the latest content.`,
         };
-        return data;
     };
 
     static deleteEventNotificationContent = (eventTitle: string) => {
-        const data = {
+        return {
             type: NotificationType.DELETE_EVENT,
             title: 'Event Cancelled!',
             content: `We regret to inform you that the event "${eventTitle}" has been cancelled. Please contact the organizer for more details or if you have any questions.`,
         };
-        return data;
     };
 
     static rsvpAcceptNotificationContent = (eventName: string) => {
-        const data = {
+        return {
             type: NotificationType.RSVP_ACCEPT,
             title: 'RSVP Confirmed!',
             content: `Your RSVP for the event "${eventName}" has been successfully accepted. 
             We look forward to seeing you there!`,
         };
-        return data;
     };
 
     static rsvpDeniedNotificationContent = (eventName: string) => {
-        const data = {
+        return {
             type: NotificationType.RSVP_DENIED,
             title: 'RSVP Declined',
             content: `We regret to inform you that your RSVP for the event "${eventName}" 
             could not be accepted. Please contact the organizer for more details.`,
         };
-        return data;
     };
 
     static requestJoinNotificationContent = (participantsSentName: string, eventName: string) => {
-        const data = {
+        return {
             type: NotificationType.REQUEST_JOIN,
             title: 'New Join Request',
             content: `${participantsSentName} has requested to join the event "${eventName}". 
             Please review their request and respond accordingly.`,
         };
-        return data;
     };
 
     static requestAcceptNotificationContent = (eventName: string) => {
-        const data = {
+        return {
             type: NotificationType.REQUEST_ACCEPT,
             title: 'Join Request Approved!',
             content: `Your request to join the event "${eventName}" has been approved. 
             Welcome aboard! Check the event details for more information.`,
         };
-        return data;
     };
 
     static requestDeniedNotificationContent = (eventName: string) => {
-        const data = {
+        return {
             type: NotificationType.REQUEST_DENIED,
             title: 'Join Request Declined',
             content: `We’re sorry, but your request to join the event "${eventName}" 
             has been declined. Please contact the organizer for further details.`,
         };
-        return data;
     };
 }

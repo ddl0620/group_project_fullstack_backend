@@ -8,7 +8,6 @@ import upload from '../uploads/multer.config';
 const eventRoutes = Router();
 const event = new EventController();
 
-// eventRoutes.post('/add-event', authenticationToken, validateRequest(createEventSchema), event.addEvent);
 eventRoutes.post('/add-event', authenticationToken, upload.array('images', 10), event.addEvent);
 
 eventRoutes.get('/all-event', authenticationToken, event.getAllEvent);
