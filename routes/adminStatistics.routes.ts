@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { AdminStatisticsController } from '../controllers/adminStatistics.controller';
-import { authenticationToken } from '../middlewares/auth.middleware';
-import validateRequest from '././../middlewares/validateRequest.middleware';
+import { authenticationToken, adminOnlyMiddleware } from '../middlewares/auth.middleware';
+import {validateRequest} from '../middlewares/validation.middleware';
 import {
     eventsByDateSchema,
     usersByDateSchema,
@@ -10,11 +10,17 @@ import {
 
 const router = Router();
 
-router.get('/statistics/overview', authenticationToken, AdminStatisticsController.getOverview);
+router.get(
+    '/statistics/overview',
+    authenticationToken,
+    adminOnlyMiddleware, // Chỉ admin được phép truy cập
+    AdminStatisticsController.getOverview,
+);
 
 router.get(
     '/statistics/events-by-date',
     authenticationToken,
+    adminOnlyMiddleware, // Chỉ admin được phép truy cập
     validateRequest(eventsByDateSchema, 'query'),
     AdminStatisticsController.getEventsByDate,
 );
@@ -22,6 +28,7 @@ router.get(
 router.get(
     '/statistics/users-by-date',
     authenticationToken,
+    adminOnlyMiddleware, // Chỉ admin được phép truy cập
     validateRequest(usersByDateSchema, 'query'),
     AdminStatisticsController.getUsersByDate,
 );
@@ -29,6 +36,7 @@ router.get(
 router.get(
     '/statistics/deleted-users-by-date',
     authenticationToken,
+    adminOnlyMiddleware, // Chỉ admin được phép truy cập
     validateRequest(deletedUsersByDateSchema, 'query'),
     AdminStatisticsController.getDeletedUsersByDate,
 );
