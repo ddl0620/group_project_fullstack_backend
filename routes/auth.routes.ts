@@ -6,7 +6,9 @@ const authController = new AuthControllers();
 
 router.post('/sign-in', authController.signIn);
 router.post('/sign-up', authController.signUp);
-// router.post('/send-verification', authController.sendVerification);
-router.post('/verify-code', authController.verifySignUp);
+
+router.post('/send-verification', authController.sendVerification);
+router.post('/verify-code', authController.verifyCode);
+
 
 export default router;

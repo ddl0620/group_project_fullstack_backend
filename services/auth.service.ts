@@ -1,6 +1,6 @@
 import { SignInResponse, SignInType, SignUpResponse, SignUpType } from '../types/auth.type';
 import { UserService } from './user.service';
-import { sendVerificationEmail } from '../helpers/email';
+import { OtpService } from './otp.service';
 
 export class AuthService {
     static async validateCredentials(input: SignInType): Promise<SignInResponse> {
@@ -16,9 +16,7 @@ export class AuthService {
     }
 
     static async sendVerificationCode(email: string): Promise<void> {
-        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-        // Send the verification code via email
-        await sendVerificationEmail(email, verificationCode);
+        return await OtpService.sendOtp(email);
     }
 
 }
