@@ -5,8 +5,9 @@ import { AuthenticationRequest } from '../interfaces/authenticationRequest.inter
 import { USER_ROLE } from '../enums/role.enum';
 import { StatusCode } from '../enums/statusCode.enums';
 import { ErrorCode } from '../enums/errorCode.enums';
+import { UserModel } from '../models/user.models';
 
-export const authenticationToken = (
+export const authenticationToken = async (
     request: AuthenticationRequest,
     response: Response,
     nextFunction: NextFunction,
@@ -52,8 +53,21 @@ export const authenticationToken = (
             );
         }
 
+        const user = await UserModel.findById(encoded.userId);
+        // console.log(user);
+        if (!user) {
+            return nextFunction(
+                new HttpError(
+                    `User id = ${encoded.userId} not found`,
+                    StatusCode.NOT_FOUND,
+                    ErrorCode.USER_NOT_FOUND,
+                ),
+            );
+        }
+
         request.user = {
             userId: encoded.userId,
+            role: user.role === 'admin' ? USER_ROLE.ADMIN : USER_ROLE.USER,
         };
         nextFunction();
     } catch (err) {
