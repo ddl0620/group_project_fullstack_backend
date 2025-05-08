@@ -75,7 +75,7 @@ export const adminOnlyMiddleware = (
 
     //Commented for testing purposes
 
-    if (userRole !== USER_ROLE.ADMIN && userRole) {
+    if (userRole !== USER_ROLE.ADMIN || !userRole) {
         return nextFunction(
             new HttpError(
                 'Only admin are allow to access this route!',
