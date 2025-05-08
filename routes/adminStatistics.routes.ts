@@ -13,14 +13,14 @@ const router = Router();
 router.get(
     '/statistics/overview',
     authenticationToken,
-    adminOnlyMiddleware, // Chỉ admin được phép truy cập
+    adminOnlyMiddleware, 
     AdminStatisticsController.getOverview,
 );
 
 router.get(
     '/statistics/events-by-date',
     authenticationToken,
-    adminOnlyMiddleware, // Chỉ admin được phép truy cập
+    adminOnlyMiddleware, 
     validateRequest(eventsByDateSchema, 'query'),
     AdminStatisticsController.getEventsByDate,
 );
