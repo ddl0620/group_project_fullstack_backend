@@ -78,4 +78,12 @@ export class AdminStatisticsService {
             { $project: { date: '$_id', count: 1, _id: 0 } },
         ]);
     }
+
+    // API 5: Số lượng sự kiện công khai và riêng tư
+    static async getPublicAndPrivateEvents(): Promise<{ publicEvents: number; privateEvents: number }> {
+        const publicEvents = await EventModel.countDocuments({ isPublic: true });
+        const privateEvents = await EventModel.countDocuments({ isPublic: false });
+
+        return { publicEvents, privateEvents };
+    }
 }

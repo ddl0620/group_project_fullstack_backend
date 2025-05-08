@@ -43,4 +43,14 @@ export class AdminStatisticsController {
             next(err);
         }
     }
+
+    // API 5: Số lượng sự kiện công khai và riêng tư
+    static async getPublicAndPrivateEvents(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const data = await AdminStatisticsService.getPublicAndPrivateEvents();
+            HttpResponse.sendYES(res, 200, 'Public and private events count fetched successfully', data);
+        } catch (err) {
+            next(err);
+        }
+    }
 }
