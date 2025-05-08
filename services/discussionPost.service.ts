@@ -7,6 +7,8 @@ import { EventInterface } from '../interfaces/event.interfaces';
 import { EventModel } from '../models/event.models';
 import { NotificationService } from './notification.service';
 import mongoose from 'mongoose';
+import { StatusCode } from '../enums/statusCode.enums';
+import { ErrorCode } from '../enums/errorCode.enums';
 
 export class DiscussionPostService {
     // Tạo bài viết mới
@@ -20,7 +22,11 @@ export class DiscussionPostService {
         });
 
         if (!event) {
-            throw new HttpError('Event not found. Cannot ', 404, 'EVENT_NOT_FOUND');
+            throw new HttpError(
+                'Event not found ',
+                StatusCode.NOT_FOUND,
+                ErrorCode.EVENT_NOT_FOUND,
+            );
         }
 
         data.images = await ImageUploadService.convertFileToURL(
@@ -29,13 +35,13 @@ export class DiscussionPostService {
             data.creator_id as string,
         );
 
-        const post = await DiscussionPostModel.create(data);
+        const post: DiscussionPostInterface | null = await DiscussionPostModel.create(data);
         if (!post) {
-            throw new HttpError(`Failed to create post`);
-        }
-
-        if (!post) {
-            throw new HttpError('Failed to update post with images');
+            throw new HttpError(
+                `Failed to create post`,
+                StatusCode.NOT_FOUND,
+                ErrorCode.CAN_NOT_CREATE,
+            );
         }
 
         const userIds: string[] =
@@ -44,7 +50,6 @@ export class DiscussionPostService {
             ...NotificationService.newPostNotificationContent(event?.title as string),
             userIds,
         });
-
         return post;
     }
 
@@ -54,12 +59,7 @@ export class DiscussionPostService {
         page: number,
         limit: number,
     ): Promise<DiscussionPostInterface[]> {
-        // Kiểm tra định dạng event_id
-        if (!event_id.match(/^[0-9a-fA-F]{24}$/)) {
-            throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
-        }
-
-        const skip = (page - 1) * limit;
+        const skip: number = (page - 1) * limit;
 
         const posts = await DiscussionPostModel.find({ event_id, isDeleted: false })
             .populate('creator_id', 'username')
@@ -68,7 +68,11 @@ export class DiscussionPostService {
             .sort({ created_at: -1 });
 
         if (!posts) {
-            throw new HttpError('No posts found for this event', 404, 'NO_POSTS_FOUND');
+            throw new HttpError(
+                'No posts found for this event',
+                StatusCode.NOT_FOUND,
+                ErrorCode.POST_NOT_FOUND,
+            );
         }
 
         return posts;
@@ -76,9 +80,12 @@ export class DiscussionPostService {
 
     // Lấy chi tiết bài viết
     static async getPostById(postId: string): Promise<DiscussionPostInterface | null> {
-        // Kiểm tra định dạng postId
         if (!mongoose.Types.ObjectId.isValid(postId)) {
-            throw new HttpError('Invalid post ID format', 400, 'INVALID_POST_ID');
+            throw new HttpError(
+                'Invalid post ID format',
+                StatusCode.NOT_FOUND,
+                ErrorCode.INVALID_ID,
+            );
         }
 
         return await DiscussionPostModel.findById(postId).exec();
@@ -91,9 +98,10 @@ export class DiscussionPostService {
         existingImages: string[],
         updateData: UpdatePostInput,
     ): Promise<DiscussionPostInterface | null> {
-        const currentPost = await DiscussionPostService.getPostById(post_id);
+        const currentPost: DiscussionPostInterface | null =
+            await DiscussionPostService.getPostById(post_id);
         if (!currentPost) {
-            throw new HttpError('Post not found', 404, 'POST_NOT_FOUND');
+            throw new HttpError('Post not found', StatusCode.NOT_FOUND, ErrorCode.POST_NOT_FOUND);
         }
 
         const updatedImages: string[] = await ImageUploadService.updateImagesList(
@@ -111,14 +119,14 @@ export class DiscussionPostService {
 
     // Soft delete bài viết
     static async deletePost(post_id: string): Promise<DiscussionPostInterface | null> {
-        const post = await DiscussionPostModel.findById(post_id);
+        const post: DiscussionPostInterface | null = await DiscussionPostModel.findById(post_id);
         if (!post) {
-            throw new HttpError('Failed to delete post', 500, 'DELETE_POST_FAILED');
+            throw new HttpError(
+                'Failed to delete post',
+                StatusCode.BAD_REQUEST,
+                ErrorCode.DELETE_FAILED,
+            );
         }
-        return await DiscussionPostModel.findByIdAndUpdate(
-            post_id,
-            { isDeleted: true },
-            { new: true },
-        );
+        return DiscussionPostModel.findByIdAndUpdate(post_id, { isDeleted: true }, { new: true });
     }
 }

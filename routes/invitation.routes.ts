@@ -6,12 +6,10 @@ import {
     createInvitationSchema,
     getInvitationsByEventIdSchema,
 } from '../validation/invitation.validation';
-import { createRSVPSchema } from '../validation/rsvp.validation';
 
 const invitationRoutes = Router();
 const controller = new InvitationController();
 
-// Tạo lời mời mới: POST /invitations
 invitationRoutes.post(
     '/invitations',
     authenticationToken,
@@ -19,10 +17,8 @@ invitationRoutes.post(
     controller.createInvitation,
 );
 
-// Lấy danh sách lời mời đã nhận của user: GET /invitations
 invitationRoutes.get('/received', authenticationToken, controller.getAllReceivedInvitations);
 
-// Lấy danh sách lời mời theo eventId (organizer only): GET /invitations/event
 invitationRoutes.get(
     '/invitations/event',
     authenticationToken,
@@ -36,25 +32,18 @@ invitationRoutes.get(
     controller.getReceivedInvitationByEventId,
 );
 
-// Lấy danh sách RSVP của user: GET /rsvps
 invitationRoutes.get('/rsvps', authenticationToken, controller.getRSVPs);
 
-// Lấy lời mời theo ID: GET /invitations/:id
 invitationRoutes.get('/invitations/:id', authenticationToken, controller.getInvitationById);
 
-// Xóa lời mời: DELETE /invitations/:id
 invitationRoutes.delete('/invitations/:id', authenticationToken, controller.deleteInvitation);
 
-// Tạo RSVP: POST /invitations/:invitationId/rsvp
 invitationRoutes.post('/rsvp/:invitationId', authenticationToken, controller.createRSVP);
 
-// Lấy RSVP theo ID: GET /rsvps/:id
 invitationRoutes.get('/rsvps/:id', authenticationToken, controller.getRSVPById);
 
-// Xóa RSVP: DELETE /rsvps/:id
 invitationRoutes.delete('/rsvps/:id', authenticationToken, controller.deleteRSVP);
 
-// Lấy RSVP theo invitationId: GET /invitations/:invitationId/rsvp
 invitationRoutes.get(
     '/invitations/:invitationId/rsvp',
     authenticationToken,

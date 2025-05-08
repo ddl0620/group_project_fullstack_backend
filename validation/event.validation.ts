@@ -100,7 +100,7 @@ export const updateEventSchema = Joi.object({
     location: Joi.string().optional().messages({
         'string.base': 'Location must be a string',
     }),
-    existingImages: Joi.array().items(Joi.string()).optional().messages({
+    existingImages: Joi.optional().messages({
         'array.base': 'existingImages must be an array of strings',
         'string.base': 'Each image must be a string',
     }),

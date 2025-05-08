@@ -13,6 +13,9 @@ import { ParticipationStatus } from '../enums/participationStatus.enums';
 import { ParticipantInterface } from '../interfaces/participant.interfaces';
 import { ImageUploadService } from './imageUpload.service';
 import { NotificationService } from './notification.service';
+import { StatusCode } from '../enums/statusCode.enums';
+import { ErrorCode } from '../enums/errorCode.enums';
+import { UserInterface } from '../interfaces/user.interfaces';
 
 export class EventService {
     static async addEvent(
@@ -20,22 +23,23 @@ export class EventService {
         eventData: CreateEventInput,
         files: Express.Multer.File[] | undefined | null,
     ): Promise<EventInterface> {
-        const user = await UserModel.findById(userId).select('-password');
+        const user: Partial<UserInterface> | null =
+            await UserModel.findById(userId).select('-password');
 
         if (!user) {
-            throw new HttpError('User not found', 404, 'USER_NOT_FOUND');
+            throw new HttpError('User not found', StatusCode.NOT_FOUND, ErrorCode.USER_NOT_FOUND);
         }
 
         const userEventCount = await EventModel.countDocuments({
             organizer: userId,
-            isDeleted: false
+            isDeleted: false,
         });
 
         if (user.maxEventCreate !== undefined && userEventCount >= user.maxEventCreate) {
             throw new HttpError(
                 `You have reached your limit of ${user.maxEventCreate} events. You cannot create more events.`,
-                403,
-                'MAX_EVENT_LIMIT_REACHED'
+                StatusCode.FORBIDDEN,
+                ErrorCode.EVENT_EXCEEDED_LIMIT,
             );
         }
 
@@ -45,15 +49,18 @@ export class EventService {
         }
 
         try {
-            const newEvent = await EventModel.create({
+            return await EventModel.create({
                 ...eventData,
                 organizer: userId,
                 participants: [],
                 images: imgUrls,
             });
-            return newEvent;
         } catch (err) {
-            throw new HttpError('Failed to create event', 500, 'CREATE_EVENT_FAILED');
+            throw new HttpError(
+                'Failed to create event',
+                StatusCode.NOT_FOUND,
+                ErrorCode.EVENT_NOT_FOUND,
+            );
         }
     }
 
@@ -73,12 +80,12 @@ export class EventService {
             ],
         };
 
-        const events = await EventModel.find(query)
+        const events: EventInterface[] | null = await EventModel.find(query)
             .sort({ createdAt: sortOrder })
             .skip(skip)
             .limit(limit);
 
-        const totalEvents = await EventModel.countDocuments(query);
+        const totalEvents: number = await EventModel.countDocuments(query);
 
         return {
             events,
@@ -98,8 +105,8 @@ export class EventService {
         limit: number = 10,
         sortBy: string = 'desc',
     ): Promise<EventListResponse> {
-        const skip = (page - 1) * limit;
-        const sortOrder = sortBy.toLowerCase() === 'asc' ? 1 : -1;
+        const skip: number = (page - 1) * limit;
+        const sortOrder: 1 | -1 = sortBy.toLowerCase() === 'asc' ? 1 : -1;
 
         const query = {
             $and: [
@@ -111,7 +118,7 @@ export class EventService {
                         { 'participants.userId': userId },
                     ],
                 },
-                { isDeleted: false }, // Loại bỏ sự kiện đã bị xóa
+                { isDeleted: false },
             ],
         };
 
@@ -139,8 +146,8 @@ export class EventService {
         limit: number = 10,
         sortBy: string = 'desc',
     ): Promise<EventListResponse> {
-        const skip = (page - 1) * limit;
-        const sortOrder = sortBy.toLowerCase() === 'asc' ? 1 : -1;
+        const skip: number = (page - 1) * limit;
+        const sortOrder: 1 | -1 = sortBy.toLowerCase() === 'asc' ? 1 : -1;
 
         const query = {
             $and: [
@@ -151,7 +158,7 @@ export class EventService {
             ],
         };
 
-        const events = await EventModel.find(query)
+        const events: EventInterface[] | null = await EventModel.find(query)
             .sort({ createdAt: sortOrder })
             .skip(skip)
             .limit(limit);
@@ -174,15 +181,15 @@ export class EventService {
         limit: number = 10,
         sortBy: string = 'desc',
     ): Promise<EventListResponse> {
-        const skip = (page - 1) * limit;
-        const sortOrder = sortBy.toLowerCase() === 'asc' ? 1 : -1;
+        const skip: number = (page - 1) * limit;
+        const sortOrder: 1 | -1 = sortBy.toLowerCase() === 'asc' ? 1 : -1;
 
-        const events = await EventModel.find()
+        const events: EventInterface[] | null = await EventModel.find()
             .sort({ createdAt: sortOrder })
             .skip(skip)
             .limit(limit);
 
-        const totalEvents = await EventModel.countDocuments();
+        const totalEvents: number = await EventModel.countDocuments();
 
         return {
             events,
@@ -201,8 +208,8 @@ export class EventService {
         limit: number = 10,
         sortBy: string = 'desc',
     ): Promise<EventListResponse> {
-        const skip = (page - 1) * limit;
-        const sortOrder = sortBy.toLowerCase() === 'asc' ? 1 : -1;
+        const skip: number = (page - 1) * limit;
+        const sortOrder: 1 | -1 = sortBy.toLowerCase() === 'asc' ? 1 : -1;
 
         const query = {
             $and: [
@@ -213,12 +220,12 @@ export class EventService {
             ],
         };
 
-        const events = await EventModel.find(query)
+        const events: EventInterface[] | null = await EventModel.find(query)
             .sort({ createdAt: sortOrder })
             .skip(skip)
             .limit(limit);
 
-        const totalEvents = await EventModel.countDocuments(query);
+        const totalEvents: number = await EventModel.countDocuments(query);
 
         return {
             events,
@@ -233,17 +240,25 @@ export class EventService {
 
     static async getEventById(userId: string, eventId: string): Promise<EventInterface> {
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
-            throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
+            throw new HttpError(
+                'Invalid event ID format',
+                StatusCode.NOT_FOUND,
+                ErrorCode.INVALID_ID,
+            );
         }
 
-        const event = await EventModel.findOne({ _id: eventId, isDeleted: false }); // Loại bỏ sự kiện đã bị xóa
+        const event: EventInterface | null = await EventModel.findOne({
+            _id: eventId,
+            isDeleted: false,
+        }); // Loại bỏ sự kiện đã bị xóa
+
         if (!event) {
-            throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
+            throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
         }
 
         if (!event.isPublic) {
-            const isOrganizer = event.organizer?.toString() === userId;
-            const isParticipant =
+            const isOrganizer: boolean = event.organizer?.toString() === userId;
+            const isParticipant: boolean =
                 event.participants?.some(
                     participant => participant.userId?.toString() === userId,
                 ) || false;
@@ -264,31 +279,42 @@ export class EventService {
         updateData: UpdateEventInput,
     ): Promise<EventInterface> {
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
-            throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
+            throw new HttpError(
+                'Invalid event ID format',
+                StatusCode.NOT_FOUND,
+                ErrorCode.INVALID_ID,
+            );
         }
 
-        const event = await EventModel.findById(eventId); // Loại bỏ sự kiện đã bị xóa
+        const event: EventInterface | null = await EventModel.findById(eventId); // Loại bỏ sự kiện đã bị xóa
 
         if (!event) {
-            throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
+            throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
         }
 
         if (updateData.organizer) {
             if (updateData.organizer !== event.organizer) {
-                const newOrganizer = await UserModel.findOne({
+                const newOrganizer: UserInterface | null = await UserModel.findOne({
                     _id: updateData.organizer,
                     isDeleted: false,
                 });
 
                 if (!newOrganizer) {
-                    throw new HttpError('New organizer not found', 404, 'NOT_FOUND_USER');
+                    throw new HttpError(
+                        'New organizer not found',
+                        StatusCode.NOT_FOUND,
+                        ErrorCode.USER_NOT_FOUND,
+                    );
                 }
             }
         } else if (!event.organizer || event.organizer.toString() !== userId) {
-            throw new HttpError('Only the organizer can update this event', 403, 'FORBIDDEN');
+            throw new HttpError(
+                'Only the organizer can update this event',
+                StatusCode.FORBIDDEN,
+                ErrorCode.UNAUTHORIZED,
+            );
         }
 
-        console.log('existingImages', existingImages);
         updateData.images = await ImageUploadService.updateImagesList(
             files,
             existingImages,
@@ -297,18 +323,23 @@ export class EventService {
             eventId,
         );
 
-        console.log('updateData.images', updateData.images);
-
-        const updatedEvent = await EventModel.findByIdAndUpdate(
+        const updatedEvent: EventInterface | null = await EventModel.findByIdAndUpdate(
             eventId,
             { $set: updateData },
             { new: true, runValidators: true },
         );
 
         if (!updatedEvent) {
-            throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
+            throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
         }
 
+        const userIds: string[] = (updatedEvent.participants || []).map(participant =>
+            participant.userId.toString(),
+        );
+        await NotificationService.createNotification({
+            ...NotificationService.eventUpdateNotificationContent(updatedEvent.title),
+            userIds,
+        });
         return updatedEvent;
     }
 
@@ -318,27 +349,40 @@ export class EventService {
         isActive: boolean,
     ): Promise<EventInterface> {
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
-            throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
+            throw new HttpError(
+                'Invalid event ID format',
+                StatusCode.NOT_FOUND,
+                ErrorCode.INVALID_ID,
+            );
         }
 
-        const event = await EventModel.findById(eventId); // Loại bỏ sự kiện đã bị xóa
+        const event: EventInterface | null = await EventModel.findById(eventId); // Loại bỏ sự kiện đã bị xóa
         if (!event) {
-            throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
+            throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
         }
 
         if (!event.organizer || event.organizer.toString() !== userId) {
             throw new HttpError('Only the organizer can delete this event', 403, 'FORBIDDEN');
         }
 
-        // Soft delete: Đánh dấu isDeleted = true
-        const deletedEvent = await EventModel.findByIdAndUpdate(
+        const deletedEvent: EventInterface | null = await EventModel.findByIdAndUpdate(
             eventId,
             { $set: { isDeleted: isActive } },
             { new: true },
         );
 
         if (!deletedEvent) {
-            throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
+            throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
+        }
+
+        if (!isActive) {
+            const userId: string[] = (deletedEvent.participants || []).map(participant =>
+                participant.userId.toString(),
+            );
+            await NotificationService.createNotification({
+                ...NotificationService.deleteEventNotificationContent(deletedEvent.title),
+                userIds: userId,
+            });
         }
 
         return deletedEvent;
@@ -346,78 +390,93 @@ export class EventService {
 
     static async joinEvent(userId: string, eventId: string): Promise<EventInterface> {
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
-            throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
+            throw new HttpError(
+                'Invalid event ID format',
+                StatusCode.NOT_FOUND,
+                ErrorCode.INVALID_ID,
+            );
         }
 
         if (!mongoose.Types.ObjectId.isValid(userId)) {
-            throw new HttpError('Invalid user ID format', 400, 'INVALID_USER_ID');
+            throw new HttpError(
+                'Invalid user ID format',
+                StatusCode.NOT_FOUND,
+                ErrorCode.INVALID_ID,
+            );
         }
 
         const event = await EventModel.findOne({ _id: eventId, isDeleted: false }); // Loại bỏ sự kiện đã bị xóa
         if (!event) {
-            throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
+            throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
         }
 
         const user = await UserModel.findById(userId);
         if (!user) {
-            throw new HttpError('User not found', 404, 'NOT_FOUND_USER');
+            throw new HttpError('User not found', StatusCode.NOT_FOUND, ErrorCode.USER_NOT_FOUND);
         }
 
-        const isJoined = event.participants?.some(
+        const isJoined: boolean | undefined = event.participants?.some(
             participant => participant.userId?.toString() === userId,
         );
 
-        const isOrganizer = event.organizer?.toString() === userId;
+        const isOrganizer: boolean = event.organizer?.toString() === userId;
 
         if (isJoined) {
             throw new HttpError(
                 'User already joined or sent request to the event',
-                400,
-                'USER_ALREADY_JOINED',
+                StatusCode.FORBIDDEN,
+                ErrorCode.UNAUTHORIZED,
             );
         }
 
         if (isOrganizer) {
             throw new HttpError(
                 'Organizer cannot join their own event',
-                400,
-                'ORGANIZER_CANNOT_JOIN',
+                StatusCode.FORBIDDEN,
+                ErrorCode.UNAUTHORIZED,
             );
         }
 
         if (event.isPublic) {
-            const organizer = await UserModel.findById(event.organizer);
+            const organizer: UserInterface | null = await UserModel.findById(event.organizer);
             if (!organizer) {
-                throw new HttpError('Event organizer not found', 404, 'ORGANIZER_NOT_FOUND');
+                throw new HttpError(
+                    'Event organizer not found',
+                    StatusCode.NOT_FOUND,
+                    ErrorCode.USER_NOT_FOUND,
+                );
             }
-            
+
             // Count current accepted participants
-            const acceptedParticipantsCount = event.participants?.filter(
-                p => p.status === ParticipationStatus.ACCEPTED
-            ).length || 0;
-            
+            const acceptedParticipantsCount =
+                event.participants?.filter(p => p.status === ParticipationStatus.ACCEPTED).length ||
+                0;
+
             // Check if joining would exceed the limit
             if (
-                organizer.maxParticipantPerEvent !== undefined && 
+                organizer.maxParticipantPerEvent !== undefined &&
                 acceptedParticipantsCount >= organizer.maxParticipantPerEvent
             ) {
                 throw new HttpError(
                     `Event has reached the maximum limit of ${organizer.maxParticipantPerEvent} participants`,
-                    403,
-                    'MAX_PARTICIPANT_LIMIT_REACHED'
+                    StatusCode.FORBIDDEN,
+                    ErrorCode.MAX_PARTICIPANT_EXCEEDED_LIMIT,
                 );
             }
         }
 
-        const status = event.isPublic ? ParticipationStatus.ACCEPTED : ParticipationStatus.PENDING;
-        const newParticipant: ParticipantInterface = {
+        const status: Partial<ParticipationStatus> = event.isPublic
+            ? ParticipationStatus.ACCEPTED
+            : ParticipationStatus.PENDING;
+
+        const newParticipant: Partial<ParticipantInterface> = {
             userId: new mongoose.Types.ObjectId(userId),
             status,
             invitedAt: new Date(),
             respondedAt: event.isPublic ? new Date() : null,
-        } as ParticipantInterface;
+        };
 
-        const updatedEvent = await EventModel.findByIdAndUpdate(
+        const updatedEvent: EventInterface | null = await EventModel.findByIdAndUpdate(
             eventId,
             {
                 $push: { participants: newParticipant },
@@ -426,7 +485,7 @@ export class EventService {
         );
 
         if (!updatedEvent) {
-            throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
+            throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
         }
 
         await NotificationService.createNotification({
@@ -446,59 +505,87 @@ export class EventService {
         input: RespondJoinInput,
     ): Promise<EventInterface> {
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
-            throw new HttpError('Invalid event ID format', 400, 'INVALID_EVENT_ID');
+            throw new HttpError(
+                'Invalid event ID format',
+                StatusCode.NOT_FOUND,
+                ErrorCode.INVALID_ID,
+            );
         }
 
         if (!mongoose.Types.ObjectId.isValid(input.userId)) {
-            throw new HttpError('Invalid user ID format', 400, 'INVALID_USER_ID');
+            throw new HttpError(
+                'Invalid user ID format',
+                StatusCode.NOT_FOUND,
+                ErrorCode.INVALID_ID,
+            );
         }
 
-        const event = await EventModel.findOne({ _id: eventId, isDeleted: false }); // Loại bỏ sự kiện đã bị xóa
+        const event: EventInterface | null = await EventModel.findOne({
+            _id: eventId,
+            isDeleted: false,
+        }); // Loại bỏ sự kiện đã bị xóa
+
         if (!event) {
-            throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
+            throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
         }
 
         if (userIdToken !== event.organizer.toString()) {
-            throw new HttpError('Only the organizer can respond to this event', 403, 'FORBIDDEN');
+            throw new HttpError(
+                'Only the organizer can respond to this event',
+                StatusCode.FORBIDDEN,
+                ErrorCode.UNAUTHORIZED,
+            );
         }
 
-        //get user (organizer), if not found user => cut, kiem tra event hien tai bao nhieu thang tham gia ? event.participant.accepted
-        //user.maxparticipant event - confirm > 1 cho phep tao, ko thi notify error  throw new HttpError('Only the organizer can respond to this event', 403, 'FORBIDDEN');
         if (input.status === 'ACCEPTED') {
-            const organizer = await UserModel.findById(userIdToken);
+            const organizer: UserInterface | null = await UserModel.findById(userIdToken);
             if (!organizer) {
-                throw new HttpError('Organizer not found', 404, 'USER_NOT_FOUND');
+                throw new HttpError(
+                    'Organizer not found',
+                    StatusCode.NOT_FOUND,
+                    ErrorCode.USER_NOT_FOUND,
+                );
             }
-            
+
             // Count current accepted participants
-            const acceptedParticipantsCount = event.participants?.filter(
-                p => p.status === ParticipationStatus.ACCEPTED
-            ).length || 0;
-            
+            const acceptedParticipantsCount: number =
+                event.participants?.filter(p => p.status === ParticipationStatus.ACCEPTED).length ||
+                0;
+
             // Check if accepting this participant would exceed the limit
             if (
-                organizer.maxParticipantPerEvent !== undefined && 
+                organizer.maxParticipantPerEvent !== undefined &&
                 acceptedParticipantsCount >= organizer.maxParticipantPerEvent
             ) {
                 throw new HttpError(
                     `Event has reached the maximum limit of ${organizer.maxParticipantPerEvent} participants`,
-                    403,
-                    'MAX_PARTICIPANT_LIMIT_REACHED'
+                    StatusCode.FORBIDDEN,
+                    ErrorCode.MAX_PARTICIPANT_EXCEEDED_LIMIT,
                 );
             }
         }
 
-        const participant = event.participants?.find(p => p.userId?.toString() === input.userId);
+        const participant: ParticipantInterface | undefined = event.participants?.find(
+            p => p.userId?.toString() === input.userId,
+        );
 
         if (!participant) {
-            throw new HttpError('Participant not found', 404, 'NOT_FOUND_PARTICIPANT');
+            throw new HttpError(
+                'Participant not found',
+                StatusCode.NOT_FOUND,
+                ErrorCode.USER_NOT_FOUND,
+            );
         }
 
         if (participant.status !== ParticipationStatus.PENDING) {
-            throw new HttpError('Participant already replied', 400, 'PARTICIPANT_ALREADY_REPLIED');
+            throw new HttpError(
+                'Participant already replied',
+                StatusCode.FORBIDDEN,
+                ErrorCode.FORBIDDEN,
+            );
         }
 
-        const updatedEvent = await EventModel.findOneAndUpdate(
+        const updatedEvent: EventInterface | null = await EventModel.findOneAndUpdate(
             { _id: eventId, 'participants.userId': input.userId },
             {
                 $set: {
@@ -513,7 +600,7 @@ export class EventService {
         );
 
         if (!updatedEvent) {
-            throw new HttpError('Event not found', 404, 'NOT_FOUND_EVENT');
+            throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
         }
 
         const notiContent =

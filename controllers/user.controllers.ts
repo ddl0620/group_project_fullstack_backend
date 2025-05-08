@@ -2,14 +2,16 @@ import { Response, NextFunction } from 'express';
 import { HttpResponse } from '../helpers/HttpResponse';
 import { UserService } from '../services/user.service';
 import { AuthenticationRequest } from '../interfaces/authenticationRequest.interface';
-import { HttpError } from '../helpers/httpsError.helpers';
+import { validateInput } from '../helpers/validateInput';
+import { updatePasswordSchema } from '../validation/user.validation';
+import { StatusCode } from '../enums/statusCode.enums';
 
 export class UserController {
     async me(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
             const user = await UserService.getCurrentUser(req.user?.userId as string);
 
-            HttpResponse.sendYES(res, 200, 'Fetch user successfully', {
+            HttpResponse.sendYES(res, StatusCode.OK, 'Fetch user successfully', {
                 user,
             });
         } catch (err) {
@@ -29,7 +31,7 @@ export class UserController {
 
             const result = await UserService.getAllUsers(page, limit, sortBy);
 
-            HttpResponse.sendYES(res, 200, 'Users fetched successfully', result);
+            HttpResponse.sendYES(res, StatusCode.OK, 'Users fetched successfully', result);
         } catch (err) {
             next(err);
         }
@@ -43,7 +45,7 @@ export class UserController {
         try {
             const user = await UserService.getUserById(req.params?.id as string);
 
-            HttpResponse.sendYES(res, 200, 'Users fetched successfully', user);
+            HttpResponse.sendYES(res, StatusCode.OK, 'Users fetched successfully', user);
         } catch (err) {
             next(err);
         }
@@ -69,7 +71,7 @@ export class UserController {
                 notAllowedFields,
             );
 
-            HttpResponse.sendYES(res, 200, 'User updated successfully', {
+            HttpResponse.sendYES(res, StatusCode.OK, 'User updated successfully', {
                 user: updatedUser,
             });
         } catch (err) {
@@ -83,23 +85,12 @@ export class UserController {
         next: NextFunction,
     ): Promise<void> {
         try {
-            const { currentPassword, newPassword, confirmPassword } = req.body;
-            if (!currentPassword || !newPassword || !confirmPassword) {
-                return next(
-                    new HttpError(
-                        'Please provide current password, new password and confirm password',
-                        400,
-                    ),
-                );
-            }
-            const updatedUser = await UserService.updatePassword(
-                req.user?.userId as string,
-                currentPassword,
-                newPassword,
-                confirmPassword,
-            );
+            validateInput(updatePasswordSchema, req.body);
+            const updatedUser = await UserService.updatePassword(req.user?.userId as string, {
+                ...req.body,
+            });
 
-            HttpResponse.sendYES(res, 200, 'Password updated successfully', {
+            HttpResponse.sendYES(res, StatusCode.OK, 'Password updated successfully', {
                 user: updatedUser,
             });
         } catch (err) {
@@ -111,7 +102,7 @@ export class UserController {
         try {
             const deletedUser = await UserService.deleteUser(req.user?.userId as string);
 
-            HttpResponse.sendYES(res, 200, 'User deleted successfully', {
+            HttpResponse.sendYES(res, StatusCode.OK, 'User deleted successfully', {
                 user: deletedUser,
             });
         } catch (err) {

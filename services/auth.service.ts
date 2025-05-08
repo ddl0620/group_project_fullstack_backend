@@ -1,4 +1,3 @@
-import { UserInterface } from '../interfaces/user.interfaces';
 import { SignInResponse, SignInType, SignUpResponse, SignUpType } from '../types/auth.type';
 import { UserService } from './user.service';
 

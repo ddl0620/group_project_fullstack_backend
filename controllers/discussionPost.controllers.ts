@@ -10,6 +10,7 @@ import { createPostSchema, updatePostSchema } from '../validation/discussionPost
 import { NotificationService } from '../services/notification.service';
 import { EventModel } from '../models/event.models';
 import { EventInterface } from '../interfaces/event.interfaces';
+import { validateInput } from '../helpers/validateInput';
 // import multer from 'multer';
 export class DiscussionPostController {
     // Tạo bài viết
@@ -19,12 +20,8 @@ export class DiscussionPostController {
         next: NextFunction,
     ): Promise<void> {
         try {
-            const { error } = createPostSchema.validate(req.body);
-            if (error) {
-                throw new HttpError(error.details[0].message, 400, 'INVALID_INPUT');
-            }
+            validateInput(createPostSchema, req.body);
 
-            const { content } = req.body;
             const { eventId } = req.params;
             const creator_id: string = req.user?.userId as string;
             const files = req.files as Express.Multer.File[];
@@ -32,8 +29,7 @@ export class DiscussionPostController {
             // Tạo bài viết trước
             const post = await DiscussionPostService.createPost(
                 {
-                    content,
-                    images: [], // Tạm thời để trống, sẽ cập nhật sau khi xử lý ảnh
+                    ...req.body,
                     creator_id,
                     event_id: eventId,
                 },
