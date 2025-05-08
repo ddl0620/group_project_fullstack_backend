@@ -41,4 +41,11 @@ router.get(
     AdminStatisticsController.getDeletedUsersByDate,
 );
 
+router.get(
+    '/statistics/public-private-events',
+    authenticationToken,
+    adminOnlyMiddleware,
+    AdminStatisticsController.getPublicAndPrivateEvents,
+);
+
 export default router;
