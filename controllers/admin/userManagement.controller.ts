@@ -7,7 +7,27 @@ import { HttpError } from '../../helpers/httpsError.helpers';
 import { UserInterface } from '../../interfaces/user.interfaces';
 import { SignUpResponse } from '../../types/auth.type';
 
+/**
+ * UserManagementController
+ * 
+ * This controller handles all user management operations including:
+ * - Retrieving users (all users or by ID)
+ * - Creating new users
+ * - Updating user information
+ * - Deleting users
+ */
 export class UserManagementController {
+    /**
+     * Retrieves all users with pagination and sorting
+     * 
+     * @param req - Express Request object containing query parameters for pagination and sorting
+     * @param res - Express Response object
+     * @param next - Express NextFunction for error handling
+     * 
+     * @query {number} page - Page number for pagination (default: 1)
+     * @query {number} limit - Number of users per page (default: 10)
+     * @query {string} sortBy - Sort direction, 'asc' or 'desc' (default: 'desc')
+     */
     // Method to get all users
     static async getAllUsers(req: Request, res: Response, next: NextFunction) {
         try {
@@ -23,6 +43,16 @@ export class UserManagementController {
         }
     }
 
+    /**
+     * Creates a new user with admin privileges
+     * 
+     * @param req - Express Request object containing user data
+     * @param res - Express Response object
+     * @param next - Express NextFunction for error handling
+     * 
+     * @param {object} req.body - User data validated against signUpSchemaAdmin
+     * @returns {SignUpResponse} - The created user object
+     */
     static async createNewUser(req: Request, res: Response, next: NextFunction) {
         try {
             const { error } = signUpSchemaAdmin.validate(req.body);
@@ -41,6 +71,17 @@ export class UserManagementController {
         }
     }
 
+    /**
+     * Updates user information for a specific user
+     * 
+     * @param req - AuthenticationRequest object containing user data and authenticated user
+     * @param res - Express Response object
+     * @param next - Express NextFunction for error handling
+     * 
+     * @param {string} req.params.id - ID of the user to update
+     * @param {object} req.body - Updated user data
+     * @param {Express.Multer.File[]} req.files - Uploaded files (e.g., profile picture)
+     */
     static async updateUserInformation(
         req: AuthenticationRequest,
         res: Response,
@@ -64,6 +105,15 @@ export class UserManagementController {
         }
     }
 
+    /**
+     * Deletes a user by ID
+     * 
+     * @param req - Express Request object containing user ID
+     * @param res - Express Response object
+     * @param next - Express NextFunction for error handling
+     * 
+     * @param {string} req.params.id - ID of the user to delete
+     */
     static async deleteUser(req: Request, res: Response, next: NextFunction) {
         try {
             const id = req.params.id;
@@ -74,6 +124,15 @@ export class UserManagementController {
         }
     }
 
+    /**
+     * Retrieves a specific user by their ID
+     * 
+     * @param req - Express Request object containing user ID
+     * @param res - Express Response object
+     * 
+     * @param {string} req.params.id - ID of the user to retrieve
+     * @returns {object} - The user object if found
+     */
     // Method to get a user by ID
     static async getUserById(req: Request, res: Response) {
         const { id } = req.params;

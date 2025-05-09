@@ -1,6 +1,13 @@
 import mongoose, { Schema, model } from "mongoose";
 import { DiscussionPostInterface } from "../interfaces/discussionPost.interfaces";
 
+/**
+ * Mongoose schema for discussion posts.
+ * 
+ * This schema defines the structure for discussion post documents in MongoDB,
+ * representing user-created posts within event discussions. Each post belongs to
+ * a specific event and can include text content and optional images.
+ */
 // Schema cho bài viết trong hệ thống Discussion
 const DiscussionPostSchema = new Schema<DiscussionPostInterface>({
     creator_id: { type: mongoose.Schema.Types.ObjectId, ref: "user", required: true }, // Người tạo bài viết
@@ -16,4 +23,10 @@ const DiscussionPostSchema = new Schema<DiscussionPostInterface>({
 DiscussionPostSchema.index({ event_id: 1 });
 DiscussionPostSchema.index({ creator_id: 1 });
 
+/**
+ * Mongoose model for discussion post documents.
+ * 
+ * This model provides an interface for creating, querying, updating, and
+ * deleting discussion post documents in the MongoDB 'DiscussionPost' collection.
+ */
 export const DiscussionPostModel = model<DiscussionPostInterface>("DiscussionPost", DiscussionPostSchema);

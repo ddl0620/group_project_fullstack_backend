@@ -1,5 +1,12 @@
 import Joi from 'joi';
 
+/**
+ * Validation Schema for Reply Creation
+ * 
+ * Defines validation rules for creating new replies in the system.
+ * Supports both top-level replies to posts and nested replies to other replies.
+ * Ensures that replies have required content and proper parent relationships.
+ */
 export const createReplySchema = Joi.object({
     content: Joi.string().trim().min(1).required().messages({
         "string.base": "Content must be a string",
@@ -12,6 +19,13 @@ export const createReplySchema = Joi.object({
     }),
 });
 
+/**
+ * Validation Schema for Reply Updates
+ * 
+ * Defines validation rules for updating existing replies.
+ * Ensures that replies maintain required content and proper image references.
+ * Supports modifying content and managing attached images.
+ */
 export const updateReplySchema = Joi.object({
     content: Joi.string().trim().min(1).required().messages({
         "string.base": "Content must be a string",

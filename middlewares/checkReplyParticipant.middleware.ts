@@ -6,6 +6,33 @@ import { HttpError } from "../helpers/httpsError.helpers";
 import { AuthenticationRequest } from "../interfaces/authenticationRequest.interface";
 import mongoose from "mongoose";
 
+/**
+ * Discussion Reply Access Control Middleware
+ * 
+ * Verifies that the authenticated user has permission to access or interact with
+ * discussion replies within an event. This middleware:
+ * 
+ * 1. Validates the format of provided post or reply IDs
+ * 2. Resolves the associated event for the discussion content
+ * 3. Verifies the user has access to the parent event as either:
+ *    - The event organizer
+ *    - An accepted participant of the event
+ * 
+ * The middleware handles two access paths:
+ * - Direct access via postId (for creating new replies or accessing all replies)
+ * - Indirect access via replyId (for updating, deleting or viewing a specific reply)
+ * 
+ * It also enriches the request by adding the eventId to req.params for downstream use.
+ * 
+ * @param req - Extended Express request with authentication properties and discussion parameters
+ * @param res - Express response object (unused but required by Express middleware signature)
+ * @param next - Express next middleware function
+ * @returns void - Calls next middleware or error handler
+ * 
+ * @throws HttpError(400) - If post or reply ID format is invalid
+ * @throws HttpError(404) - If the specified post or reply cannot be found
+ * @throws HttpError(403) - If user is not authorized to access the parent event
+ */
 export const checkReplyParticipant = async (req: AuthenticationRequest, res: Response, next: NextFunction) => {
     try {
         console.log("Middleware checkReplyParticipant called");

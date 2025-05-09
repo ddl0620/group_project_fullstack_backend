@@ -2,6 +2,13 @@ import Joi from 'joi';
 import { ParticipationStatus } from '../enums/participationStatus.enums';
 import { EventType } from '../enums/eventType.enums';
 
+/**
+ * Validation Schema for Event Creation
+ * 
+ * Defines validation rules for creating new events in the system.
+ * Ensures that events have required fields like title, description, type, dates,
+ * and visibility settings. Used by regular users to create events.
+ */
 export const createEventSchema = Joi.object({
     title: Joi.string().required().messages({
         'string.base': 'Title must be a string',
@@ -37,6 +44,13 @@ export const createEventSchema = Joi.object({
     }),
 });
 
+/**
+ * Validation Schema for Admin Event Creation
+ * 
+ * Extends the regular event creation schema with additional fields for
+ * administrative purposes. Allows admins to create events on behalf of users
+ * by specifying an organizer.
+ */
 export const createEventAdminSchema = Joi.object({
     title: Joi.string().required().messages({
         'string.base': 'Title must be a string',
@@ -76,6 +90,13 @@ export const createEventAdminSchema = Joi.object({
     }),
 });
 
+/**
+ * Validation Schema for Event Updates
+ * 
+ * Defines validation rules for updating existing events by regular users.
+ * All fields are optional, but at least one field must be provided.
+ * Ensures data integrity when modifying event details.
+ */
 export const updateEventSchema = Joi.object({
     title: Joi.string().optional().messages({
         'string.base': 'Title must be a string',
@@ -113,6 +134,13 @@ export const updateEventSchema = Joi.object({
         'object.min': 'At least one field must be provided for update',
     });
 
+    /**
+ * Validation Schema for Admin Event Updates
+ * 
+ * Extends the regular event update schema with additional fields for
+ * administrative purposes. Allows admins to update events and change
+ * the event organizer.
+ */
 export const updateEventAdminSchema = Joi.object({
     title: Joi.string().optional().messages({
         'string.base': 'Title must be a string',
@@ -153,6 +181,12 @@ export const updateEventAdminSchema = Joi.object({
         'object.min': 'At least one field must be provided for update',
     });
 
+    /**
+ * Validation Schema for Event Join Requests
+ * 
+ * Defines validation rules for users requesting to join an event.
+ * Ensures that join requests include valid user identification.
+ */
 export const joinEventSchema = Joi.object({
     userId: Joi.string().required().messages({
         'string.base': 'User ID must be a string',
@@ -160,6 +194,12 @@ export const joinEventSchema = Joi.object({
     }),
 });
 
+/**
+ * Validation Schema for Event Participation Responses
+ * 
+ * Defines validation rules for users responding to event invitations.
+ * Ensures that responses include valid user identification and participation status.
+ */
 export const respondEventSchema = Joi.object({
     userId: Joi.string().required().messages({
         'string.base': 'User ID must be a string',
