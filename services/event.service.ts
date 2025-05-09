@@ -38,6 +38,7 @@ export class EventService {
      * @returns {Promise<EventInterface>} The created event
      * @throws {HttpError} If user not found or event creation limit reached
      */
+
     static async addEvent(
         userId: string,
         eventData: CreateEventInput,
@@ -64,6 +65,7 @@ export class EventService {
         }
 
         let imgUrls: string[] = [];
+
         if (files && files.length > 0) {
             imgUrls = await ImageUploadService.convertFileToURL(files, 'event', userId);
         }
@@ -416,6 +418,7 @@ export class EventService {
             );
         }
 
+
         updateData.images = await ImageUploadService.updateImagesList(
             files,
             existingImages,
@@ -531,6 +534,11 @@ export class EventService {
         const event = await EventModel.findOne({ _id: eventId, isDeleted: false }); // Loại bỏ sự kiện đã bị xóa
         if (!event) {
             throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
+        }
+        
+        // HERE: Check if the event is open for joining
+        if (!event.isOpen) {
+            throw new HttpError('Event is closed', StatusCode.FORBIDDEN, ErrorCode.EVENT_CLOSED);
         }
 
         const user = await UserModel.findById(userId);
@@ -747,6 +755,42 @@ export class EventService {
             ...notiContent,
             userIds: [input.userId],
         });
+
+        return updatedEvent;
+    }
+
+    // HERE : Update the isOpen field of the event
+    static async updateIsOpen(eventId: string, userId: string, isOpen: boolean): Promise<EventInterface> {
+        if (!mongoose.Types.ObjectId.isValid(eventId)) {
+            throw new HttpError(
+                'Invalid event ID format',
+                StatusCode.NOT_FOUND,
+                ErrorCode.INVALID_ID,
+            );
+        }
+
+        const event = await EventModel.findOne({ _id: eventId, isDeleted: false });
+        if (!event) {
+            throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
+        }
+
+        if (event.organizer.toString() !== userId) {
+            throw new HttpError(
+                'Only the organizer can update the event status',
+                StatusCode.FORBIDDEN,
+                ErrorCode.UNAUTHORIZED,
+            );
+        }
+
+        const updatedEvent = await EventModel.findByIdAndUpdate(
+            eventId,
+            { $set: { isOpen } },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedEvent) {
+            throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
+        }
 
         return updatedEvent;
     }

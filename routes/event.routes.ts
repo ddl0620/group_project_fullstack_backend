@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { EventController } from '../controllers/event.controllers';
 import { authenticationToken } from '../middlewares/auth.middleware';
 import { validateRequest } from '../middlewares/validation.middleware';
-import { joinEventSchema, respondEventSchema } from '../validation/event.validation';
+import { joinEventSchema, respondEventSchema, updateIsOpenSchema} from '../validation/event.validation';
 import upload from '../uploads/multer.config';
 
 /**
@@ -43,6 +43,7 @@ eventRoutes.post('/add-event', authenticationToken, upload.array('images', 10), 
  */
 eventRoutes.get('/all-event', authenticationToken, event.getAllEvent);
 
+
 /**
  * GET /joined
  * 
@@ -65,6 +66,7 @@ eventRoutes.get('/joined', authenticationToken, event.getJoinedEvent);
  * 
  * @returns {Array} List of events created by the user
  */
+
 eventRoutes.get('/my', authenticationToken, event.getMyEvent);
 
 /**
@@ -88,6 +90,7 @@ eventRoutes.post(
     event.joinEvent,
 );
 
+
 /**
  * POST /:eventId/respond-join
  * 
@@ -103,12 +106,14 @@ eventRoutes.post(
  * 
  * @returns {Object} Confirmation of the response action
  */
+
 eventRoutes.post(
     '/:eventId/respond-join',
     authenticationToken,
     validateRequest(respondEventSchema),
     event.respondEvent,
 );
+
 
 /**
  * GET /:id
@@ -151,6 +156,14 @@ eventRoutes.put('/:id', authenticationToken, upload.array('images', 10), event.u
  * 
  * @returns {Object} Confirmation of deletion
  */
+
 eventRoutes.delete('/:id', authenticationToken, event.deleteEvent);
+
+eventRoutes.patch(
+    '/:eventId/is-open',
+    authenticationToken,
+    validateRequest(updateIsOpenSchema),
+    event.updateIsOpen,
+);
 
 export default eventRoutes;

@@ -27,6 +27,7 @@ const EventSchema = new Schema<EventInterface>(
         participants: { type: [ParticipantSchema], required: false }, // Use imported schema
         isPublic: { type: Boolean, default: false },
         isDeleted: { type: Boolean, default: false },
+        isOpen: { type: Boolean, default: true }, // Add this field
     },
     {
         timestamps: true,

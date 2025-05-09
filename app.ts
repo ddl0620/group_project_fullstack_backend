@@ -13,6 +13,7 @@ import applyRoutes from './routes';
  * Primary Express application object that handles HTTP requests,
  * middleware application, and route definitions.
  */
+
 const app: Express = express();
 /**
  * HTTP server instance
@@ -44,6 +45,7 @@ app.get('/', (_req: Request, res: Response): void => {
     res.send('Backend: Fullstack Group Project\n');
 });
 
+
 /**
  * Server initialization
  * 
@@ -51,6 +53,7 @@ app.get('/', (_req: Request, res: Response): void => {
  * a connection to the MongoDB database.
  * Logs confirmation message when server is successfully running.
  */
+
 // 🚀 Start Server
 server.listen(PORT, async (): Promise<void> => {
     await connectToDB();
