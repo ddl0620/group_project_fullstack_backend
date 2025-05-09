@@ -7,8 +7,11 @@ import applyGlobalMiddleware from './middlewares';
 import errorMiddleware from './middlewares/error.middlewares';
 import applyRoutes from './routes';
 import CronScheduleBuilder from './helpers/CronScheduleBuilder';
-import { as } from '@faker-js/faker/dist/airline-BUL6NtOJ';
 import { CronManager } from './cron/cronManager';
+import { sendEventNotificationEmail } from './email/email';
+import { EventInterface } from './interfaces/event.interfaces';
+import mongoose from 'mongoose';
+import { EventType } from './enums/eventType.enums';
 
 /**
  * Express application instance
@@ -55,13 +58,26 @@ app.get('/', (_req: Request, res: Response): void => {
  * a connection to the MongoDB database.
  * Logs confirmation message when server is successfully running.
  */
+const event: EventInterface = {
+    title: 'Annual Tech Conference',
+    description: 'Join us for a day of inspiring talks and networking with industry leaders.',
+    type: EventType.ENTERTAINMENT,
+    startDate: new Date('2025-06-01T14:00:00'),
+    endDate: new Date('2025-06-01T18:00:00'),
+    location: 'Tech Hub, 123 Innovation Drive, City',
+    organizer: '1234567890abcdef12345678', // Example ObjectId
+    isPublic: true,
+    isDeleted: false,
+    isOpen: true,
+} as EventInterface;
 
 const schedule = new CronScheduleBuilder().minute('every').build();
 const action = async () => {
-    console.log('Action executed');
+    // await sendEventNotificationEmail('trinhnhung23689@gmail.com', event);
+    console.log('Email sent successfully!');
 };
-
-CronManager.getInstance().registerJob('Test', schedule, action);
+const eventId = '123';
+CronManager.getInstance().registerJob(`${eventId}`, schedule, action);
 
 // 🚀 Start Server
 server.listen(PORT, async (): Promise<void> => {
