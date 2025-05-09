@@ -1,5 +1,12 @@
 import Joi from 'joi';
 
+/**
+ * Validation Schema for User Sign In
+ * 
+ * Defines validation rules for authenticating existing users.
+ * Enforces email format validation and minimum password length requirements.
+ * Used in login endpoints to validate user credentials before authentication.
+ */
 export const signInSchema = Joi.object({
     email: Joi.string().email().required().messages({
         'string.email': 'Invalid email format',
@@ -11,6 +18,13 @@ export const signInSchema = Joi.object({
     }),
 });
 
+/**
+ * Validation Schema for Standard User Registration
+ * 
+ * Defines validation rules for creating new standard user accounts.
+ * Enforces data integrity for user profile information and credentials.
+ * Used in registration endpoints to validate new user data.
+ */
 export const signUpSchema = Joi.object({
     name: Joi.string().required().messages({
         'any.required': 'Name is required',
@@ -36,6 +50,13 @@ export const signUpSchema = Joi.object({
     }),
 });
 
+/**
+ * Validation Schema for Admin User Registration
+ * 
+ * Extends the standard user registration schema with additional fields
+ * specific to administrator accounts. Includes event creation and participant
+ * limits for administrative control over platform usage.
+ */
 export const signUpSchemaAdmin = Joi.object({
     name: Joi.string().required().messages({
         'any.required': 'Name is required',

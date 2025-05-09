@@ -1,6 +1,13 @@
 import mongoose, { Schema, model } from "mongoose";
 import { ImageDiscussionInterface } from "../interfaces/imageDiscussion.interfaces";
 
+/**
+ * Mongoose schema for discussion images.
+ * 
+ * This schema defines the structure for image documents in MongoDB,
+ * representing images that can be attached to discussion posts or replies.
+ * It provides a centralized way to manage and reference images across the discussion system.
+ */
 // Schema cho hình ảnh trong hệ thống Discussion
 const ImageDiscussionSchema = new Schema<ImageDiscussionInterface>({
     url: { type: String, required: true }, // URL của hình ảnh
@@ -14,4 +21,13 @@ const ImageDiscussionSchema = new Schema<ImageDiscussionInterface>({
 ImageDiscussionSchema.index({ reference_id: 1 });
 ImageDiscussionSchema.index({ type: 1, reference_id: 1 });
 
+/**
+ * Mongoose model for discussion image documents.
+ * 
+ * This model provides an interface for creating, querying, updating, and
+ * deleting image documents in the MongoDB 'Image' collection.
+ * 
+ * Note: There appears to be a typo in the model name (ImageDicussionModel)
+ * which should be corrected to ImageDiscussionModel for consistency.
+ */
 export const ImageDicussionModel = model<ImageDiscussionInterface>("Image", ImageDiscussionSchema);
