@@ -7,9 +7,31 @@ import { getInvitationsByEventIdSchema } from '../validation/invitation.validati
 import { createRSVPSchema } from '../validation/rsvp.validation';
 import { validateInput } from '../helpers/validateInput';
 
+/**
+ * InvitationController
+ * 
+ * This controller handles all operations related to event invitations and RSVPs, including:
+ * - Creating and managing invitations to events
+ * - Retrieving invitations (received, sent, by event)
+ * - Managing RSVPs (create, retrieve, delete)
+ * - Handling invitation-specific operations for event organizers
+ * 
+ * All endpoints require authentication through AuthenticationRequest.
+ */
 export class InvitationController {
     /**
-     * Create a new invitation
+     * Creates a new invitation to an event
+     * 
+     * This endpoint allows an authenticated user to create a new invitation for an event,
+     * typically used by event organizers to invite other users.
+     * 
+     * @param req - AuthenticationRequest object containing authenticated user information and invitation data
+     * @param res - Express Response object
+     * @param next - Express NextFunction for error handling
+     * 
+     * @param {string} req.user.userId - ID of the authenticated user creating the invitation
+     * @param {Object} req.body - Invitation details (eventId, recipientId, etc.)
+     * @returns {Promise<void>} - Returns the created invitation through HttpResponse
      */
     async createInvitation(
         req: AuthenticationRequest,
@@ -29,7 +51,19 @@ export class InvitationController {
     }
 
     /**
-     * Get list of invitations for the authenticated user
+     * Retrieves all invitations received by the authenticated user with pagination
+     * 
+     * This endpoint fetches all invitations where the authenticated user is the recipient,
+     * supporting pagination and sorting options.
+     * 
+     * @param req - AuthenticationRequest object containing authenticated user information
+     * @param res - Express Response object
+     * @param next - Express NextFunction for error handling
+     * 
+     * @param {number} req.query.page - Page number for pagination (default: 1)
+     * @param {number} req.query.limit - Number of invitations per page (default: 10)
+     * @param {string} req.query.sortBy - Sorting direction (default: 'desc')
+     * @returns {Promise<void>} - Returns paginated invitations through HttpResponse
      */
     async getAllReceivedInvitations(
         req: AuthenticationRequest,
@@ -53,6 +87,19 @@ export class InvitationController {
         }
     }
 
+    /**
+     * Retrieves a received invitation for a specific event
+     * 
+     * This endpoint fetches an invitation received by the authenticated user
+     * for a specific event identified by the eventId parameter.
+     * 
+     * @param req - AuthenticationRequest object containing authenticated user information
+     * @param res - Express Response object
+     * @param next - Express NextFunction for error handling
+     * 
+     * @param {string} req.params.eventId - ID of the event to fetch the invitation for
+     * @returns {Promise<void>} - Returns the invitation through HttpResponse
+     */
     async getReceivedInvitationByEventId(
         req: AuthenticationRequest,
         res: Response,
@@ -71,8 +118,18 @@ export class InvitationController {
         }
     }
 
-    /**
-     * Get an invitation by ID
+     /**
+     * Retrieves a specific invitation by its ID
+     * 
+     * This endpoint fetches a single invitation based on the provided invitation ID,
+     * ensuring the authenticated user has permission to view it.
+     * 
+     * @param req - AuthenticationRequest object containing authenticated user information
+     * @param res - Express Response object
+     * @param next - Express NextFunction for error handling
+     * 
+     * @param {string} req.params.id - ID of the invitation to fetch
+     * @returns {Promise<void>} - Returns the requested invitation through HttpResponse
      */
     async getInvitationById(
         req: AuthenticationRequest,
@@ -91,7 +148,17 @@ export class InvitationController {
     }
 
     /**
-     * Delete an invitation
+     * Deletes an invitation
+     * 
+     * This endpoint allows a user to delete an invitation they've created or received,
+     * depending on the service implementation's permission checks.
+     * 
+     * @param req - AuthenticationRequest object containing authenticated user information
+     * @param res - Express Response object
+     * @param next - Express NextFunction for error handling
+     * 
+     * @param {string} req.params.id - ID of the invitation to delete
+     * @returns {Promise<void>} - Returns confirmation of deletion through HttpResponse
      */
     async deleteInvitation(
         req: AuthenticationRequest,
@@ -111,8 +178,19 @@ export class InvitationController {
         }
     }
 
-    /**
-     * Create an RSVP for an invitation
+     /**
+     * Creates an RSVP response for an invitation
+     * 
+     * This endpoint allows a user to respond to an invitation they've received
+     * by creating an RSVP with their attendance status.
+     * 
+     * @param req - AuthenticationRequest object containing authenticated user information and RSVP data
+     * @param res - Express Response object
+     * @param next - Express NextFunction for error handling
+     * 
+     * @param {string} req.params.invitationId - ID of the invitation being responded to
+     * @param {Object} req.body - RSVP details (status, message, etc.)
+     * @returns {Promise<void>} - Returns the created RSVP through HttpResponse
      */
     async createRSVP(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
@@ -130,7 +208,19 @@ export class InvitationController {
     }
 
     /**
-     * Get list of RSVPs for the authenticated user
+     * Retrieves all RSVPs created by the authenticated user with pagination
+     * 
+     * This endpoint fetches all RSVPs where the authenticated user is the creator,
+     * supporting pagination and sorting options.
+     * 
+     * @param req - AuthenticationRequest object containing authenticated user information
+     * @param res - Express Response object
+     * @param next - Express NextFunction for error handling
+     * 
+     * @param {number} req.query.page - Page number for pagination (default: 1)
+     * @param {number} req.query.limit - Number of RSVPs per page (default: 10)
+     * @param {string} req.query.sortBy - Sorting direction (default: 'desc')
+     * @returns {Promise<void>} - Returns paginated RSVPs through HttpResponse
      */
     async getRSVPs(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
@@ -146,7 +236,17 @@ export class InvitationController {
     }
 
     /**
-     * Get an RSVP by ID
+     * Retrieves a specific RSVP by its ID
+     * 
+     * This endpoint fetches a single RSVP based on the provided RSVP ID,
+     * ensuring the authenticated user has permission to view it.
+     * 
+     * @param req - AuthenticationRequest object containing authenticated user information
+     * @param res - Express Response object
+     * @param next - Express NextFunction for error handling
+     * 
+     * @param {string} req.params.id - ID of the RSVP to fetch
+     * @returns {Promise<void>} - Returns the requested RSVP through HttpResponse
      */
     async getRSVPById(
         req: AuthenticationRequest,
@@ -162,7 +262,17 @@ export class InvitationController {
     }
 
     /**
-     * Delete an RSVP
+     * Deletes an RSVP
+     * 
+     * This endpoint allows a user to delete an RSVP they've created,
+     * effectively withdrawing their response to an invitation.
+     * 
+     * @param req - AuthenticationRequest object containing authenticated user information
+     * @param res - Express Response object
+     * @param next - Express NextFunction for error handling
+     * 
+     * @param {string} req.params.id - ID of the RSVP to delete
+     * @returns {Promise<void>} - Returns confirmation of deletion through HttpResponse
      */
     async deleteRSVP(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
         try {
@@ -181,7 +291,20 @@ export class InvitationController {
     }
 
     /**
-     * Get list of invitations sent for a specific event (organizer only)
+     * Retrieves all invitations for a specific event (organizer only)
+     * 
+     * This endpoint fetches all invitations associated with a specific event,
+     * typically accessible only by the event organizer, with pagination and sorting.
+     * 
+     * @param req - AuthenticationRequest object containing authenticated user information
+     * @param res - Express Response object
+     * @param next - Express NextFunction for error handling
+     * 
+     * @param {string} req.query.eventId - ID of the event to fetch invitations for
+     * @param {number} req.query.page - Page number for pagination (default: 1)
+     * @param {number} req.query.limit - Number of invitations per page (default: 10)
+     * @param {string} req.query.sortBy - Sorting direction (default: 'desc')
+     * @returns {Promise<void>} - Returns paginated invitations through HttpResponse
      */
 
     async getInvitationsByEventId(
@@ -217,7 +340,17 @@ export class InvitationController {
     }
 
     /**
-     * Get RSVP for a specific invitation
+     * Retrieves an RSVP for a specific invitation
+     * 
+     * This endpoint fetches the RSVP associated with a specific invitation,
+     * if one exists.
+     * 
+     * @param req - AuthenticationRequest object containing authenticated user information
+     * @param res - Express Response object
+     * @param next - Express NextFunction for error handling
+     * 
+     * @param {string} req.params.invitationId - ID of the invitation to fetch the RSVP for
+     * @returns {Promise<void>} - Returns the RSVP through HttpResponse
      */
     async getRSVPByInvitationId(
         req: AuthenticationRequest,

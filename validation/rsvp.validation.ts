@@ -13,5 +13,16 @@ import { RSVPStatus } from '../interfaces/Invitation/rsvp.interface';
 // });
 
 export const createRSVPSchema = Joi.object({
+    /**
+     * RSVP response status
+     * 
+     * Required string that indicates the user's response to an invitation.
+     * Must be one of the predefined status values: 'PENDING', 'ACCEPTED', or 'DENIED'.
+     * - PENDING: User has not yet provided a definitive response
+     * - ACCEPTED: User has confirmed attendance or participation
+     * - DENIED: User has declined the invitation
+     * 
+     * Used for tracking attendance, managing event capacity, and updating event organizers.
+     */
     response: Joi.string().valid('PENDING', 'ACCEPTED', 'DENIED').required(),
 });

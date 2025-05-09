@@ -4,6 +4,11 @@ import { UserModel } from '../models/user.models';
 import { HttpError } from '../helpers/httpsError.helpers';
 import { RSVPStatus } from '../interfaces/Invitation/rsvp.interface';
 
+/**
+ * Interface for engagement statistics
+ * 
+ * Contains metrics about invitations and RSVPs for current and previous periods
+ */
 interface EngagementStats {
     totalInvitations: number;
     acceptedRSVPs: number;
@@ -17,11 +22,21 @@ interface EngagementStats {
     };
 }
 
+/**
+ * Interface for invitation trend data
+ * 
+ * Tracks invitation counts over time
+ */
 interface InvitationsOverTime {
     date: string;
     invitations: number;
 }
 
+/**
+ * Interface for RSVP trend data
+ * 
+ * Tracks RSVP status counts over time
+ */
 interface RsvpTrend {
     date: string;
     accepted: number;
@@ -29,11 +44,21 @@ interface RsvpTrend {
     pending: number;
 }
 
+/**
+ * Interface for RSVP distribution data
+ * 
+ * Contains summary counts for each RSVP status
+ */
 interface RsvpDistribution {
     status: string;
     value: number;
 }
 
+/**
+ * Interface for recipient data
+ * 
+ * Contains information about an invitation recipient
+ */
 interface Recipient {
     id: string;
     name: string;
@@ -43,6 +68,11 @@ interface Recipient {
     avatar: string;
 }
 
+/**
+ * Interface for paginated recipients response
+ * 
+ * Contains recipient list and pagination metadata
+ */
 interface RecipientsResponse {
     recipients: Recipient[];
     pagination: {
@@ -52,9 +82,26 @@ interface RecipientsResponse {
     };
 }
 
+
+/**
+ * User Statistics Service
+ * 
+ * This service provides analytics and reporting functionality for user invitations
+ * and RSVPs. It offers methods to retrieve engagement metrics, trends over time,
+ * and recipient information for dashboard displays and reporting.
+ */
 export class UserStatisService {
     /**
      * Get engagement statistics for the dashboard
+     * 
+     * Retrieves invitation and RSVP metrics for the current period and compares
+     * them with the previous period for trend analysis.
+     * 
+     * @param {string} userId - ID of the user requesting statistics
+     * @param {string} [startDate] - Optional start date for the period (defaults to start of current week)
+     * @param {string} [endDate] - Optional end date for the period (defaults to current date)
+     * @returns {Promise<EngagementStats>} Statistics for current and previous periods
+     * @throws {HttpError} If user ID is invalid
      */
     static async getEngagementStats(
         userId: string,
@@ -85,6 +132,17 @@ export class UserStatisService {
         };
     }
 
+    /**
+     * Helper method to retrieve invitation statistics for a specific period
+     * 
+     * Counts invitations and aggregates RSVP responses for the given date range.
+     * 
+     * @param {string} userId - ID of the user
+     * @param {Date} startDate - Start date for the period
+     * @param {Date} endDate - End date for the period
+     * @returns {Promise<{totalInvitations: number, acceptedRSVPs: number, deniedRSVPs: number, pendingRSVPs: number}>}
+     * @private
+     */
     private static async getStats(userId: string, startDate: Date, endDate: Date) {
         // Đếm tổng số lời mời trong khoảng thời gian
         const invitations = await InvitationModel.countDocuments({
@@ -158,6 +216,15 @@ export class UserStatisService {
 
     /**
      * Get invitations sent over time
+     * 
+     * Retrieves a time series of invitation counts, grouped by day or week.
+     * 
+     * @param {string} userId - ID of the user
+     * @param {string} startDate - Start date for the period (YYYY-MM-DD)
+     * @param {string} endDate - End date for the period (YYYY-MM-DD)
+     * @param {'daily' | 'weekly'} interval - Time grouping interval (daily or weekly)
+     * @returns {Promise<InvitationsOverTime[]>} Time series data of invitation counts
+     * @throws {HttpError} If user ID or date format is invalid
      */
     static async getInvitationsOverTime(
         userId: string,
@@ -216,6 +283,15 @@ export class UserStatisService {
 
     /**
      * Get RSVP trend over time
+     * 
+     * Retrieves a time series of RSVP responses by status, grouped by day or week.
+     * 
+     * @param {string} userId - ID of the user
+     * @param {string} startDate - Start date for the period (YYYY-MM-DD)
+     * @param {string} endDate - End date for the period (YYYY-MM-DD)
+     * @param {'daily' | 'weekly'} interval - Time grouping interval (daily or weekly)
+     * @returns {Promise<RsvpTrend[]>} Time series data of RSVP responses by status
+     * @throws {HttpError} If user ID or date format is invalid
      */
     static async getRsvpTrend(
         userId: string,
@@ -349,6 +425,14 @@ export class UserStatisService {
 
     /**
      * Get RSVP distribution
+     * 
+     * Retrieves the count of invitations by RSVP status for a specified period.
+     * 
+     * @param {string} userId - ID of the user
+     * @param {string} [startDate] - Optional start date for the period
+     * @param {string} [endDate] - Optional end date for the period
+     * @returns {Promise<RsvpDistribution[]>} Distribution of invitations by RSVP status
+     * @throws {HttpError} If user ID or date format is invalid
      */
     static async getRsvpDistribution(
         userId: string,
@@ -443,6 +527,17 @@ export class UserStatisService {
 
     /**
      * Get recipients list
+     * 
+     * Retrieves a paginated list of invitation recipients with their RSVP status.
+     * Supports filtering by RSVP status and searching by name or email.
+     * 
+     * @param {string} userId - ID of the user
+     * @param {number} [page=1] - Page number for pagination
+     * @param {number} [limit=10] - Number of recipients per page
+     * @param {'ACCEPTED' | 'DENIED' | 'PENDING'} [rsvpStatus] - Optional filter by RSVP status
+     * @param {string} [search] - Optional search term for filtering by name or email
+     * @returns {Promise<RecipientsResponse>} Paginated list of recipients and pagination metadata
+     * @throws {HttpError} If user ID is invalid
      */
     static async getRecipients(
         userId: string,

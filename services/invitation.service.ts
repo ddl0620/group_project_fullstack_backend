@@ -20,7 +20,27 @@ import { StatusCode } from '../enums/statusCode.enums';
 import { ErrorCode } from '../enums/errorCode.enums';
 import { UserInterface } from '../interfaces/user.interfaces';
 
+
+/**
+ * Invitation Service
+ * 
+ * This service manages operations related to event invitations and RSVPs,
+ * including creation, retrieval, and management of invitations between users
+ * for events. It handles access control, notifications, and the complete
+ * invitation workflow.
+ */
 export class InvitationService {
+    /**
+     * Creates a new invitation for an event
+     * 
+     * Creates an invitation from an event organizer to a participant,
+     * with validation of permissions and participant status.
+     * 
+     * @param {string} invitorId - ID of the user sending the invitation (must be event organizer)
+     * @param {CreateInvitationInput} input - Invitation details including eventId, inviteeId, and content
+     * @returns {Promise<InvitationInterface>} The created invitation
+     * @throws {HttpError} If event not found, user not authorized, or invitee not an accepted participant
+     */
     static async createInvitation(
         invitorId: string,
         input: CreateInvitationInput,
@@ -106,6 +126,18 @@ export class InvitationService {
         }
     }
 
+    /**
+     * Retrieves invitations received by a user
+     * 
+     * Gets all invitations where the specified user is the invitee,
+     * with pagination and sorting options.
+     * 
+     * @param {string} userId - ID of the user receiving invitations
+     * @param {number} page - Page number for pagination (default: 1)
+     * @param {number} limit - Number of invitations per page (default: 10)
+     * @param {string} sortBy - Sort order ('asc' or 'desc', default: 'desc')
+     * @returns {Promise<InvitationListResponse>} Invitations and pagination information
+     */
     static async getReceivedInvitations(
         userId: string,
         page: number = 1,
@@ -139,6 +171,17 @@ export class InvitationService {
         };
     }
 
+    /**
+     * Retrieves a specific invitation by event ID for a user
+     * 
+     * Gets an invitation for a specific event where the user is the invitee,
+     * with access control validation.
+     * 
+     * @param {string} userId - ID of the user receiving the invitation
+     * @param {string} eventId - ID of the event
+     * @returns {Promise<InvitationInterface>} The invitation
+     * @throws {HttpError} If event or invitation not found, or user not authorized
+     */
     static async getReceivedInvitationById(
         userId: string,
         eventId: string,
@@ -170,6 +213,16 @@ export class InvitationService {
         return invitation;
     }
 
+    /**
+     * Retrieves a specific invitation by ID with access control
+     * 
+     * Gets an invitation by ID, ensuring the user is either the invitor or invitee.
+     * 
+     * @param {string} userId - ID of the user requesting the invitation
+     * @param {string} invitationId - ID of the invitation
+     * @returns {Promise<InvitationInterface>} The invitation with populated references
+     * @throws {HttpError} If invitation not found or user not authorized
+     */
     static async getInvitationById(
         userId: string,
         invitationId: string,
@@ -204,6 +257,16 @@ export class InvitationService {
         return invitation;
     }
 
+    /**
+     * Soft deletes an invitation
+     * 
+     * Marks an invitation as deleted, with validation that only the invitor can delete it.
+     * 
+     * @param {string} userId - ID of the user attempting to delete the invitation
+     * @param {string} invitationId - ID of the invitation to delete
+     * @returns {Promise<InvitationInterface>} The deleted invitation
+     * @throws {HttpError} If invitation not found or user not authorized
+     */
     static async deleteInvitation(
         userId: string,
         invitationId: string,
@@ -243,6 +306,18 @@ export class InvitationService {
         return deletedInvitation;
     }
 
+    /**
+     * Creates a response (RSVP) to an invitation
+     * 
+     * Records the invitee's response to an invitation and sends notification
+     * to the invitor about the response.
+     * 
+     * @param {string} userId - ID of the user responding (must be invitee)
+     * @param {string} invitationId - ID of the invitation
+     * @param {CreateRSVPInput} input - Response details including accept/decline status
+     * @returns {Promise<RSVPInterface>} The created RSVP
+     * @throws {HttpError} If invitation not found, user not authorized, or RSVP already exists
+     */
     static async createRSVP(
         userId: string,
         invitationId: string,
@@ -310,6 +385,18 @@ export class InvitationService {
         }
     }
 
+    /**
+     * Retrieves RSVPs created by a user
+     * 
+     * Gets all RSVPs where the specified user is the invitee,
+     * with pagination and sorting options.
+     * 
+     * @param {string} userId - ID of the user who created the RSVPs
+     * @param {number} page - Page number for pagination (default: 1)
+     * @param {number} limit - Number of RSVPs per page (default: 10)
+     * @param {string} sortBy - Sort order ('asc' or 'desc', default: 'desc')
+     * @returns {Promise<RSVPListResponse>} RSVPs and pagination information
+     */
     static async getRSVPs(
         userId: string,
         page: number = 1,
@@ -393,6 +480,17 @@ export class InvitationService {
         };
     }
 
+    /**
+     * Retrieves a specific RSVP by ID with access control
+     * 
+     * Gets an RSVP by ID, ensuring the user is either the invitor or invitee
+     * of the associated invitation.
+     * 
+     * @param {string} userId - ID of the user requesting the RSVP
+     * @param {string} rsvpId - ID of the RSVP
+     * @returns {Promise<RSVPInterface>} The RSVP
+     * @throws {HttpError} If RSVP not found, invitation not found, or user not authorized
+     */
     static async getRSVPById(userId: string, rsvpId: string): Promise<RSVPInterface> {
         const rsvp: RSVPInterface | null = await RSVPModel.findOne({
             _id: rsvpId,
@@ -427,6 +525,16 @@ export class InvitationService {
         return rsvp;
     }
 
+    /**
+     * Soft deletes an RSVP
+     * 
+     * Marks an RSVP as deleted, with validation that only the invitee can delete it.
+     * 
+     * @param {string} userId - ID of the user attempting to delete the RSVP
+     * @param {string} rsvpId - ID of the RSVP to delete
+     * @returns {Promise<RSVPInterface>} The deleted RSVP
+     * @throws {HttpError} If RSVP not found, invitation not found, or user not authorized
+     */
     static async deleteRSVP(userId: string, rsvpId: string): Promise<RSVPInterface> {
         const rsvp: RSVPInterface | null = await RSVPModel.findOne({
             _id: rsvpId,
@@ -468,6 +576,20 @@ export class InvitationService {
         return deletedRSVP;
     }
 
+    /**
+     * Retrieves invitations for a specific event
+     * 
+     * Gets all invitations for an event, with validation that only the
+     * event organizer can access this information.
+     * 
+     * @param {string} userId - ID of the user requesting invitations (must be event organizer)
+     * @param {string} eventId - ID of the event
+     * @param {number} page - Page number for pagination (default: 1)
+     * @param {number} limit - Number of invitations per page (default: 10)
+     * @param {string} sortBy - Sort order ('asc' or 'desc', default: 'desc')
+     * @returns {Promise<InvitationListResponse>} Invitations and pagination information
+     * @throws {HttpError} If event not found or user not authorized
+     */
     static async getInvitationsByEventId(
         userId: string,
         eventId: string,
@@ -518,6 +640,17 @@ export class InvitationService {
         };
     }
 
+    /**
+     * Retrieves an RSVP for a specific invitation
+     * 
+     * Gets the RSVP for an invitation, or returns a default 'PENDING' status
+     * if no RSVP exists. Validates that the user is either the invitor or invitee.
+     * 
+     * @param {string} userId - ID of the user requesting the RSVP
+     * @param {string} invitationId - ID of the invitation
+     * @returns {Promise<RSVPInterface | { invitationId: string; response: string }>} The RSVP or pending status
+     * @throws {HttpError} If invitation not found or user not authorized
+     */
     static async getRSVPByInvitationId(
         userId: string,
         invitationId: string,

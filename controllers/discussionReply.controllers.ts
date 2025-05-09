@@ -14,7 +14,38 @@ import { DiscussionPostModel } from '../models/discussionPost.model';
 import { EventInterface } from '../interfaces/event.interfaces';
 import { EventModel } from '../models/event.models';
 
+/**
+ * DiscussionReplyController
+ * 
+ * This controller handles all operations related to replies within discussion posts, including:
+ * - Creating new replies with optional image attachments and parent-child relationships
+ * - Retrieving replies with pagination
+ * - Fetching individual replies by ID
+ * - Updating existing replies (content and images)
+ * - Soft deleting replies and their child replies
+ * 
+ * The controller also manages notifications for replies and comments.
+ * All endpoints require authentication through AuthenticationRequest.
+ */
 export class DiscussionReplyController {
+    /**
+     * Creates a new reply to a discussion post or to another reply
+     * 
+     * This endpoint validates the reply data, processes any attached images,
+     * creates a new reply, and sends notifications to relevant users.
+     * It supports both direct replies to posts and nested replies to other replies.
+     * 
+     * @param req - AuthenticationRequest object containing authenticated user information and reply data
+     * @param res - Express Response object
+     * @param next - Express NextFunction for error handling
+     * 
+     * @param {string} req.body.content - Content of the reply
+     * @param {string|null} req.body.parent_reply_id - ID of the parent reply (if replying to another reply)
+     * @param {string} req.params.postId - ID of the post being replied to
+     * @param {string} req.user.userId - ID of the authenticated user creating the reply
+     * @param {Express.Multer.File[]} req.files - Array of uploaded image files
+     * @returns {Promise<void>} - Returns the created reply through HttpResponse and sends notifications
+     */
     static async createReply(
         req: AuthenticationRequest,
         res: Response,
@@ -102,6 +133,21 @@ export class DiscussionReplyController {
         }
     }
 
+    /**
+     * Retrieves replies for a specific discussion post with pagination
+     * 
+     * This endpoint fetches replies associated with the specified post,
+     * supporting pagination through page and limit query parameters.
+     * 
+     * @param req - AuthenticationRequest object containing authenticated user information
+     * @param res - Express Response object
+     * @param next - Express NextFunction for error handling
+     * 
+     * @param {string} req.params.postId - ID of the post to fetch replies for
+     * @param {number} req.query.page - Page number for pagination (default: 1)
+     * @param {number} req.query.limit - Number of replies per page (default: 10)
+     * @returns {Promise<void>} - Returns paginated replies through HttpResponse
+     */
     static async getReplies(
         req: AuthenticationRequest,
         res: Response,
@@ -119,6 +165,18 @@ export class DiscussionReplyController {
         }
     }
 
+    /**
+     * Retrieves a specific reply by its ID
+     * 
+     * This endpoint fetches a single reply based on the provided reply ID.
+     * 
+     * @param req - AuthenticationRequest object containing authenticated user information
+     * @param res - Express Response object
+     * @param next - Express NextFunction for error handling
+     * 
+     * @param {string} req.params.replyId - ID of the reply to fetch
+     * @returns {Promise<void>} - Returns the requested reply through HttpResponse
+     */
     static async getReplyById(
         req: AuthenticationRequest,
         res: Response,
@@ -135,6 +193,22 @@ export class DiscussionReplyController {
         }
     }
 
+    /**
+     * Updates an existing reply
+     * 
+     * This endpoint validates the update data, processes any new or removed images,
+     * and updates the specified reply with the new content and images.
+     * 
+     * @param req - AuthenticationRequest object containing authenticated user information and update data
+     * @param res - Express Response object
+     * @param next - Express NextFunction for error handling
+     * 
+     * @param {string} req.params.replyId - ID of the reply to update
+     * @param {string} req.body.content - Updated content for the reply
+     * @param {string[]} req.body.existingImages - Array of image URLs to retain
+     * @param {Express.Multer.File[]} req.files - Array of new uploaded image files
+     * @returns {Promise<void>} - Returns the updated reply through HttpResponse
+     */
     static async updateReply(
         req: AuthenticationRequest,
         res: Response,
@@ -208,6 +282,19 @@ export class DiscussionReplyController {
         }
     }
 
+    /**
+     * Soft deletes a reply and its child replies
+     * 
+     * This endpoint marks a reply as deleted (isDeleted: true) along with
+     * all child replies, without permanently removing data from the database.
+     * 
+     * @param req - AuthenticationRequest object containing authenticated user information
+     * @param res - Express Response object
+     * @param next - Express NextFunction for error handling
+     * 
+     * @param {string} req.params.replyId - ID of the reply to delete
+     * @returns {Promise<void>} - Returns confirmation of deletion through HttpResponse
+     */
     static async deleteReply(
         req: AuthenticationRequest,
         res: Response,

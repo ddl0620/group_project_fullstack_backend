@@ -4,7 +4,13 @@ import { HttpError } from '../helpers/httpsError.helpers';
 import { errorHandlers } from '../helpers/errorHandlers';
 
 /**
- * Logger configuration for error logging.
+ * Winston logger configuration for centralized error logging.
+ * 
+ * Logs are written to:
+ * - File: logs/error.log (for persistent storage)
+ * - Console: For immediate visibility during development
+ * 
+ * Log format includes timestamps and is structured as JSON for easier parsing.
  */
 const logger = createLogger({
     level: 'error',
@@ -16,11 +22,27 @@ const logger = createLogger({
 });
 
 /**
- * Express middleware for handling errors and sending standardized error responses.
- * @param err - The error object thrown or passed to the middleware.
- * @param req - Express request object.
- * @param res - Express response object.
- * @param _next - Express next function (unused).
+ * Global Error Handling Middleware
+ * 
+ * This middleware serves as the central error processor for the application.
+ * It standardizes error responses across the API by:
+ * 
+ * 1. Converting various error types to a consistent HttpError format
+ * 2. Applying specific error handlers based on error name or code
+ * 3. Logging errors with contextual information for debugging
+ * 4. Sanitizing error details in production environments
+ * 5. Returning standardized JSON error responses
+ * 
+ * The middleware distinguishes between operational errors (4xx) and
+ * programming/server errors (5xx), handling them appropriately based on
+ * the environment.
+ * 
+ * @param err - The error object thrown in the application or passed from previous middleware
+ * @param req - Express request object containing request details
+ * @param res - Express response object used to send the error response
+ * @param _next - Express next function (unused as this is the final error handler)
+ * 
+ * @returns void - Sends JSON response with appropriate status code and error details
  */
 export function errorMiddleware(err: any, req: Request, res: Response, _next: NextFunction): void {
     // Determine if the environment is production

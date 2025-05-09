@@ -17,7 +17,27 @@ import { StatusCode } from '../enums/statusCode.enums';
 import { ErrorCode } from '../enums/errorCode.enums';
 import { UserInterface } from '../interfaces/user.interfaces';
 
+/**
+ * Event Service
+ * 
+ * This service manages operations related to events, including creation,
+ * retrieval, updates, participation management, and event visibility.
+ * It handles complex business logic for event participation, permissions,
+ * and notification delivery.
+ */
 export class EventService {
+    /**
+     * Creates a new event
+     * 
+     * Creates an event with the specified user as organizer, handling image uploads
+     * and enforcing user event creation limits.
+     * 
+     * @param {string} userId - ID of the user creating the event (organizer)
+     * @param {CreateEventInput} eventData - Event details
+     * @param {Express.Multer.File[] | undefined | null} files - Image files to upload
+     * @returns {Promise<EventInterface>} The created event
+     * @throws {HttpError} If user not found or event creation limit reached
+     */
     static async addEvent(
         userId: string,
         eventData: CreateEventInput,
@@ -64,6 +84,18 @@ export class EventService {
         }
     }
 
+    /**
+     * Retrieves events organized by a specific user
+     * 
+     * Gets events where the specified user is the organizer, with pagination
+     * and sorting options.
+     * 
+     * @param {string} userId - ID of the organizer
+     * @param {number} page - Page number for pagination (default: 1)
+     * @param {number} limit - Number of events per page (default: 10)
+     * @param {string} sortBy - Sort order ('asc' or 'desc', default: 'desc')
+     * @returns {Promise<EventListResponse>} Events and pagination information
+     */
     static async getOrganizedEvents(
         userId: string,
         page: number = 1,
@@ -98,6 +130,18 @@ export class EventService {
         };
     }
 
+    /**
+     * Retrieves all events visible to a specific user
+     * 
+     * Gets events that are public, or where the user is an organizer or participant,
+     * with pagination and sorting options.
+     * 
+     * @param {string} userId - ID of the user
+     * @param {number} page - Page number for pagination (default: 1)
+     * @param {number} limit - Number of events per page (default: 10)
+     * @param {string} sortBy - Sort order ('asc' or 'desc', default: 'desc')
+     * @returns {Promise<EventListResponse>} Events and pagination information
+     */
     //Note: Visible events: joined, organizer, or public, not deleted, private
     static async getAllVisibleEvent(
         userId: string,
@@ -140,6 +184,18 @@ export class EventService {
         };
     }
 
+    /**
+     * Retrieves events where user is either organizer or participant
+     * 
+     * Gets events where the specified user is either the organizer or a participant,
+     * with pagination and sorting options.
+     * 
+     * @param {string} userId - ID of the user
+     * @param {number} page - Page number for pagination (default: 1)
+     * @param {number} limit - Number of events per page (default: 10)
+     * @param {string} sortBy - Sort order ('asc' or 'desc', default: 'desc')
+     * @returns {Promise<EventListResponse>} Events and pagination information
+     */
     static async getJoinedAndOrganizedEvents(
         userId: string,
         page: number = 1,
@@ -176,6 +232,16 @@ export class EventService {
         };
     }
 
+    /**
+     * Retrieves all events with pagination
+     * 
+     * Gets all events in the system with pagination and sorting options.
+     * 
+     * @param {number} page - Page number for pagination (default: 1)
+     * @param {number} limit - Number of events per page (default: 10)
+     * @param {string} sortBy - Sort order ('asc' or 'desc', default: 'desc')
+     * @returns {Promise<EventListResponse>} Events and pagination information
+     */
     static async getAll(
         page: number = 1,
         limit: number = 10,
@@ -202,6 +268,18 @@ export class EventService {
         };
     }
 
+    /**
+     * Retrieves events where user is a participant
+     * 
+     * Gets events where the specified user is a participant (not organizer),
+     * with pagination and sorting options.
+     * 
+     * @param {string} userId - ID of the user
+     * @param {number} page - Page number for pagination (default: 1)
+     * @param {number} limit - Number of events per page (default: 10)
+     * @param {string} sortBy - Sort order ('asc' or 'desc', default: 'desc')
+     * @returns {Promise<EventListResponse>} Events and pagination information
+     */
     static async getJoinedEvent(
         userId: string,
         page: number = 1,
@@ -238,6 +316,16 @@ export class EventService {
         };
     }
 
+    /**
+     * Retrieves a specific event by ID with access control
+     * 
+     * Gets an event by ID, enforcing access control for private events.
+     * 
+     * @param {string} userId - ID of the user requesting access
+     * @param {string} eventId - ID of the event to retrieve
+     * @returns {Promise<EventInterface>} The event object
+     * @throws {HttpError} If event not found or user has no access to private event
+     */
     static async getEventById(userId: string, eventId: string): Promise<EventInterface> {
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
             throw new HttpError(
@@ -271,6 +359,19 @@ export class EventService {
         return event;
     }
 
+    /**
+     * Updates an existing event
+     * 
+     * Updates event details, managing associated images and notifying participants.
+     * 
+     * @param {string} userId - ID of the user attempting the update
+     * @param {string} eventId - ID of the event to update
+     * @param {Express.Multer.File[]} files - New image files to upload
+     * @param {string[]} existingImages - URLs of images to keep
+     * @param {UpdateEventInput} updateData - New event data
+     * @returns {Promise<EventInterface>} The updated event
+     * @throws {HttpError} If event not found or user not authorized
+     */
     static async updateEvent(
         userId: string,
         eventId: string,
@@ -343,6 +444,17 @@ export class EventService {
         return updatedEvent;
     }
 
+    /**
+     * Sets the active/deleted status of an event
+     * 
+     * Marks an event as deleted or active, with notification to participants.
+     * 
+     * @param {string} userId - ID of the user attempting the status change
+     * @param {string} eventId - ID of the event to update
+     * @param {boolean} isActive - Whether the event should be marked as deleted (false) or active (true)
+     * @returns {Promise<EventInterface>} The updated event
+     * @throws {HttpError} If event not found or user not authorized
+     */
     static async setActiveStatus(
         userId: string,
         eventId: string,
@@ -388,6 +500,17 @@ export class EventService {
         return deletedEvent;
     }
 
+    /**
+     * Processes a user's request to join an event
+     * 
+     * Handles join requests with different flows for public vs. private events,
+     * enforcing participant limits and preventing duplicate joins.
+     * 
+     * @param {string} userId - ID of the user requesting to join
+     * @param {string} eventId - ID of the event to join
+     * @returns {Promise<EventInterface>} The updated event
+     * @throws {HttpError} If event not found, user already joined, or participant limit reached
+     */
     static async joinEvent(userId: string, eventId: string): Promise<EventInterface> {
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
             throw new HttpError(
@@ -499,6 +622,18 @@ export class EventService {
         return updatedEvent;
     }
 
+    /**
+     * Processes an organizer's response to a join request
+     * 
+     * Handles acceptance or rejection of pending join requests,
+     * enforcing participant limits and sending appropriate notifications.
+     * 
+     * @param {string} eventId - ID of the event
+     * @param {string} userIdToken - ID of the organizer responding to the request
+     * @param {RespondJoinInput} input - Response data including userId and status
+     * @returns {Promise<EventInterface>} The updated event
+     * @throws {HttpError} If event not found, user not authorized, or participant limit reached
+     */
     static async replyEvent(
         eventId: string,
         userIdToken: string,
