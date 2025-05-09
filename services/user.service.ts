@@ -232,4 +232,8 @@ export class UserService {
             token,
         };
     }
+
+    static async checkUserExists(email: string): Promise<UserInterface | null> {
+        return await UserModel.findOne({ email: email.toLowerCase() });
+    }
 }

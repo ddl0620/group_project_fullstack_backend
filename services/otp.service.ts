@@ -1,26 +1,31 @@
-import { sendVerificationEmail } from '../helpers/email'
+import { sendVerificationEmail } from '../helpers/email';
 
-// In-memory store for temporary OTP data
-const otpStorage = new Map<string, { code: string; expires: number }>();
+// In-memory store for temporary OTP data and pending actions
+const otpStorage = new Map<
+    string,
+    { code: string; expires: number; action?: { type: string; data: any } }
+>();
 
 export class OtpService {
     private static generateOtp(): string {
         return Math.floor(100000 + Math.random() * 900000).toString();
     }
 
-    static async sendOtp(email: string): Promise<void> {
+    static async sendOtp(
+        email: string,
+        action?: { type: string; data: any },
+    ): Promise<void> {
         const code = this.generateOtp();
         const expires = Date.now() + 10 * 60 * 1000; // 10 minutes expiration
 
-        // Store OTP and expiration in memory
-        otpStorage.set(email, { code, expires });
+        // Store OTP, expiration, and optional action data
+        otpStorage.set(email, { code, expires, action });
 
         // Send OTP via email
-        await sendVerificationEmail(email, code);
+    await sendVerificationEmail(email, code);
+}
 
-    }
-
-    static verifyOtp(email: string, code: string): boolean {
+static verifyOtp(email: string, code: string): boolean {
         const otpData = otpStorage.get(email);
 
         if (!otpData) {
@@ -36,8 +41,18 @@ export class OtpService {
             throw new Error('Invalid OTP');
         }
 
-        // OTP is valid, remove it from storage
-        otpStorage.delete(email);
         return true;
     }
+
+    // Retrieve pending action and clear OTP data
+    static getPendingAction(email: string): { type: string; data: any } | null {
+        const otpData = otpStorage.get(email);
+        if (!otpData || !otpData.action) {
+            return null;
+        }
+        const action = otpData.action;
+        otpStorage.delete(email); // Clear after retrieving
+        return action;
+    }
+
 }
