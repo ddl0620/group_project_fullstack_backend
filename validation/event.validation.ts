@@ -35,6 +35,9 @@ export const createEventSchema = Joi.object({
         'boolean.base': 'isPublic must be a boolean',
         'any.required': 'isPublic is required',
     }),
+    isOpen: Joi.boolean().optional().default(true).messages({
+        'boolean.base': 'isOpen must be a boolean',
+    }),
 });
 
 export const createEventAdminSchema = Joi.object({
@@ -74,6 +77,9 @@ export const createEventAdminSchema = Joi.object({
         'string.base': 'Organizer (id) must be a string',
         'any.required': 'Organizer (id) is required',
     }),
+    isOpen: Joi.boolean().optional().default(true).messages({
+        'boolean.base': 'isOpen must be a boolean',
+    }),
 });
 
 export const updateEventSchema = Joi.object({
@@ -106,6 +112,9 @@ export const updateEventSchema = Joi.object({
     }),
     isPublic: Joi.boolean().optional().messages({
         'boolean.base': 'isPublic must be a boolean',
+    }),
+    isOpen: Joi.boolean().optional().messages({
+        'boolean.base': 'isOpen must be a boolean',
     }),
 })
     .min(1)
@@ -147,6 +156,9 @@ export const updateEventAdminSchema = Joi.object({
     organizer: Joi.string().required().messages({
         'string.base': 'organizer (id) must be a string',
     }),
+    isOpen: Joi.boolean().optional().messages({
+        'boolean.base': 'isOpen must be a boolean',
+    }),
 })
     .min(1)
     .messages({
@@ -173,4 +185,12 @@ export const respondEventSchema = Joi.object({
             'any.only': `Status must be either ${ParticipationStatus.ACCEPTED} or ${ParticipationStatus.DENIED}`,
             'any.required': 'Status is required',
         }),
+});
+
+
+export const updateIsOpenSchema = Joi.object({
+    isOpen: Joi.boolean().required().messages({
+        'boolean.base': 'isOpen must be a boolean',
+        'any.required': 'isOpen is required',
+    }),
 });

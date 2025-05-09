@@ -18,6 +18,7 @@ import { ErrorCode } from '../enums/errorCode.enums';
 import { UserInterface } from '../interfaces/user.interfaces';
 
 export class EventService {
+
     static async addEvent(
         userId: string,
         eventData: CreateEventInput,
@@ -44,6 +45,7 @@ export class EventService {
         }
 
         let imgUrls: string[] = [];
+
         if (files && files.length > 0) {
             imgUrls = await ImageUploadService.convertFileToURL(files, 'event', userId);
         }
@@ -314,6 +316,7 @@ export class EventService {
                 ErrorCode.UNAUTHORIZED,
             );
         }
+
 
         updateData.images = await ImageUploadService.updateImagesList(
             files,
@@ -622,21 +625,38 @@ export class EventService {
     }
 
     // HERE : Update the isOpen field of the event
-    static async updateIsOpen(eventId: string, isOpen: boolean): Promise<EventInterface> {
+    static async updateIsOpen(eventId: string, userId: string, isOpen: boolean): Promise<EventInterface> {
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
-            throw new Error('Invalid event ID');
+            throw new HttpError(
+                'Invalid event ID format',
+                StatusCode.NOT_FOUND,
+                ErrorCode.INVALID_ID,
+            );
         }
 
-        const event = await EventModel.findById(eventId);
-
+        const event = await EventModel.findOne({ _id: eventId, isDeleted: false });
         if (!event) {
-            throw new Error('Event not found');
+            throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
         }
 
-        event.isOpen = isOpen;
-        
-        await event.save();
+        if (event.organizer.toString() !== userId) {
+            throw new HttpError(
+                'Only the organizer can update the event status',
+                StatusCode.FORBIDDEN,
+                ErrorCode.UNAUTHORIZED,
+            );
+        }
 
-        return event;
+        const updatedEvent = await EventModel.findByIdAndUpdate(
+            eventId,
+            { $set: { isOpen } },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedEvent) {
+            throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
+        }
+
+        return updatedEvent;
     }
 }

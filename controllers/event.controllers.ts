@@ -209,7 +209,11 @@ export class EventController {
             const { isOpen } = req.body;
             const { eventId } = req.params;
 
-            const updatedEvent = await EventService.updateIsOpen(eventId, isOpen);
+            const updatedEvent = await EventService.updateIsOpen(
+                eventId,
+                req.user?.userId as string,
+                isOpen
+            );
             HttpResponse.sendYES(res, StatusCode.OK, 'Event status updated successfully', {
                 event: updatedEvent,
             });

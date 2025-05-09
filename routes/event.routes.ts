@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { EventController } from '../controllers/event.controllers';
 import { authenticationToken } from '../middlewares/auth.middleware';
 import { validateRequest } from '../middlewares/validation.middleware';
-import { joinEventSchema, respondEventSchema } from '../validation/event.validation';
+import { joinEventSchema, respondEventSchema, updateIsOpenSchema} from '../validation/event.validation';
 import upload from '../uploads/multer.config';
 
 const eventRoutes = Router();
@@ -22,23 +22,24 @@ eventRoutes.post(
     validateRequest(joinEventSchema),
     event.joinEvent,
 );
+
 eventRoutes.post(
     '/:eventId/respond-join',
     authenticationToken,
     validateRequest(respondEventSchema),
     event.respondEvent,
 );
+
 eventRoutes.get('/:id', authenticationToken, event.getEventById);
+
 eventRoutes.put('/:id', authenticationToken, upload.array('images', 10), event.updateEvent);
+
 eventRoutes.delete('/:id', authenticationToken, event.deleteEvent);
 
 eventRoutes.patch(
     '/:eventId/is-open',
     authenticationToken,
-    async (req, res, next) => {
-        const eventController = new EventController();
-        await eventController.updateIsOpen(req, res, next);
-    },
+    validateRequest(updateIsOpenSchema),
+    event.updateIsOpen,
 );
-
 export default eventRoutes;

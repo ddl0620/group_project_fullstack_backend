@@ -14,6 +14,7 @@ export type CreateEventInput = {
     participants?: { userId: string; status: string }[];
     isPublic: boolean;
     organizer: string;
+    isOpen?: boolean;
 };
 
 // Định nghĩa kiểu dữ liệu cho dữ liệu cập nhật sự kiện
@@ -34,3 +35,7 @@ export type RespondJoinInput = {
     userId: string;
     status: 'ACCEPTED' | 'DENIED';
 }
+
+export type UpdateIsOpenInput = {
+    isOpen: boolean;
+};
