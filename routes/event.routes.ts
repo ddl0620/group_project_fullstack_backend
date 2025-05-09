@@ -11,7 +11,9 @@ const event = new EventController();
 eventRoutes.post('/add-event', authenticationToken, upload.array('images', 10), event.addEvent);
 
 eventRoutes.get('/all-event', authenticationToken, event.getAllEvent);
+
 eventRoutes.get('/joined', authenticationToken, event.getJoinedEvent);
+
 eventRoutes.get('/my', authenticationToken, event.getMyEvent);
 
 eventRoutes.post(
@@ -29,5 +31,14 @@ eventRoutes.post(
 eventRoutes.get('/:id', authenticationToken, event.getEventById);
 eventRoutes.put('/:id', authenticationToken, upload.array('images', 10), event.updateEvent);
 eventRoutes.delete('/:id', authenticationToken, event.deleteEvent);
+
+eventRoutes.patch(
+    '/:eventId/is-open',
+    authenticationToken,
+    async (req, res, next) => {
+        const eventController = new EventController();
+        await eventController.updateIsOpen(req, res, next);
+    },
+);
 
 export default eventRoutes;

@@ -203,4 +203,18 @@ export class EventController {
             next(err);
         }
     }
+
+    async updateIsOpen(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const { isOpen } = req.body;
+            const { eventId } = req.params;
+
+            const updatedEvent = await EventService.updateIsOpen(eventId, isOpen);
+            HttpResponse.sendYES(res, StatusCode.OK, 'Event status updated successfully', {
+                event: updatedEvent,
+            });
+        } catch (err) {
+            next(err);
+        }
+    }
 }

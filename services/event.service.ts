@@ -409,6 +409,11 @@ export class EventService {
         if (!event) {
             throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
         }
+        
+        // HERE: Check if the event is open for joining
+        if (!event.isOpen) {
+            throw new HttpError('Event is closed', StatusCode.FORBIDDEN, ErrorCode.EVENT_CLOSED);
+        }
 
         const user = await UserModel.findById(userId);
         if (!user) {
@@ -614,5 +619,24 @@ export class EventService {
         });
 
         return updatedEvent;
+    }
+
+    // HERE : Update the isOpen field of the event
+    static async updateIsOpen(eventId: string, isOpen: boolean): Promise<EventInterface> {
+        if (!mongoose.Types.ObjectId.isValid(eventId)) {
+            throw new Error('Invalid event ID');
+        }
+
+        const event = await EventModel.findById(eventId);
+
+        if (!event) {
+            throw new Error('Event not found');
+        }
+
+        event.isOpen = isOpen;
+        
+        await event.save();
+
+        return event;
     }
 }
