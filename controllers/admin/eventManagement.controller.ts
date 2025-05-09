@@ -7,7 +7,27 @@ import { AuthenticationRequest } from '../../interfaces/authenticationRequest.in
 import { EventModel } from '../../models/event.models';
 import { EventInterface } from '../../interfaces/event.interfaces';
 
+/**
+ * EventManagementController
+ * 
+ * This controller handles all event management operations including:
+ * - Retrieving events (all events or by user)
+ * - Creating new events
+ * - Updating existing events
+ * - Managing event active status
+ */
 export class EventManagementController {
+    /**
+     * Retrieves all events with pagination and sorting
+     * 
+     * @param request - Express Request object containing query parameters for pagination and sorting
+     * @param response - Express Response object
+     * @param nextFunction - Express NextFunction for error handling
+     * 
+     * @query {number} page - Page number for pagination (default: 1)
+     * @query {number} limit - Number of events per page (default: 10)
+     * @query {string} sortBy - Sort direction, 'asc' or 'desc' (default: 'desc')
+     */
     static async getAllEvents(request: Request, response: Response, nextFunction: NextFunction) {
         try {
             const page = parseInt(request.query.page as string) || 1;
@@ -23,6 +43,17 @@ export class EventManagementController {
         }
     }
 
+    /**
+     * Creates a new event
+     * 
+     * @param request - Express Request object containing event data and files
+     * @param response - Express Response object
+     * @param nextFunction - Express NextFunction for error handling
+     * 
+     * @param {string} request.params.userId - ID of the user creating the event
+     * @param {Express.Multer.File[]} request.files - Uploaded files (images) for the event
+     * @param {object} request.body - Event data validated against createEventAdminSchema
+     */
     static async createNewEvent(request: Request, response: Response, nextFunction: NextFunction) {
         try {
             const { error } = createEventAdminSchema.validate(request.body);
@@ -41,6 +72,19 @@ export class EventManagementController {
         }
     }
 
+    /**
+     * Updates an existing event
+     * 
+     * @param request - AuthenticationRequest object containing event data and authenticated user
+     * @param response - Express Response object
+     * @param nextFunction - Express NextFunction for error handling
+     * 
+     * @param {string} request.params.eventId - ID of the event to update
+     * @param {string} request.user?.userId - ID of the authenticated user
+     * @param {Express.Multer.File[]} request.files - New uploaded files (images) for the event
+     * @param {string[]} request.body.existingImages - Array of existing image paths to keep
+     * @param {object} request.body - Updated event data validated against updateEventAdminSchema
+     */
     static async updateEvent(
         request: AuthenticationRequest,
         response: Response,
@@ -74,6 +118,16 @@ export class EventManagementController {
         }
     }
 
+    /**
+     * Updates the active/deleted status of an event
+     * 
+     * @param request - AuthenticationRequest object containing event ID and status data
+     * @param response - Express Response object
+     * @param nextFunction - Express NextFunction for error handling
+     * 
+     * @param {string} request.params.eventId - ID of the event to update status
+     * @param {boolean} request.body.isDeleted - New deleted status for the event
+     */
     static async updateActiveStatus(
         request: AuthenticationRequest,
         response: Response,
@@ -100,6 +154,18 @@ export class EventManagementController {
         }
     }
 
+    /**
+     * Retrieves all events associated with a specific user (both joined and organized)
+     * 
+     * @param request - Express Request object containing user ID and pagination parameters
+     * @param response - Express Response object
+     * @param nextFunction - Express NextFunction for error handling
+     * 
+     * @param {string} request.params.id - ID of the user whose events to retrieve
+     * @param {number} request.query.page - Page number for pagination (default: 1)
+     * @param {number} request.query.limit - Number of events per page (default: 10)
+     * @param {string} request.query.sortBy - Sort direction, 'asc' or 'desc' (default: 'desc')
+     */
     static async getAllEventByUserId(
         request: Request,
         response: Response,

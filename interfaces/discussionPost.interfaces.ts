@@ -1,4 +1,11 @@
 import mongoose, { Document } from "mongoose";
+/**
+ * Interface for discussion posts in the system
+ * 
+ * Represents a post created by a user within the discussion system, typically
+ * related to a specific event. This interface extends Mongoose's Document type
+ * to enable direct use with Mongoose models while providing type safety.
+ */
 
 // Interface cho bài viết trong hệ thống Discussion
 export interface DiscussionPostInterface extends Document {

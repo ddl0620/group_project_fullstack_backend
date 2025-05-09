@@ -18,6 +18,14 @@ import discussionReplyRoutes from './discussionReply.routes';
 
 import adminStatisticsRoutes from './adminStatistics.routes';
 
+/**
+ * Apply Routes
+ * 
+ * This function registers all API routes with the Express application.
+ * Routes are organized by feature domain and follow a consistent API versioning pattern.
+ * 
+ * @param {Express} app - The Express application instance
+ */
 const applyRoutes = (app: Express) => {
     app.use('/api/v1/auth', authRoutes);
 

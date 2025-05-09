@@ -7,6 +7,17 @@ import { StatusCode } from '../enums/statusCode.enums';
 import { ErrorCode } from '../enums/errorCode.enums';
 import { UserModel } from '../models/user.models';
 
+/**
+ * Authentication middleware to verify JWT tokens
+ * 
+ * Extracts the JWT token from the Authorization header, verifies its validity,
+ * and attaches the authenticated user information to the request object.
+ * 
+ * @param request - Extended Express request with authentication properties
+ * @param response - Express response object
+ * @param nextFunction - Express next middleware function
+ * @returns void - Calls next middleware or error handler
+ */
 export const authenticationToken = async (
     request: AuthenticationRequest,
     response: Response,
@@ -80,6 +91,17 @@ export const authenticationToken = async (
     }
 };
 
+/**
+ * Admin-only access middleware
+ * 
+ * Ensures that only users with admin role can access protected routes.
+ * Must be used after authenticationToken middleware.
+ * 
+ * @param request - Extended Express request with authentication properties
+ * @param response - Express response object
+ * @param nextFunction - Express next middleware function
+ * @returns void - Calls next middleware or error handler
+ */
 export const adminOnlyMiddleware = (
     request: AuthenticationRequest,
     response: Response,
@@ -101,6 +123,17 @@ export const adminOnlyMiddleware = (
     nextFunction();
 };
 
+/**
+ * Regular user-only access middleware
+ * 
+ * Ensures that only users with regular user role can access protected routes.
+ * Must be used after authenticationToken middleware.
+ * 
+ * @param request - Extended Express request with authentication properties
+ * @param response - Express response object
+ * @param nextFunction - Express next middleware function
+ * @returns void - Calls next middleware or error handler
+ */
 export const userOnlyMiddleware = (
     request: AuthenticationRequest,
     response: Response,

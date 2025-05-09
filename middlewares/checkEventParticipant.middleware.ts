@@ -4,6 +4,26 @@ import { HttpError } from '../helpers/httpsError.helpers';
 import { AuthenticationRequest } from '../interfaces/authenticationRequest.interface';
 import mongoose from 'mongoose';
 
+/**
+ * Event Access Control Middleware
+ * 
+ * Verifies that the authenticated user has permission to access a specific event.
+ * Access is granted if the user is either:
+ * 1. The event organizer
+ * 2. An accepted participant of the event
+ * 
+ * This middleware expects the event ID to be present in the request parameters
+ * and requires prior authentication to have populated the user information.
+ * 
+ * @param req - Extended Express request with authentication properties and event parameters
+ * @param res - Express response object (unused but required by Express middleware signature)
+ * @param next - Express next middleware function
+ * @returns void - Calls next middleware or error handler
+ * 
+ * @throws HttpError(400) - If the event ID format is invalid
+ * @throws HttpError(401) - If user ID is missing (authentication issue)
+ * @throws HttpError(403) - If user is not authorized to access the event
+ */
 export const allowedUserMiddleware = async (
     req: AuthenticationRequest,
     res: Response,

@@ -2,6 +2,28 @@ import { HttpError } from './httpsError.helpers';
 import { StatusCode } from '../enums/statusCode.enums';
 import { ErrorCode } from '../enums/errorCode.enums';
 import { ErrorHandler } from '../types/error.type';
+/**
+ * Error Handler Registry Module
+ * 
+ * This module implements a centralized error handling system for the application.
+ * It provides a registry for mapping specific error types or codes to appropriate
+ * HTTP error responses, ensuring consistent error handling throughout the application.
+ * 
+ * The module includes:
+ * - A registry to store error handlers
+ * - A function to register new error handlers
+ * - Pre-configured handlers for common error scenarios including:
+ *   - Mongoose database errors (CastError, ValidationError, duplicate keys)
+ *   - JWT authentication errors
+ *   - Bcrypt encryption errors
+ *   - General authentication and authorization errors
+ *   - Common application-specific errors
+ * 
+ * Each handler converts specific errors into standardized HttpError objects
+ * with appropriate status codes and error codes.
+ * 
+ * @module utils/errorHandlerRegistry
+ */
 
 /**
  * Registry of error handlers for specific error types or codes.

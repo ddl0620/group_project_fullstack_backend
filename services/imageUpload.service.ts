@@ -9,14 +9,30 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+/**
+ * Input interface for image upload operations
+ */
 export interface UploadImageInput {
     file: string; // File ảnh (đường dẫn hoặc buffer)
     folder: string; // Thư mục trên Cloudinary
 }
 
+/**
+ * Image Upload Service
+ * 
+ * This service manages operations related to image uploads, including
+ * uploading, deleting, and managing images on Cloudinary.
+ * It provides optimized image processing and organized storage.
+ */
 export class ImageUploadService {
     /**
-     * Upload ảnh lên Cloudinary và trả về URL
+     * Uploads a single image to Cloudinary
+     * 
+     * Uploads an image with optimization transformations and returns the secure URL.
+     * 
+     * @param {UploadImageInput} input - Upload parameters including file and folder
+     * @returns {Promise<string>} The secure URL of the uploaded image
+     * @throws {HttpError} If upload fails
      */
     static async uploadImage(input: UploadImageInput): Promise<string> {
         const { file, folder } = input;
@@ -42,7 +58,12 @@ export class ImageUploadService {
     }
 
     /**
-     * Upload nhiều ảnh cùng lúc và trả về danh sách URL
+     * Uploads multiple images to Cloudinary in parallel
+     * 
+     * Processes multiple image uploads concurrently and returns all secure URLs.
+     * 
+     * @param {UploadImageInput[]} inputs - Array of upload parameters
+     * @returns {Promise<string[]>} Array of secure URLs for the uploaded images
      */
     static async uploadImages(inputs: UploadImageInput[]): Promise<string[]> {
         const uploadPromises = inputs.map(input => this.uploadImage(input));
@@ -50,9 +71,14 @@ export class ImageUploadService {
     }
 
     /**
-     * Delete multiple images from Cloudinary by their URLs
-     * @param urls Array of Cloudinary URLs to delete
-     * @param folder Folder path used in Cloudinary (e.g., 'discussionPosts/{postId}')
+     * Deletes multiple images from Cloudinary by their URLs
+     * 
+     * Extracts public IDs from URLs and deletes the images from Cloudinary.
+     * Continues with remaining deletions if individual deletions fail.
+     * 
+     * @param {string[]} urls - Array of Cloudinary URLs to delete
+     * @param {string} folder - Folder path in Cloudinary (e.g., 'discussionPosts/{postId}')
+     * @returns {Promise<void>}
      */
     static async deleteImages(urls: string[], folder: string): Promise<void> {
         try {
@@ -84,6 +110,16 @@ export class ImageUploadService {
         }
     }
 
+    /**
+     * Converts Multer file objects to Cloudinary URLs
+     * 
+     * Processes uploaded files and stores them in a specified folder structure.
+     * 
+     * @param {Express.Multer.File[] | undefined} files - Array of uploaded files
+     * @param {string} folderName - Base folder name for storage
+     * @param {string | null} id - Optional ID to create a subfolder
+     * @returns {Promise<string[]>} Array of secure URLs for the uploaded images
+     */
     static async convertFileToURL(
         files: Express.Multer.File[] | undefined,
         folderName: string,
@@ -109,6 +145,20 @@ export class ImageUploadService {
         return imgUrls;
     }
 
+    /**
+     * Updates an entity's image list, handling additions and removals
+     * 
+     * Processes new uploads, retains specified existing images, and removes
+     * deleted images from both the entity and Cloudinary storage.
+     * 
+     * @param {Express.Multer.File[] | undefined} files - New files to upload
+     * @param {string[]} existingImages - URLs of images to retain
+     * @param {any} entity - Entity with current images array
+     * @param {string} folderName - Base folder name for storage
+     * @param {string | null} id - Optional ID for subfolder
+     * @returns {Promise<string[]>} Updated array of image URLs
+     * @throws {HttpError} If existingImages format is invalid
+     */
     static async updateImagesList(
         files: Express.Multer.File[] | undefined,
         existingImages: string[],

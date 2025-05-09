@@ -1,4 +1,18 @@
 import nodemailer from 'nodemailer';
+/**
+ * Email Service Utility
+ * 
+ * This module provides email sending capabilities for the application,
+ * specifically for user verification purposes. It uses Nodemailer with
+ * Gmail as the email service provider.
+ * 
+ * Environment variables required:
+ * - EMAIL_USER: Gmail account username used to send emails
+ * - EMAIL_PASS: Authentication password or app-specific password
+ * 
+ * @module services/email
+ */
+
 
 // Interface for email options
 interface EmailOptions {
@@ -10,6 +24,15 @@ interface EmailOptions {
 }
 
 // Initialize transporter once for reuse
+
+/**
+ * Email transport configuration using Gmail service
+ * The transporter is configured with credentials from environment variables
+ * for secure email sending operations.
+ * 
+ * @private
+ */
+
 const transporter = nodemailer.createTransport({
     service: 'Gmail',
     auth: {
@@ -17,6 +40,7 @@ const transporter = nodemailer.createTransport({
         pass: process.env.EMAIL_PASS as string,
     },
 });
+
 
 // Generic sendEmail function
 export const sendEmail = async ({

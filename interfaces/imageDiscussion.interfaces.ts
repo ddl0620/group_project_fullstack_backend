@@ -1,5 +1,12 @@
 import mongoose, { Document } from "mongoose";
 
+/**
+ * Interface for images in the discussion system
+ * 
+ * Represents an image that can be attached to either a discussion post or a reply.
+ * This interface extends Mongoose's Document type to enable direct use with Mongoose models
+ * while providing type safety for image-related operations in the discussion system.
+ */
 // Interface cho hình ảnh trong hệ thống Discussion
 export interface ImageDiscussionInterface extends Document {
     url: string; // URL của hình ảnh
