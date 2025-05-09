@@ -4,7 +4,7 @@ import { HttpResponse } from '../helpers/HttpResponse';
 import { SignInResponse, SignInType, SignUpResponse, SignUpType } from '../types/auth.type';
 import { signInSchema, signUpSchema } from '../validation/auth.validation';
 import { validateInput } from '../helpers/validateInput';
-import { OtpService} from "../services/otp.service";
+import {OtpService} from "../services/otp.service";
 
 /**
  * AuthControllers
@@ -42,18 +42,14 @@ export class AuthControllers {
             //
             // HttpResponse.sendYES(response, 201, 'User created successfully', newUser);
 
-
-            const signUpData: SignUpType = {
+            await AuthService.initiateSignUp({
                 ...(request.body as SignUpType),
                 confirmPassword: request.body.password,
-            };
+            });
 
-            await OtpService.storeSignUpDataAndSendOtp(signUpData);
-            HttpResponse.sendYES(response, 200, 'Verification code sent to email', signUpData);
-        } catch (err) {
-            nextFunction(err);
-        }
-    }
+            HttpResponse.sendYES(response, 200, 'Verification code sent for signup', {
+                email: request.body.email,
+            });
 
     /**
      * Verifies the OTP code and completes the user registration process
@@ -75,7 +71,6 @@ export class AuthControllers {
             const signUpData: SignUpType = await OtpService.verifyOtpAndGetData(email, code);
             const newUser: SignUpResponse = await AuthService.createUser(signUpData);
 
-            HttpResponse.sendYES(response, 201, 'User created successfully', newUser);
         } catch (err) {
             nextFunction(err);
         }
@@ -110,15 +105,39 @@ export class AuthControllers {
         }
     }
 
-    // async sendVerification(request: Request, response: Response, nextFunction: NextFunction): Promise<void> {
-    //     try {
-    //         const { email } = request.body;
-    //         const result = await AuthService.sendVerificationCode(email);
-    //         HttpResponse.sendYES(response, 200, 'Verification code sent successfully', result);
-    //     } catch (err) {
-    //         nextFunction(err);
-    //     }
-    // }
+    async sendVerification(request: Request, response: Response, nextFunction: NextFunction): Promise<void> {
+        try {
+            const { email } = request.body;
+            await AuthService.sendVerificationCode(email);
+            HttpResponse.sendYES(response, 200, 'Verification code sent successfully', { email });
+        } catch (err) {
+            nextFunction(err);
+        }
+    }
+
+    async verifyCode(request: Request, response: Response, nextFunction: NextFunction): Promise<void> {
+        try {
+            const { email, code } = request.body;
+            OtpService.verifyOtp(email, code);
+            HttpResponse.sendYES(response, 200, 'Verification successful', { email, code });
+        } catch (err) {
+            nextFunction(err);
+        }
+    }
+
+
+    async verifySignUp(request: Request, response: Response, nextFunction: NextFunction): Promise<void> {
+        try {
+            const { email, code } = request.body;
+            const result = await AuthService.completeSignUp(email, code);
+            HttpResponse.sendYES(response, 201, 'User created successfully', result);
+        } catch (err) {
+            nextFunction(err);
+        }
+    }
+
+
+
 
 
 }

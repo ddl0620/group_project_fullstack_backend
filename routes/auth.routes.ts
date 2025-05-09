@@ -34,19 +34,10 @@ router.post('/sign-in', authController.signIn);
  * @returns {Object} Registration result, typically including verification requirements
  */
 router.post('/sign-up', authController.signUp);
-// router.post('/send-verification', authController.sendVerification);
+router.post('/verify-sign-up', authController.verifySignUp);
+router.post('/send-verification', authController.sendVerification);
+router.post('/verification', authController.verifyCode);
 
-/**
- * POST /auth/verify-code
- * 
- * Verifies a user's account using a verification code
- * 
- * @controller authController.verifySignUp - Validates verification codes
- * @body {Object} verificationData - Contains user identifier and verification code
- * 
- * @returns {Object} Verification result and next steps
- */
-router.post('/verify-code', authController.verifySignUp);
 
 
 /**

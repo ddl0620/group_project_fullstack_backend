@@ -13,6 +13,18 @@ import nodemailer from 'nodemailer';
  * @module services/email
  */
 
+
+// Interface for email options
+interface EmailOptions {
+    to: string | string[];
+    subject: string;
+    text: string;
+    html: string;
+    from?: string;
+}
+
+// Initialize transporter once for reuse
+
 /**
  * Email transport configuration using Gmail service
  * The transporter is configured with credentials from environment variables
@@ -20,44 +32,47 @@ import nodemailer from 'nodemailer';
  * 
  * @private
  */
+
 const transporter = nodemailer.createTransport({
     service: 'Gmail',
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: process.env.EMAIL_USER as string,
+        pass: process.env.EMAIL_PASS as string,
     },
 });
 
-/**
- * Sends a verification email containing an OTP code to the specified recipient
- * 
- * This function creates and sends an email with a verification code for user authentication.
- * The email is sent in both plain text and HTML formats for compatibility across email clients.
- * 
- * @async
- * @function sendVerificationEmail
- * @param {string} to - The recipient's email address
- * @param {string} code - The OTP verification code to be included in the email
- * @returns {Promise<any>} The information object returned by Nodemailer after sending the email
- * @throws {Error} Throws an error if the email sending fails
- */
-export const sendVerificationEmail = async (
-    to: string,
-    code: string,
-) => {
-    const mailOptions = {
-        from: process.env.EMAIL_USER,
+
+// Generic sendEmail function
+export const sendEmail = async ({
+    to,
+    subject,
+    text,
+    html,
+    from = process.env.EMAIL_USER as string,
+}: EmailOptions): Promise<nodemailer.SentMessageInfo> => {
+    const mailOptions: nodemailer.SendMailOptions = {
+        from,
         to,
-        subject: 'OTP Verification Code',
-        text: `Your OTP verification code is: ${code}`,
-        html: `<p>Your OTP verification code is: <strong>${code}</strong></p>`,
+        subject,
+        text,
+        html,
     };
 
     try {
-        const info = await transporter.sendMail(mailOptions);
-        return info;
-    } catch (error) {
-
-        throw new Error(`Failed to send email: ${error}`);
+        return await transporter.sendMail(mailOptions);
+    } catch (error: any) {
+        throw new Error(`Failed to send email: ${error.message}`);
     }
+};
+
+// Specialized function for OTP verification emails
+export const sendVerificationEmail = async (
+    to: string | string[],
+    code: string,
+): Promise<nodemailer.SentMessageInfo> => {
+    const subject = 'OTP Verification Code';
+    const text = `Your OTP verification code is: ${code}`;
+    const html = `<p>Your OTP verification code is: <strong>${code}</strong></p>`;
+
+    return sendEmail({ to, subject, text, html });
 };

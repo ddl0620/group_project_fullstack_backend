@@ -1,16 +1,9 @@
-import { SignUpType } from '../types/auth.type';
 import { sendVerificationEmail } from '../helpers/email';
 
-/**
- * In-memory storage for temporary sign-up data and OTP codes
- * 
- * Maps email addresses to their associated sign-up data, verification code,
- * and expiration timestamp.
- */
-// In-memory store for temporary sign-up data and OTP
-const tempStorage = new Map<
+// In-memory store for temporary OTP data and pending actions
+const otpStorage = new Map<
     string,
-    { data: SignUpType; code: string; expires: number }
+    { code: string; expires: number; action?: { type: string; data: any } }
 >();
 
 /**
@@ -34,82 +27,49 @@ export class OtpService {
         return Math.floor(100000 + Math.random() * 900000).toString();
     }
 
-    /**
-     * Stores sign-up data and sends verification OTP
-     * 
-     * Generates an OTP, stores it with the sign-up data in temporary storage,
-     * and sends the code to the user's email address.
-     * 
-     * @param {SignUpType} data - User sign-up information including email
-     * @returns {Promise<void>}
-     */
-    static async storeSignUpDataAndSendOtp(data: SignUpType): Promise<void> {
+
+    static async sendOtp(
+        email: string,
+        action?: { type: string; data: any },
+    ): Promise<void> {
         const code = this.generateOtp();
         const expires = Date.now() + 10 * 60 * 1000; // 10 minutes expiration
 
-        tempStorage.set(data.email, {
-            data,
-            code,
-            expires,
-        });
+        // Store OTP, expiration, and optional action data
+        otpStorage.set(email, { code, expires, action });
 
-        await sendVerificationEmail(data.email, code);
+        // Send OTP via email
+    await sendVerificationEmail(email, code);
+}
+
+static verifyOtp(email: string, code: string): boolean {
+        const otpData = otpStorage.get(email);
+
+        if (!otpData) {
+            throw new Error('OTP not found or expired');
+        }
+
+        if (otpData.expires < Date.now()) {
+            otpStorage.delete(email);
+            throw new Error('OTP expired');
+        }
+
+        if (otpData.code !== code) {
+            throw new Error('Invalid OTP');
+        }
+
+        return true;
     }
 
-    /**
-     * Sends an OTP for verification purposes
-     * 
-     * Used for scenarios like password change or information updates.
-     * Generates a new OTP and sends it to the specified email address,
-     * updating existing data if present.
-     * 
-     * @param {string} email - Email address to send the OTP to
-     * @returns {Promise<void>}
-     */
-    //use in case change password or information
-    static async sendOtp(email: string): Promise<void> {
-        const code = this.generateOtp();
-        const expires = Date.now() + 10 * 60 * 1000; // 10 minutes expiration
-
-        const existing = tempStorage.get(email);
-        if (existing) {
-            tempStorage.set(email, { ...existing, code, expires });
-        } else {
-            tempStorage.set(email, { data: { email } as SignUpType, code, expires });
+    // Retrieve pending action and clear OTP data
+    static getPendingAction(email: string): { type: string; data: any } | null {
+        const otpData = otpStorage.get(email);
+        if (!otpData || !otpData.action) {
+            return null;
         }
-
-        await sendVerificationEmail(email, code);
+        const action = otpData.action;
+        otpStorage.delete(email); // Clear after retrieving
+        return action;
     }
 
-    /**
-     * Verifies an OTP and retrieves associated data
-     * 
-     * Checks if the provided code matches the stored OTP for the email address,
-     * validates that the code hasn't expired, and returns the associated data
-     * if verification is successful.
-     * 
-     * @param {string} email - Email address associated with the OTP
-     * @param {string} code - OTP code to verify
-     * @returns {Promise<SignUpType>} The sign-up data associated with the email
-     * @throws {Error} If verification fails due to invalid code, expiration, or missing data
-     */
-    static async verifyOtpAndGetData(email: string, code: string): Promise<SignUpType> {
-        const stored = tempStorage.get(email);
-        if (!stored) {
-            throw new Error('No verification data found for this email');
-        }
-
-        if (stored.expires < Date.now()) {
-            tempStorage.delete(email);
-            throw new Error('Verification code has expired');
-        }
-
-        if (stored.code !== code) {
-            throw new Error('Invalid verification code');
-        }
-
-        const signUpData = stored.data;
-        tempStorage.delete(email);
-        return signUpData;
-    }
 }
