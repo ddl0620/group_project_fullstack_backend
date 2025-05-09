@@ -9,7 +9,25 @@ import { UserInterface } from '../interfaces/user.interfaces';
 import { StatusCode } from '../enums/statusCode.enums';
 import { ErrorCode } from '../enums/errorCode.enums';
 
+/**
+ * Notification Service
+ * 
+ * This service manages the creation, delivery, and management of notifications
+ * across the application. It provides a centralized system for sending various
+ * types of notifications to users and retrieving user-specific notifications.
+ * The service includes pre-defined templates for common notification scenarios.
+ */
 export class NotificationService {
+    /**
+     * Creates a new notification and delivers it to specified users
+     * 
+     * Creates a notification record and associates it with multiple users
+     * through the UserNotification junction table.
+     * 
+     * @param {CreateNotificationInput} notificationData - Notification content and recipient user IDs
+     * @returns {Promise<NotificationInterface>} The created notification
+     * @throws {HttpError} If users not found or creation fails
+     */
     static async createNotification(
         notificationData: CreateNotificationInput,
     ): Promise<NotificationInterface> {
@@ -49,6 +67,15 @@ export class NotificationService {
         }
     }
 
+    /**
+     * Soft deletes a notification by ID
+     * 
+     * Marks a notification as deleted without removing it from the database.
+     * 
+     * @param {string} notificationId - ID of the notification to delete
+     * @returns {Promise<NotificationInterface | null>} The deleted notification
+     * @throws {HttpError} If notification not found or deletion fails
+     */
     static async deleteNotification(notificationId: string): Promise<NotificationInterface | null> {
         try {
             const deletedNotification = await NotificationModel.findByIdAndUpdate(
@@ -65,6 +92,15 @@ export class NotificationService {
         }
     }
 
+    /**
+     * Retrieves all active notifications for a user
+     * 
+     * Gets all non-deleted notifications associated with the specified user.
+     * 
+     * @param {string} userId - ID of the user
+     * @returns {Promise<NotificationInterface[] | null>} Array of notifications for the user
+     * @throws {HttpError} If retrieval fails
+     */
     static async getUserNotifications(userId: string): Promise<NotificationInterface[] | null> {
         try {
             const userNotifications = await UserNotificationModel.find({ userId })
@@ -91,6 +127,12 @@ export class NotificationService {
         }
     }
 
+    /**
+     * Creates notification content for event updates
+     * 
+     * @param {string} eventTitle - Title of the updated event
+     * @returns {Object} Notification content with type, title and message
+     */
     static eventUpdateNotificationContent = (eventTitle: string) => {
         return {
             type: NotificationType.UPDATE_EVENT,
@@ -99,14 +141,28 @@ export class NotificationService {
         };
     };
 
+    /**
+     * Creates notification content for event invitations
+     * 
+     * @param {string} eventTitle - Title of the event
+     * @returns {Object} Notification content with type, title and message
+     */
     static invitationNotificationContent = (eventTitle: string) => {
         return {
             type: NotificationType.INVITATION,
             title: 'You’re Invited!',
             content: `You have been invited to the event "${eventTitle}".Join us for an exciting experience! Please check the event details and RSVP at your earliest convenience.`,
         };
-    };
+    };  
 
+    /**
+     * Creates notification content for comment replies
+     * 
+     * @param {string} eventTitle - Title of the event
+     * @param {string} commenter - Name of the person who replied
+     * @param {string} userName - Name of the recipient
+     * @returns {Object} Notification content with type, title and message
+     */
     static replyNotificationContent = (eventTitle: string, commenter: string, userName: string) => {
         return {
             type: NotificationType.REPLY,
@@ -115,6 +171,14 @@ export class NotificationService {
         };
     };
 
+    /**
+     * Creates notification content for new comments
+     * 
+     * @param {string} eventTitle - Title of the event
+     * @param {string} commenter - Name of the person who commented
+     * @param {string} userName - Name of the recipient
+     * @returns {Object} Notification content with type, title and message
+     */
     static commentNotificationContent = (
         eventTitle: string,
         commenter: string,
@@ -127,6 +191,12 @@ export class NotificationService {
         };
     };
 
+    /**
+     * Creates notification content for new posts
+     * 
+     * @param {string} eventTitle - Title of the event
+     * @returns {Object} Notification content with type, title and message
+     */
     static newPostNotificationContent = (eventTitle: string) => {
         return {
             type: NotificationType.NEW_POST,
@@ -135,6 +205,12 @@ export class NotificationService {
         };
     };
 
+     /**
+     * Creates notification content for event cancellations
+     * 
+     * @param {string} eventTitle - Title of the cancelled event
+     * @returns {Object} Notification content with type, title and message
+     */
     static deleteEventNotificationContent = (eventTitle: string) => {
         return {
             type: NotificationType.DELETE_EVENT,
@@ -143,6 +219,12 @@ export class NotificationService {
         };
     };
 
+    /**
+     * Creates notification content for accepted RSVPs
+     * 
+     * @param {string} eventName - Name of the event
+     * @returns {Object} Notification content with type, title and message
+     */
     static rsvpAcceptNotificationContent = (eventName: string) => {
         return {
             type: NotificationType.RSVP_ACCEPT,
@@ -152,6 +234,12 @@ export class NotificationService {
         };
     };
 
+    /**
+     * Creates notification content for declined RSVPs
+     * 
+     * @param {string} eventName - Name of the event
+     * @returns {Object} Notification content with type, title and message
+     */
     static rsvpDeniedNotificationContent = (eventName: string) => {
         return {
             type: NotificationType.RSVP_DENIED,
@@ -161,6 +249,13 @@ export class NotificationService {
         };
     };
 
+    /**
+     * Creates notification content for join requests
+     * 
+     * @param {string} participantsSentName - Name of the user requesting to join
+     * @param {string} eventName - Name of the event
+     * @returns {Object} Notification content with type, title and message
+     */
     static requestJoinNotificationContent = (participantsSentName: string, eventName: string) => {
         return {
             type: NotificationType.REQUEST_JOIN,
@@ -170,6 +265,12 @@ export class NotificationService {
         };
     };
 
+    /**
+     * Creates notification content for accepted join requests
+     * 
+     * @param {string} eventName - Name of the event
+     * @returns {Object} Notification content with type, title and message
+     */
     static requestAcceptNotificationContent = (eventName: string) => {
         return {
             type: NotificationType.REQUEST_ACCEPT,
@@ -179,6 +280,12 @@ export class NotificationService {
         };
     };
 
+    /**
+     * Creates notification content for declined join requests
+     * 
+     * @param {string} eventName - Name of the event
+     * @returns {Object} Notification content with type, title and message
+     */
     static requestDeniedNotificationContent = (eventName: string) => {
         return {
             type: NotificationType.REQUEST_DENIED,

@@ -7,8 +7,21 @@ import trimRequest from './requestTrimming';
 import rateLimit from 'express-rate-limit';
 import { HttpError } from '../helpers/httpsError.helpers';
 
+/**
+ * Configures and applies global middleware to the Express application.
+ * 
+ * This function sets up essential middleware for security, parsing, logging,
+ * and request handling in a standardized way across the application.
+ * 
+ * @param app - The Express application instance
+ */
 const applyGlobalMiddleware = (app: express.Express) => {
-    // Apply rate limiting
+    /**
+     * Rate limiting configuration
+     * 
+     * Protects against brute force attacks and prevents API abuse by limiting
+     * the number of requests from a single IP address within a time window.
+     */
     const limiter = rateLimit({
         windowMs: 15 * 60 * 1000, // 15 minutes
         limit: 100, // Limit each IP to 10 requests per windowMs

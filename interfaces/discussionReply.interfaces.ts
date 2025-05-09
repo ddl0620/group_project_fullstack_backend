@@ -1,5 +1,13 @@
 import mongoose, { Document } from "mongoose";
 
+/**
+ * Interface for replies/comments in the discussion system
+ * 
+ * Represents a reply created by a user in response to a discussion post or another reply.
+ * This interface extends Mongoose's Document type to enable direct use with Mongoose models
+ * while providing type safety for comment-related operations.
+ */
+
 // Interface cho bình luận trong hệ thống Discussion
 export interface DiscussionReplyInterface extends Document {
     post_id: mongoose.Schema.Types.ObjectId | string; // ID bài viết mà bình luận thuộc về

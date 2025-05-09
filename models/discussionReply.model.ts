@@ -1,6 +1,13 @@
 import mongoose, { Schema, model } from "mongoose";
 import { DiscussionReplyInterface } from "../interfaces/discussionReply.interfaces";
 
+/**
+ * Mongoose schema for discussion replies.
+ * 
+ * This schema defines the structure for reply documents in MongoDB,
+ * representing comments on discussion posts or replies to other comments.
+ * The schema supports a nested comment structure through parent-child relationships.
+ */
 // Schema cho bình luận trong hệ thống Discussion
 const DiscussionReplySchema = new Schema({
     post_id: { type: mongoose.Schema.Types.ObjectId, ref: "DiscussionPost", required: true },
@@ -18,4 +25,10 @@ DiscussionReplySchema.index({ post_id: 1 });
 DiscussionReplySchema.index({ parent_reply_id: 1 });
 DiscussionReplySchema.index({ creator_id: 1 });
 
+/**
+ * Mongoose model for discussion reply documents.
+ * 
+ * This model provides an interface for creating, querying, updating, and
+ * deleting reply documents in the MongoDB 'DiscussionReply' collection.
+ */
 export const DiscussionReplyModel = model<DiscussionReplyInterface>("DiscussionReply", DiscussionReplySchema);
