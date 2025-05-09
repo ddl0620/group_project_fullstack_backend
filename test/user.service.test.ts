@@ -195,7 +195,11 @@ describe('UserService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(
-        UserService.updatePassword('user123', 'wrongpassword', 'newpassword', 'newpassword')
+        UserService.updatePassword('user123', {
+          currentPassword: 'wrongpassword',
+          newPassword: 'newpassword',
+          confirmPassword: 'newpassword'
+        })
       ).rejects.toThrow('Current password is incorrect');
     });
   });
