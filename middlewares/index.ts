@@ -8,26 +8,12 @@ import rateLimit from 'express-rate-limit';
 import { HttpError } from '../helpers/httpsError.helpers';
 import app from '../app';
 
-/**
- * Configures and applies global middleware to the Express application.
- *
- * This function sets up essential middleware for security, parsing, logging,
- * and request handling in a standardized way across the application.
- *
- * @param app - The Express application instance
- */
 const applyGlobalMiddleware = (app: express.Express) => {
-    /**
-     * Rate limiting configuration
-     *
-     * Protects against brute force attacks and prevents API abuse by limiting
-     * the number of requests from a single IP address within a time window.
-     */
     const limiter = rateLimit({
-        windowMs: 2 * 60 * 1000, // 2 minutes
-        limit: 300, // Limit each IP to 300 requests per windowMs
-        standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-        legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+        windowMs: 2 * 60 * 1000,
+        limit: 300,
+        standardHeaders: true,
+        legacyHeaders: false,
         handler: (req, res, next) => {
             throw new HttpError(
                 'Too many requests, please try again later.',
@@ -42,7 +28,6 @@ const applyGlobalMiddleware = (app: express.Express) => {
     app.use(express.static('public'));
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
-    app.use(cookieParser());
     app.use(trimRequest);
     app.use(helmet());
     app.use(morgan('common'));
@@ -64,11 +49,11 @@ const applyGlobalMiddleware = (app: express.Express) => {
                 callback(new Error('Not allowed by CORS'));
             }
         },
-        credentials: true,
+        credentials: true, // Required for cookies with sameSite: 'none'
     };
 
     app.use(cors(corsOptions));
-    app.options('*', cors(corsOptions)); // Handle preflight with the same config
+    app.options('*', cors(corsOptions));
 };
 
 export default applyGlobalMiddleware;
