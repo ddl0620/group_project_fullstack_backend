@@ -69,12 +69,15 @@ export class AuthControllers {
                 email,
                 password,
             });
+            const isProd = process.env.NODE_ENV === 'production';
+
             response.cookie('jwt', result.token, {
-                httpOnly: true, // Không cho JavaScript truy cập
-                secure: process.env.NODE_ENV === 'production', // Chỉ gửi qua HTTPS trong production
-                sameSite: 'none', // Ngăn CSRF
-                maxAge: 24 * 60 * 60 * 1000, // Thời gian sống của cookie (ví dụ: 1 ngày)
+                httpOnly: true,
+                secure: isProd,                          // ✅ HTTPS trong production
+                sameSite: isProd ? 'none' : 'lax',       // ✅ Gửi cookie cross-origin nếu production
+                maxAge: 24 * 60 * 60 * 1000,             // ✅ 1 ngày
             });
+
 
             HttpResponse.sendYES(response, 200, 'Login successful', result);
         } catch (err) {

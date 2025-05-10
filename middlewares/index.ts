@@ -45,18 +45,26 @@ const applyGlobalMiddleware = (app: express.Express) => {
     app.use(trimRequest);
     app.use(helmet());
     app.use(morgan('common'));
-    app.use(
-        cors({
-            origin: [ "https://group-project-fullstack-frontend-copy.vercel.app",'http://localhost:5173'], // Match the frontend origin
-            methods: ['GET', 'POST', 'PUT', 'DELETE'],
-            allowedHeaders: ['Content-Type', 'Authorization'],
-            exposedHeaders: ['RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset'],
-            credentials: true,
-        }),
-    );
 
-    // Handle CORS preflight requests
-    app.options('*', cors());
+    const allowedOrigins = [
+        'http://localhost:5173',
+        'https://eventify.solve.vn',
+        'https://your-another-frontend.vercel.app',
+    ];
+
+    const corsOptions = {
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
+        credentials: true,
+    };
+
+    app.use(cors(corsOptions));
+    app.options('*', cors(corsOptions)); // 👈 Xử lý preflight bằng cùng config
 };
 
 export default applyGlobalMiddleware;
