@@ -72,7 +72,7 @@ export class AuthControllers {
             response.cookie('jwt', result.token, {
                 httpOnly: true, // Không cho JavaScript truy cập
                 secure: process.env.NODE_ENV === 'production', // Chỉ gửi qua HTTPS trong production
-                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // ❗ đổi từ 'strict' thành 'none' khi production
+                sameSite: 'none', // Ngăn CSRF
                 maxAge: 24 * 60 * 60 * 1000, // Thời gian sống của cookie (ví dụ: 1 ngày)
             });
 
