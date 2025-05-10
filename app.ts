@@ -7,8 +7,11 @@ import applyGlobalMiddleware from './middlewares';
 import errorMiddleware from './middlewares/error.middlewares';
 import applyRoutes from './routes';
 import CronScheduleBuilder from './helpers/CronScheduleBuilder';
-import { as } from '@faker-js/faker/dist/airline-BUL6NtOJ';
 import { CronManager } from './cron/cronManager';
+import { sendEventNotificationEmail } from './email/email';
+import { EventInterface } from './interfaces/event.interfaces';
+import mongoose from 'mongoose';
+import { EventType } from './enums/eventType.enums';
 
 /**
  * Express application instance
@@ -51,18 +54,10 @@ app.get('/', (_req: Request, res: Response): void => {
 /**
  * Server initialization
  *
- * Starts the HTTP server on the configured port and establishes
+ * Starts the HTTP server on the configured port and establisheshhhhgb
  * a connection to the MongoDB database.
  * Logs confirmation message when server is successfully running.
  */
-
-const schedule = new CronScheduleBuilder().minute('every').build();
-const action = async () => {
-    console.log('Action executed');
-};
-
-CronManager.getInstance().registerJob('Test', schedule, action);
-
 // 🚀 Start Server
 server.listen(PORT, async (): Promise<void> => {
     await connectToDB();

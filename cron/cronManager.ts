@@ -104,7 +104,7 @@ export class CronManager {
     public registerJob(
         name: string,
         schedule: string,
-        action: () => Promise<void>,
+        action: Promise<void>,
         options: JobOptions = {},
     ): boolean {
         if (!action || typeof action !== 'function') {

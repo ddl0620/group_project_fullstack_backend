@@ -10,7 +10,7 @@ import { EventListResponse } from '../types/event.type';
 
 /**
  * EventController
- * 
+ *
  * This controller handles all operations related to events, including:
  * - Creating new events with optional image attachments
  * - Retrieving events with various filters (my events, all events, joined events)
@@ -18,20 +18,20 @@ import { EventListResponse } from '../types/event.type';
  * - Updating existing events (details and images)
  * - Soft deleting events
  * - Managing event participation (joining, responding to join requests)
- * 
+ *
  * All endpoints require authentication through AuthenticationRequest.
  */
 export class EventController {
     /**
      * Creates a new event
-     * 
+     *
      * This endpoint validates the event data, processes any attached images,
      * and creates a new event with the authenticated user as the organizer.
-     * 
+     *
      * @param req - AuthenticationRequest object containing authenticated user information and event data
      * @param res - Express Response object
      * @param next - Express NextFunction for error handling
-     * 
+     *
      * @param {string} req.user.userId - ID of the authenticated user creating the event
      * @param {Object} req.body - Event details (title, description, date, etc.)
      * @param {Express.Multer.File[]} req.files - Array of uploaded image files
@@ -60,14 +60,14 @@ export class EventController {
 
     /**
      * Retrieves events organized by the authenticated user with pagination
-     * 
+     *
      * This endpoint fetches events where the authenticated user is the organizer,
      * supporting pagination and sorting options.
-     * 
+     *
      * @param req - AuthenticationRequest object containing authenticated user information
      * @param res - Express Response object
      * @param next - Express NextFunction for error handling
-     * 
+     *
      * @param {number} req.query.page - Page number for pagination (default: 1)
      * @param {number} req.query.limit - Number of events per page (default: 10)
      * @param {string} req.query.sortBy - Sorting direction (default: 'desc')
@@ -94,14 +94,14 @@ export class EventController {
 
     /**
      * Retrieves all visible events with pagination
-     * 
+     *
      * This endpoint fetches all events that are visible to the authenticated user,
      * supporting pagination and sorting options.
-     * 
+     *
      * @param req - AuthenticationRequest object containing authenticated user information
      * @param res - Express Response object
      * @param next - Express NextFunction for error handling
-     * 
+     *
      * @param {number} req.query.page - Page number for pagination (default: 1)
      * @param {number} req.query.limit - Number of events per page (default: 10)
      * @param {string} req.query.sortBy - Sorting direction (default: 'desc')
@@ -132,14 +132,14 @@ export class EventController {
 
     /**
      * Retrieves events joined by the authenticated user with pagination
-     * 
+     *
      * This endpoint fetches events that the authenticated user has joined,
      * supporting pagination and sorting options.
-     * 
+     *
      * @param req - AuthenticationRequest object containing authenticated user information
      * @param res - Express Response object
      * @param next - Express NextFunction for error handling
-     * 
+     *
      * @param {number} req.query.page - Page number for pagination (default: 1)
      * @param {number} req.query.limit - Number of events per page (default: 10)
      * @param {string} req.query.sortBy - Sorting direction (default: 'desc')
@@ -170,14 +170,14 @@ export class EventController {
 
     /**
      * Retrieves a specific event by its ID
-     * 
+     *
      * This endpoint fetches a single event based on the provided event ID,
      * including all event details visible to the authenticated user.
-     * 
+     *
      * @param req - AuthenticationRequest object containing authenticated user information
      * @param res - Express Response object
      * @param next - Express NextFunction for error handling
-     * 
+     *
      * @param {string} req.params.id - ID of the event to fetch
      * @returns {Promise<void>} - Returns the requested event through HttpResponse
      */
@@ -200,15 +200,15 @@ export class EventController {
 
     /**
      * Updates an existing event
-     * 
+     *
      * This endpoint validates the update data, processes any new or removed images,
      * and updates the specified event with the new details and images.
      * Only the event organizer can update the event.
-     * 
+     *
      * @param req - AuthenticationRequest object containing authenticated user information and update data
      * @param res - Express Response object
      * @param next - Express NextFunction for error handling
-     * 
+     *
      * @param {string} req.params.id - ID of the event to update
      * @param {Object} req.body - Updated event details
      * @param {string[]} req.body.existingImages - Array of image IDs to retain
@@ -241,14 +241,14 @@ export class EventController {
 
     /**
      * Soft deletes an event
-     * 
+     *
      * This endpoint marks an event as deleted (isDeleted: true) without permanently
      * removing it from the database. Only the event organizer can delete the event.
-     * 
+     *
      * @param req - AuthenticationRequest object containing authenticated user information
      * @param res - Express Response object
      * @param next - Express NextFunction for error handling
-     * 
+     *
      * @param {string} req.params.id - ID of the event to delete
      * @returns {Promise<void>} - Returns confirmation of deletion through HttpResponse
      */
@@ -267,16 +267,6 @@ export class EventController {
             HttpResponse.sendYES(res, StatusCode.OK, 'Event deleted successfully', {
                 event: deletedEvent,
             });
-
-            //Send notification to participants
-
-            // const userId: string[] = (deletedEvent.participants || []).map(participant =>
-            //     participant.userId.toString(),
-            // );
-            // await NotificationService.createNotification({
-            //     ...NotificationService.deleteEventNotificationContent(deletedEvent.title),
-            //     userIds: userId,
-            // });
         } catch (err) {
             next(err);
         }
@@ -284,14 +274,14 @@ export class EventController {
 
     /**
      * Allows a user to join an event or send a join request
-     * 
+     *
      * This endpoint processes a request to join an event. Depending on the event settings,
      * this may immediately add the user as a participant or create a pending join request.
-     * 
+     *
      * @param req - AuthenticationRequest object containing authenticated user information
      * @param res - Express Response object
      * @param next - Express NextFunction for error handling
-     * 
+     *
      * @param {string} req.body.userId - ID of the user joining the event
      * @param {string} req.params.eventId - ID of the event to join
      * @returns {Promise<void>} - Returns the updated event through HttpResponse
@@ -312,14 +302,14 @@ export class EventController {
 
     /**
      * Responds to an event join request
-     * 
+     *
      * This endpoint allows the event organizer to approve or reject a user's request
      * to join an event.
-     * 
+     *
      * @param req - AuthenticationRequest object containing authenticated user information
      * @param res - Express Response object
      * @param next - Express NextFunction for error handling
-     * 
+     *
      * @param {string} req.body.userId - ID of the user whose request is being responded to
      * @param {string} req.body.status - Response status ('approved' or 'rejected')
      * @param {string} req.params.eventId - ID of the event
@@ -349,7 +339,11 @@ export class EventController {
         }
     }
 
-    async updateIsOpen(req: AuthenticationRequest, res: Response, next: NextFunction): Promise<void> {
+    async updateIsOpen(
+        req: AuthenticationRequest,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> {
         try {
             const { isOpen } = req.body;
             const { eventId } = req.params;
@@ -357,7 +351,7 @@ export class EventController {
             const updatedEvent = await EventService.updateIsOpen(
                 eventId,
                 req.user?.userId as string,
-                isOpen
+                isOpen,
             );
             HttpResponse.sendYES(res, StatusCode.OK, 'Event status updated successfully', {
                 event: updatedEvent,

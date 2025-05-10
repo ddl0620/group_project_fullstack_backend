@@ -4,7 +4,7 @@ import { EventInterface } from '../interfaces/event.interfaces';
 
 /**
  * Create Event Input Type
- * 
+ *
  * Represents the data required to create a new event.
  * This type defines the structure for submitting new events in the system.
  */
@@ -15,6 +15,9 @@ export type CreateEventInput = {
     type: string;
     startDate: Date;
     endDate: Date;
+    startTime: string;
+    endTime: string;
+    notifyWhen: string;
     location?: string;
     images?: string[];
     participants?: { userId: string; status: string }[];
@@ -25,7 +28,7 @@ export type CreateEventInput = {
 
 /**
  * Update Event Input Type
- * 
+ *
  * Represents the data that can be updated for an existing event.
  * All fields are optional, allowing partial updates to event information.
  */
@@ -34,7 +37,7 @@ export type UpdateEventInput = Partial<CreateEventInput>;
 
 /**
  * Event List Response Type
- * 
+ *
  * Represents the response structure when retrieving a list of events.
  * Includes both the event data and pagination information for navigating large result sets.
  */
@@ -51,14 +54,14 @@ export type EventListResponse = {
 
 /**
  * Respond to Join Request Input Type
- * 
+ *
  * Represents the data required to respond to an event participation request.
  * Used when accepting or denying a user's request to join an event.
  */
 export type RespondJoinInput = {
     userId: string;
     status: 'ACCEPTED' | 'DENIED';
-}
+};
 
 export type UpdateIsOpenInput = {
     isOpen: boolean;

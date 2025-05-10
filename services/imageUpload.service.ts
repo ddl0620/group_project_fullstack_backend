@@ -19,7 +19,7 @@ export interface UploadImageInput {
 
 /**
  * Image Upload Service
- * 
+ *
  * This service manages operations related to image uploads, including
  * uploading, deleting, and managing images on Cloudinary.
  * It provides optimized image processing and organized storage.
@@ -27,9 +27,9 @@ export interface UploadImageInput {
 export class ImageUploadService {
     /**
      * Uploads a single image to Cloudinary
-     * 
+     *
      * Uploads an image with optimization transformations and returns the secure URL.
-     * 
+     *
      * @param {UploadImageInput} input - Upload parameters including file and folder
      * @returns {Promise<string>} The secure URL of the uploaded image
      * @throws {HttpError} If upload fails
@@ -40,9 +40,10 @@ export class ImageUploadService {
         try {
             const result = await cloudinary.uploader.upload(file, {
                 folder: folder,
+                chunk_size: 6000000, // 6MB per chunk
                 resource_type: 'image',
                 transformation: [
-                    { width: 1000, height: 1000, crop: 'limit' }, // Giới hạn kích thước
+                    { width: 1024, height: 1024, crop: 'limit' }, // Giới hạn kích thước
                     { quality: 'auto', fetch_format: 'auto' }, // Tối ưu chất lượng và định dạng
                 ],
             });
@@ -59,9 +60,9 @@ export class ImageUploadService {
 
     /**
      * Uploads multiple images to Cloudinary in parallel
-     * 
+     *
      * Processes multiple image uploads concurrently and returns all secure URLs.
-     * 
+     *
      * @param {UploadImageInput[]} inputs - Array of upload parameters
      * @returns {Promise<string[]>} Array of secure URLs for the uploaded images
      */
@@ -72,10 +73,10 @@ export class ImageUploadService {
 
     /**
      * Deletes multiple images from Cloudinary by their URLs
-     * 
+     *
      * Extracts public IDs from URLs and deletes the images from Cloudinary.
      * Continues with remaining deletions if individual deletions fail.
-     * 
+     *
      * @param {string[]} urls - Array of Cloudinary URLs to delete
      * @param {string} folder - Folder path in Cloudinary (e.g., 'discussionPosts/{postId}')
      * @returns {Promise<void>}
@@ -112,9 +113,9 @@ export class ImageUploadService {
 
     /**
      * Converts Multer file objects to Cloudinary URLs
-     * 
+     *
      * Processes uploaded files and stores them in a specified folder structure.
-     * 
+     *
      * @param {Express.Multer.File[] | undefined} files - Array of uploaded files
      * @param {string} folderName - Base folder name for storage
      * @param {string | null} id - Optional ID to create a subfolder
@@ -147,10 +148,10 @@ export class ImageUploadService {
 
     /**
      * Updates an entity's image list, handling additions and removals
-     * 
+     *
      * Processes new uploads, retains specified existing images, and removes
      * deleted images from both the entity and Cloudinary storage.
-     * 
+     *
      * @param {Express.Multer.File[] | undefined} files - New files to upload
      * @param {string[]} existingImages - URLs of images to retain
      * @param {any} entity - Entity with current images array
