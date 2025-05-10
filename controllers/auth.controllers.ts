@@ -69,12 +69,11 @@ export class AuthControllers {
                 email,
                 password,
             });
-            const isProd = process.env.NODE_ENV === 'production';
 
             response.cookie('jwt', result.token, {
                 httpOnly: true,
-                secure: isProd,                          // ✅ HTTPS trong production
-                sameSite: isProd ? 'none' : 'lax',       // ✅ Gửi cookie cross-origin nếu production
+                secure: true,                          // ✅ HTTPS trong production
+                sameSite: 'none', // Always set to 'none' for cross-origin cookies
                 maxAge: 24 * 60 * 60 * 1000,             // ✅ 1 ngày
             });
 
