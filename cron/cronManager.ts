@@ -1,6 +1,7 @@
-import cron, { ScheduledTask } from 'node-cron';
+import { Agenda } from 'agenda';
 import { cronConfig } from './cronConfig';
 import cronJobs from './jobs';
+import { upcomingEventEmailAction } from './action/commonActions';
 
 /**
  * Options for configuring a cron job.
@@ -15,7 +16,7 @@ export interface JobOptions {
 export interface Job {
     name: string;
     schedule: string;
-    action: () => Promise<void>;
+    action: (...args: any[]) => Promise<void>;
     options?: JobOptions;
 }
 
@@ -23,23 +24,107 @@ export interface Job {
  * Represents an instance of a running cron job.
  */
 export interface JobInstance {
-    task: ScheduledTask;
-    schedule: string;
-    action: () => Promise<void>;
+    schedule: string | undefined;
+    action: (...args: any[]) => Promise<void>;
     options?: JobOptions;
+    data?: any;
 }
 
 /**
- * Manages cron jobs using the node-cron library.
+ * Manages cron jobs using the Agenda library.
  * Provides methods to register, update, stop, and retrieve information about scheduled tasks.
  */
 export class CronManager {
     private jobs: Map<string, JobInstance> = new Map();
+    private agenda: Agenda;
     private static instance: CronManager;
+    private isReady: boolean = false;
+    private actionMap: Map<string, (...args: any[]) => Promise<void>> = new Map();
+
     private constructor() {
-        for (const job of cronJobs) {
-            this.addJob(job.name, job.schedule, job.action, job.options);
-        }
+        this.agenda = new Agenda({
+            db: { address: cronConfig.mongoUri, collection: 'jobs' },
+            processEvery: cronConfig.processEvery,
+            defaultConcurrency: cronConfig.defaultConcurrency,
+            defaultLockLifetime: cronConfig.defaultLockLifetime,
+        });
+
+        this.agenda.on('ready', async () => {
+            console.log('Agenda đã kết nối thành công đến MongoDB!');
+            this.isReady = true;
+
+            // Điền actionMap từ cronJobs
+            for (const job of cronJobs) {
+                this.actionMap.set(job.name, job.action);
+            }
+
+            // Tải các công việc đã lưu trong database
+            const existingJobs = await this.agenda.jobs({});
+            for (const job of existingJobs) {
+                const name = job.attrs.name;
+                const schedule = job.attrs.repeatInterval || job.attrs.nextRunAt?.toISOString();
+                const data = job.attrs.data || {};
+
+                // Lấy action từ actionMap hoặc ánh xạ động
+                let action: (...args: any[]) => Promise<void>;
+                if (this.actionMap.has(name)) {
+                    action = this.actionMap.get(name)!;
+                } else if (name.startsWith('event-')) {
+                    // Ánh xạ action cho các công việc event-...
+                    action = upcomingEventEmailAction;
+                    this.actionMap.set(name, action);
+                } else {
+                    action = async (data: any) => {
+                        console.log(`Thực thi công việc đã lưu ${name} với dữ liệu:`, data);
+                    };
+                }
+
+                // Định nghĩa lại công việc để Agenda có thể thực thi
+                this.agenda.define(name, { priority: 0, concurrency: 1 }, async (job: any) => {
+                    try {
+                        await action(job.attrs.data);
+                    } catch (error) {
+                        console.error(`Lỗi khi thực thi công việc ${name}:`, error);
+                    }
+                });
+
+                this.jobs.set(name, {
+                    schedule,
+                    action: () => action(data),
+                    options: { timezone: cronConfig.defaultTimezone },
+                    data,
+                });
+                console.log(`Đã tải công việc từ database: ${name}, lịch trình: ${schedule}`);
+            }
+
+            // Đăng ký các công việc từ cronJobs (nếu chưa tồn tại)
+            for (const job of cronJobs) {
+                if (!this.jobs.has(job.name)) {
+                    await this.addJob(job.name, job.schedule, job.action, job.options);
+                }
+            }
+
+            await this.agenda.start();
+            console.log('Agenda đã khởi động!');
+        });
+
+        this.agenda.on('error', err => {
+            console.error('Lỗi kết nối MongoDB:', err);
+            this.isReady = false;
+            throw new Error('Không thể kết nối đến MongoDB. Vui lòng kiểm tra URI và mạng.');
+        });
+
+        this.agenda.on('fail', (err, job) => {
+            console.error(`Công việc ${job.attrs.name} thất bại:`, err);
+        });
+
+        this.agenda.on('start', job => {
+            console.log(`Công việc ${job.attrs.name} bắt đầu chạy vào ${new Date()}`);
+        });
+
+        this.agenda.on('complete', job => {
+            console.log(`Công việc ${job.attrs.name} đã hoàn thành vào ${new Date()}`);
+        });
     }
 
     public static getInstance(): CronManager {
@@ -49,144 +134,130 @@ export class CronManager {
         return CronManager.instance;
     }
 
-    /**
-     * Registers a new cron job or updates an existing one with the same name.
-     * @param name - The unique name of the job.
-     * @param schedule - The cron schedule string (e.g., '* * * * *' for every minute).
-     * @param action - The asynchronous function to execute when the schedule triggers.
-     * @param options - Optional configuration for the job, such as timezone.
-     * @returns True if the job was successfully registered, false otherwise.
-     */
-    private addJob(
-        name: string,
-        schedule: string,
-        action: () => Promise<void>,
-        options: JobOptions = {},
-    ): boolean {
-        if (this.jobs.has(name)) {
-            const existingJob = this.jobs.get(name);
-            if (existingJob) {
-                existingJob.task.stop();
-            }
-        }
-
-        try {
-            cron.validate(schedule);
-        } catch (error) {
-            return false;
-        }
-
-        const task = cron.schedule(
-            schedule,
-            async () => {
-                try {
-                    await action();
-                } catch (error) {}
-            },
-            {
-                scheduled: true,
-                timezone: options.timezone || cronConfig.defaultTimezone,
-            },
-        );
-
-        this.jobs.set(name, { task, schedule, action, options });
-        return true;
+    private async waitForReady(): Promise<void> {
+        if (this.isReady) return;
+        return new Promise((resolve, reject) => {
+            this.agenda.on('ready', () => {
+                this.isReady = true;
+                resolve();
+            });
+            this.agenda.on('error', err => {
+                reject(new Error(`Agenda không sẵn sàng: ${err.message}`));
+            });
+        });
     }
 
-    /**
-     * Registers a dynamic cron job with validation for the action.
-     * @param name - The unique name of the job.
-     * @param schedule - The cron schedule string.
-     * @param action - The asynchronous function to execute.
-     * @param options - Optional configuration for the job.
-     * @returns True if the job was successfully registered, false if the action is invalid or registration fails.
-     */
-    public registerJob(
+    private async addJob(
         name: string,
         schedule: string,
-        action: Promise<void>,
+        action: (...args: any[]) => Promise<void>,
         options: JobOptions = {},
-    ): boolean {
+        data: any = {},
+    ): Promise<boolean> {
+        await this.waitForReady();
+
+        this.actionMap.set(name, action);
+
+        this.agenda.define(name, { priority: 0, concurrency: 1 }, async (job: any) => {
+            try {
+                await action(job.attrs.data);
+            } catch (error) {
+                console.error(`Lỗi khi thực thi công việc ${name}:`, error);
+            }
+        });
+
+        try {
+            await this.agenda.every(schedule, name, data, {
+                timezone: options.timezone || cronConfig.defaultTimezone,
+            });
+            this.jobs.set(name, { schedule, action: () => action(data), options, data });
+            return true;
+        } catch (error) {
+            console.error(`Lỗi khi lập lịch công việc ${name}:`, error);
+            return false;
+        }
+    }
+
+    public async registerJob(
+        name: string,
+        schedule: string,
+        action: (...args: any[]) => Promise<void>,
+        options: JobOptions = {},
+        data: any = {},
+    ): Promise<boolean> {
         if (!action || typeof action !== 'function') {
             return false;
         }
-        return this.addJob(name, schedule, action, options);
+        return this.addJob(name, schedule, action, options, data);
     }
 
-    /**
-     * Updates the schedule of an existing cron job.
-     * @param name - The name of the job to update.
-     * @param newSchedule - The new cron schedule string.
-     * @returns True if the job's schedule was updated successfully, false if the job doesn't exist or the schedule is invalid.
-     */
-    public updateJobSchedule(name: string, newSchedule: string): boolean {
+    public async updateJobSchedule(name: string, newSchedule: string): Promise<boolean> {
+        await this.waitForReady();
+
         if (!this.jobs.has(name)) {
             return false;
         }
 
+        const job = this.jobs.get(name)!;
+        const data = job.data;
+
+        await this.agenda.cancel({ name });
+
+        const action =
+            this.actionMap.get(name) ||
+            (async (data: any) => {
+                console.log(`Thực thi công việc ${name} với dữ liệu:`, data);
+            });
+
+        this.agenda.define(name, { priority: 0, concurrency: 1 }, async (job: any) => {
+            try {
+                await action(job.attrs.data);
+            } catch (error) {
+                console.error(`Lỗi khi thực thi công việc ${name}:`, error);
+            }
+        });
+
         try {
-            cron.validate(newSchedule);
+            await this.agenda.every(newSchedule, name, data, {
+                timezone: job.options?.timezone || cronConfig.defaultTimezone,
+            });
+            this.jobs.set(name, {
+                schedule: newSchedule,
+                action: () => action(data),
+                options: job.options,
+                data,
+            });
+            return true;
         } catch (error) {
+            console.error(`Lỗi khi cập nhật lịch công việc ${name}:`, error);
             return false;
         }
-
-        const job = this.jobs.get(name)!;
-        job.task.stop();
-
-        const newTask = cron.schedule(
-            newSchedule,
-            async () => {
-                try {
-                    await job.action();
-                } catch (error) {}
-            },
-            {
-                scheduled: true,
-                timezone: job.options?.timezone || cronConfig.defaultTimezone,
-            },
-        );
-
-        this.jobs.set(name, { ...job, task: newTask, schedule: newSchedule });
-        return true;
     }
 
-    /**
-     * Stops and removes a specific cron job.
-     * @param name - The name of the job to stop.
-     */
-    public stopJob(name: string): void {
+    public async stopJob(name: string): Promise<void> {
         if (this.jobs.has(name)) {
-            const job = this.jobs.get(name);
-            if (job) {
-                job.task.stop();
-            }
+            await this.agenda.cancel({ name });
             this.jobs.delete(name);
+            this.actionMap.delete(name);
         }
     }
 
-    /**
-     * Stops and removes all cron jobs.
-     */
-    public stopAllJobs(): void {
-        for (const [name] of this.jobs) {
-            this.stopJob(name);
+    public async stopAllJobs(): Promise<void> {
+        for (const name of this.jobs.keys()) {
+            await this.stopJob(name);
         }
     }
 
-    /**
-     * Retrieves the names of all currently registered cron jobs.
-     * @returns An array of job names.
-     */
     public getJobs(): string[] {
         return Array.from(this.jobs.keys());
     }
 
-    /**
-     * Retrieves detailed information about a specific cron job.
-     * @param name - The name of the job to query.
-     * @returns The JobInstance object containing job details, or null if the job doesn't exist.
-     */
     public getJobInfo(name: string): JobInstance | null {
         return this.jobs.get(name) || null;
+    }
+
+    public async shutdown(): Promise<void> {
+        await this.agenda.stop();
+        await this.agenda.close();
     }
 }

@@ -3,73 +3,136 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Event Update Notice</title>
+  <title>Event Update Notification - {{title}}</title>
   <style>
       body {
-          font-family: Arial, sans-serif;
-          background-color: #f4f4f4;
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background-color: #f9fafb;
           margin: 0;
           padding: 0;
+          color: #1f2937;
       }
       .container {
           max-width: 600px;
-          margin: 20px auto;
+          margin: 40px auto;
           background-color: #ffffff;
-          border-radius: 8px;
+          border-radius: 12px;
           overflow: hidden;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
       }
       .header {
-          background-color: #007bff;
-          color: #ffffff;
-          padding: 20px;
+          background-color: #E60028; /* RMIT Red */
+          padding: 30px 20px;
           text-align: center;
+          position: relative;
+      }
+      .header-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+      }
+      .logo-container {
+          margin-bottom: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: white;
+          padding: 12px 20px;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          width: 100%;
+          max-width: 300px;
+      }
+      .logo img {
+          height: 40px;
+          width: auto;
+          object-fit: contain;
+      }
+      .brand-text {
+          color: #1f2937;
+          font-size: 20px;
+          font-weight: 600;
+          margin-left: 10px;
       }
       .header h1 {
           margin: 0;
+          color: #ffffff;
           font-size: 24px;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+          width: 100%;
+          text-align: center;
       }
       .content {
-          padding: 20px;
+          padding: 40px 30px;
           line-height: 1.6;
       }
-      .content h2 {
-          color: #333333;
-          font-size: 20px;
+      .event-details {
+          background-color: #f8f9fa;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          padding: 20px;
+          margin: 20px 0;
       }
-      .content p {
-          color: #666666;
-          margin: 10px 0;
+      .event-detail {
+          margin-bottom: 10px;
+      }
+      .event-detail strong {
+          display: inline-block;
+          width: 100px;
+          color: #4b5563;
       }
       .button {
           display: inline-block;
           padding: 12px 24px;
-          background-color: #007bff;
+          background-color: #E60028;
           color: #ffffff;
           text-decoration: none;
-          border-radius: 5px;
-          font-weight: bold;
-          margin: 10px 0;
+          border-radius: 6px;
+          font-weight: 600;
+          margin: 20px 0 10px;
+          text-align: center;
       }
-      .button:hover {
-          background-color: #0056b3;
+      .update-notice {
+          background-color: #dbeafe;
+          border: 1px solid #bfdbfe;
+          border-radius: 8px;
+          padding: 15px;
+          margin: 20px 0;
+          color: #1e40af;
       }
       .footer {
-          background-color: #f4f4f4;
-          padding: 10px;
+          background-color: #f3f4f6;
+          padding: 25px 20px;
           text-align: center;
-          font-size: 12px;
-          color: #999999;
+          border-top: 3px solid #E60028;
+      }
+      .social-links {
+          margin-bottom: 20px;
+      }
+      .social-link {
+          display: inline-block;
+          margin: 0 10px;
+          color: #E60028;
+          text-decoration: none;
+          font-weight: 500;
+      }
+      .footer-text {
+          font-size: 13px;
+          color: #6b7280;
+          margin: 5px 0;
       }
       @media screen and (max-width: 600px) {
           .container {
-              margin: 10px;
+              margin: 20px 15px;
+              border-radius: 8px;
           }
-          .header h1 {
-              font-size: 20px;
+          .header {
+              padding: 25px 15px;
           }
-          .content h2 {
-              font-size: 18px;
+          .content {
+              padding: 30px 20px;
           }
       }
   </style>
@@ -77,20 +140,43 @@
 <body>
 <div class="container">
   <div class="header">
-    <h1>Event Updated: {{title}}</h1>
+    <div class="header-content">
+      <div class="logo-container">
+        <img src="https://res.cloudinary.com/dvdlovkqi/image/upload/v1746904834/event/6801dad65ac6f6873198f732/kmj07nyuzevuvgajx2kg.png" alt="RMIT" style="height: 40px;">
+        <span class="brand-text">Eventify × RMIT</span>
+      </div>
+      <h1>Event Update Notification</h1>
+    </div>
   </div>
   <div class="content">
-    <h2>Updated Event Details</h2>
-    <p><strong>Title:</strong> {{title}}</p>
-    <p><strong>Start Date:</strong> {{startDate}}</p>
-    <p><strong>Location:</strong> {{location}}</p>
-    <p>The event <strong>{{title}}</strong> has been updated. Please review the updated details above.</p>
-    <p>Check the event details or RSVP by clicking the button below.</p>
-    <a href="{{rsvpLink}}" class="button">View Event</a>
+    <p>Dear Participant,</p>
+
+    <div class="update-notice">
+      <p>Please be advised that the event <strong>{{title}}</strong> has been updated. Kindly review the revised details below.</p>
+    </div>
+
+    <div class="event-details">
+      <div class="event-detail"><strong>Title:</strong> {{title}}</div>
+      <div class="event-detail"><strong>Start Date:</strong> {{startDate}}</div>
+      <div class="event-detail"><strong>End Date:</strong> {{endDate}}</div>
+      <div class="event-detail"><strong>Location:</strong> {{location}}</div>
+      <div class="event-detail"><strong>Description:</strong> {{description}}</div>
+    </div>
+
+    <p>Should you need to modify your attendance status or require additional information, please utilize the link below to access the complete event details.</p>
+
+    <a href="{{rsvpLink}}" class="button">Access Event Details</a>
   </div>
   <div class="footer">
-    <p>© {{year}} Your Organization. All rights reserved.</p>
-    <p>Contact us at <a href="mailto:{{email}}">{{email}}</a>.</p>
+    <div class="social-links">
+      <a href="#" class="social-link">Facebook</a>
+      <a href="#" class="social-link">Twitter</a>
+      <a href="#" class="social-link">Instagram</a>
+      <a href="#" class="social-link">LinkedIn</a>
+    </div>
+    <p class="footer-text">© 2025 Eventify × RMIT. All rights reserved.</p>
+    <p class="footer-text">RMIT University Vietnam - 521 Kim Ma Street - 5Knights</p>
+    <p class="footer-text">Contact us at <a href="mailto:s4021494@rmit.edu.vn" style="color: #E60028;">s4021494@rmit.edu.vn</a></p>
   </div>
 </div>
 </body>

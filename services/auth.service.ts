@@ -4,8 +4,6 @@ import { OtpService } from './otp.service';
 import { StatusCode } from '../enums/statusCode.enums';
 import { ErrorCode } from '../enums/errorCode.enums';
 import { HttpError } from '../helpers/httpsError.helpers';
-import { NextFunction } from 'express';
-import { HttpResponse } from '../helpers/HttpResponse';
 
 /**
  * Authentication Service
