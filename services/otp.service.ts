@@ -49,7 +49,7 @@ export class OtpService {
             otpStorage.delete(email);
             throw new Error('OTP expired');
         }
-
+        console.log(otpData.code + ' ' + code);
         if (otpData.code !== code) {
             throw new Error('Invalid OTP');
         }

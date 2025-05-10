@@ -16,10 +16,18 @@ import { NotificationService } from './notification.service';
 import { StatusCode } from '../enums/statusCode.enums';
 import { ErrorCode } from '../enums/errorCode.enums';
 import { UserInterface } from '../interfaces/user.interfaces';
+import { convertToCronSchedule } from '../helpers/convertToCronSchedule';
+import { CronManager } from '../cron/cronManager';
+import {
+    notifyEventDeleted,
+    notifyEventUpdated,
+    upcommingEventEmail,
+} from '../cron/action/commonActions';
+import { as } from '@faker-js/faker/dist/airline-BUL6NtOJ';
 
 /**
  * Event Service
- * 
+ *
  * This service manages operations related to events, including creation,
  * retrieval, updates, participation management, and event visibility.
  * It handles complex business logic for event participation, permissions,
@@ -28,10 +36,10 @@ import { UserInterface } from '../interfaces/user.interfaces';
 export class EventService {
     /**
      * Creates a new event
-     * 
+     *
      * Creates an event with the specified user as organizer, handling image uploads
      * and enforcing user event creation limits.
-     * 
+     *
      * @param {string} userId - ID of the user creating the event (organizer)
      * @param {CreateEventInput} eventData - Event details
      * @param {Express.Multer.File[] | undefined | null} files - Image files to upload
@@ -71,12 +79,34 @@ export class EventService {
         }
 
         try {
-            return await EventModel.create({
+            const event: EventInterface | null = await EventModel.create({
                 ...eventData,
                 organizer: userId,
                 participants: [],
                 images: imgUrls,
             });
+
+            if (!event) {
+                throw new HttpError(
+                    'Failed to create event',
+                    StatusCode.INTERNAL_SERVER_ERROR,
+                    ErrorCode.CAN_NOT_CREATE,
+                );
+            }
+
+            //Set up cron job for event notification
+            const schedule: string = convertToCronSchedule(
+                event.startDate,
+                event.startTime,
+                event.notifyWhen,
+            );
+            CronManager.getInstance().registerJob(
+                `event-${event._id}`,
+                schedule,
+                upcommingEventEmail(event),
+            );
+
+            return event;
         } catch (err) {
             throw new HttpError(
                 'Failed to create event',
@@ -88,10 +118,10 @@ export class EventService {
 
     /**
      * Retrieves events organized by a specific user
-     * 
+     *
      * Gets events where the specified user is the organizer, with pagination
      * and sorting options.
-     * 
+     *
      * @param {string} userId - ID of the organizer
      * @param {number} page - Page number for pagination (default: 1)
      * @param {number} limit - Number of events per page (default: 10)
@@ -134,10 +164,10 @@ export class EventService {
 
     /**
      * Retrieves all events visible to a specific user
-     * 
+     *
      * Gets events that are public, or where the user is an organizer or participant,
      * with pagination and sorting options.
-     * 
+     *
      * @param {string} userId - ID of the user
      * @param {number} page - Page number for pagination (default: 1)
      * @param {number} limit - Number of events per page (default: 10)
@@ -188,10 +218,10 @@ export class EventService {
 
     /**
      * Retrieves events where user is either organizer or participant
-     * 
+     *
      * Gets events where the specified user is either the organizer or a participant,
      * with pagination and sorting options.
-     * 
+     *
      * @param {string} userId - ID of the user
      * @param {number} page - Page number for pagination (default: 1)
      * @param {number} limit - Number of events per page (default: 10)
@@ -236,9 +266,9 @@ export class EventService {
 
     /**
      * Retrieves all events with pagination
-     * 
+     *
      * Gets all events in the system with pagination and sorting options.
-     * 
+     *
      * @param {number} page - Page number for pagination (default: 1)
      * @param {number} limit - Number of events per page (default: 10)
      * @param {string} sortBy - Sort order ('asc' or 'desc', default: 'desc')
@@ -272,10 +302,10 @@ export class EventService {
 
     /**
      * Retrieves events where user is a participant
-     * 
+     *
      * Gets events where the specified user is a participant (not organizer),
      * with pagination and sorting options.
-     * 
+     *
      * @param {string} userId - ID of the user
      * @param {number} page - Page number for pagination (default: 1)
      * @param {number} limit - Number of events per page (default: 10)
@@ -320,9 +350,9 @@ export class EventService {
 
     /**
      * Retrieves a specific event by ID with access control
-     * 
+     *
      * Gets an event by ID, enforcing access control for private events.
-     * 
+     *
      * @param {string} userId - ID of the user requesting access
      * @param {string} eventId - ID of the event to retrieve
      * @returns {Promise<EventInterface>} The event object
@@ -363,9 +393,9 @@ export class EventService {
 
     /**
      * Updates an existing event
-     * 
+     *
      * Updates event details, managing associated images and notifying participants.
-     * 
+     *
      * @param {string} userId - ID of the user attempting the update
      * @param {string} eventId - ID of the event to update
      * @param {Express.Multer.File[]} files - New image files to upload
@@ -418,7 +448,6 @@ export class EventService {
             );
         }
 
-
         updateData.images = await ImageUploadService.updateImagesList(
             files,
             existingImages,
@@ -444,14 +473,28 @@ export class EventService {
             ...NotificationService.eventUpdateNotificationContent(updatedEvent.title),
             userIds,
         });
+
+        await notifyEventUpdated(updatedEvent);
+
+        // const schedule: string = convertToCronSchedule(
+        //     updatedEvent.startDate,
+        //     updatedEvent.startTime,
+        //     updatedEvent.notifyWhen,
+        // );
+        // CronManager.getInstance().registerJob(
+        //     `event-${updatedEvent._id}`,
+        //     schedule,
+        //     upcommingEventEmail(updatedEvent),
+        // );
+
         return updatedEvent;
     }
 
     /**
      * Sets the active/deleted status of an event
-     * 
+     *
      * Marks an event as deleted or active, with notification to participants.
-     * 
+     *
      * @param {string} userId - ID of the user attempting the status change
      * @param {string} eventId - ID of the event to update
      * @param {boolean} isActive - Whether the event should be marked as deleted (false) or active (true)
@@ -494,10 +537,15 @@ export class EventService {
             const userId: string[] = (deletedEvent.participants || []).map(participant =>
                 participant.userId.toString(),
             );
+
             await NotificationService.createNotification({
                 ...NotificationService.deleteEventNotificationContent(deletedEvent.title),
                 userIds: userId,
             });
+        }
+
+        if (deletedEvent.isDeleted) {
+            await notifyEventDeleted(deletedEvent);
         }
 
         return deletedEvent;
@@ -505,10 +553,10 @@ export class EventService {
 
     /**
      * Processes a user's request to join an event
-     * 
+     *
      * Handles join requests with different flows for public vs. private events,
      * enforcing participant limits and preventing duplicate joins.
-     * 
+     *
      * @param {string} userId - ID of the user requesting to join
      * @param {string} eventId - ID of the event to join
      * @returns {Promise<EventInterface>} The updated event
@@ -535,7 +583,7 @@ export class EventService {
         if (!event) {
             throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
         }
-        
+
         // HERE: Check if the event is open for joining
         if (!event.isOpen) {
             throw new HttpError('Event is closed', StatusCode.FORBIDDEN, ErrorCode.EVENT_CLOSED);
@@ -632,10 +680,10 @@ export class EventService {
 
     /**
      * Processes an organizer's response to a join request
-     * 
+     *
      * Handles acceptance or rejection of pending join requests,
      * enforcing participant limits and sending appropriate notifications.
-     * 
+     *
      * @param {string} eventId - ID of the event
      * @param {string} userIdToken - ID of the organizer responding to the request
      * @param {RespondJoinInput} input - Response data including userId and status
@@ -760,7 +808,11 @@ export class EventService {
     }
 
     // HERE : Update the isOpen field of the event
-    static async updateIsOpen(eventId: string, userId: string, isOpen: boolean): Promise<EventInterface> {
+    static async updateIsOpen(
+        eventId: string,
+        userId: string,
+        isOpen: boolean,
+    ): Promise<EventInterface> {
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
             throw new HttpError(
                 'Invalid event ID format',
@@ -785,7 +837,7 @@ export class EventService {
         const updatedEvent = await EventModel.findByIdAndUpdate(
             eventId,
             { $set: { isOpen } },
-            { new: true, runValidators: true }
+            { new: true, runValidators: true },
         );
 
         if (!updatedEvent) {

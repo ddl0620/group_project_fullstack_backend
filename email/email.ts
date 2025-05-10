@@ -74,3 +74,43 @@ export const sendEventNotificationEmail = async (
 
     return sendEmail({ to, subject, text, html });
 };
+
+// Function for sending event updated email
+export const sendEventUpdatedEmail = async (
+    to: string | string[],
+    event: EventInterface,
+    rsvpLink: string = 'https://example.com/event-details', // Optional with a default value
+): Promise<nodemailer.SentMessageInfo> => {
+    const { title, startDate, location } = event;
+
+    const subject = `Event Updated: ${title}`;
+    const text = `The event ${title} has been updated.\n\nStart Date: ${formatDate(startDate)}\nLocation: ${location || 'TBD'}`;
+    const html = loadHtmlTemplate('event-updated.html', {
+        title,
+        startDate: formatDate(startDate),
+        location: location || 'To Be Determined',
+        rsvpLink,
+        year: new Date().getFullYear().toString(),
+        email: process.env.EMAIL_USER as string,
+    });
+
+    return sendEmail({ to, subject, text, html });
+};
+
+// Function for sending event deleted email
+export const sendEventDeletedEmail = async (
+    to: string | string[],
+    event: EventInterface,
+): Promise<nodemailer.SentMessageInfo> => {
+    const { title } = event;
+
+    const subject = `Event Cancelled: ${title}`;
+    const text = `We regret to inform you that the event ${title} has been cancelled.`;
+    const html = loadHtmlTemplate('event-deleted.html', {
+        title,
+        year: new Date().getFullYear().toString(),
+        email: process.env.EMAIL_USER as string,
+    });
+
+    return sendEmail({ to, subject, text, html });
+};
