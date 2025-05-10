@@ -12,6 +12,7 @@ import { sendEventNotificationEmail } from './email/email';
 import { EventInterface } from './interfaces/event.interfaces';
 import mongoose from 'mongoose';
 import { EventType } from './enums/eventType.enums';
+import cookieParser from 'cookie-parser';
 
 /**
  * Express application instance
@@ -28,7 +29,6 @@ const app: Express = express();
  * This separation allows for potential future extensions like WebSockets.
  */
 const server = http.createServer(app);
-
 //Middlewares
 applyGlobalMiddleware(app);
 
