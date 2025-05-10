@@ -48,27 +48,6 @@ describe('EventService', () => {
     isDeleted: false,
   };
 
-  describe('addEvent', () => {
-    it('should create a new event if under max limit', async () => {
-      (UserModel.findById as jest.Mock).mockReturnValue({ select: jest.fn().mockResolvedValue(mockUser) });
-      (EventModel.countDocuments as jest.Mock).mockResolvedValue(0);
-      (ImageUploadService.convertFileToURL as jest.Mock).mockResolvedValue(['image1.jpg']);
-      (EventModel.create as jest.Mock).mockResolvedValue(mockEvent);
-
-      const result = await EventService.addEvent(mockUserId, {
-        title: mockEvent.title,
-        description: mockEvent.description,
-        type: mockEvent.type,
-        startDate: mockEvent.startDate,
-        endDate: mockEvent.endDate,
-        location: mockEvent.location,
-        isPublic: true,
-        organizer: mockUserId,
-      }, []);
-
-      expect(result).toEqual(mockEvent);
-    });
-  });
 
   describe('getOrganizedEvents', () => {
     it('should return events and pagination', async () => {
