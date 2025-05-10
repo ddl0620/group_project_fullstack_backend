@@ -6,6 +6,7 @@ import cors from 'cors';
 import trimRequest from './requestTrimming';
 import rateLimit from 'express-rate-limit';
 import { HttpError } from '../helpers/httpsError.helpers';
+import app from '../app';
 
 /**
  * Configures and applies global middleware to the Express application.
@@ -35,8 +36,8 @@ const applyGlobalMiddleware = (app: express.Express) => {
             );
         },
     });
+    app.use(cookieParser());
     app.use(limiter);
-
     app.use(express.static('public'));
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
@@ -50,7 +51,7 @@ const applyGlobalMiddleware = (app: express.Express) => {
             methods: ['GET', 'POST', 'PUT', 'DELETE'],
             allowedHeaders: ['Content-Type', 'Authorization'],
             exposedHeaders: ['RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset'],
-            credentials: false,
+            credentials: true,
         }),
     );
 

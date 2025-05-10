@@ -9,10 +9,10 @@ import { UserModel } from '../models/user.models';
 
 /**
  * Authentication middleware to verify JWT tokens
- * 
- * Extracts the JWT token from the Authorization header, verifies its validity,
+ *
+ * Extracts the JWT token from the 'jwt' cookie, verifies its validity,
  * and attaches the authenticated user information to the request object.
- * 
+ *
  * @param request - Extended Express request with authentication properties
  * @param response - Express response object
  * @param nextFunction - Express next middleware function
@@ -23,8 +23,7 @@ export const authenticationToken = async (
     response: Response,
     nextFunction: NextFunction,
 ) => {
-    const authHeader: string | undefined = request.headers['authorization'];
-    const token: string | undefined = authHeader && authHeader.split(' ')[1];
+    const token: string | undefined = request.cookies?.jwt; // Lấy token từ cookie 'jwt'
     if (!token) {
         return nextFunction(
             new HttpError(
@@ -48,7 +47,6 @@ export const authenticationToken = async (
 
     try {
         const encoded = jwt.verify(token, secret);
-        // console.log('encoded', encoded);
         if (
             typeof encoded !== 'object' ||
             !encoded ||
@@ -65,7 +63,6 @@ export const authenticationToken = async (
         }
 
         const user = await UserModel.findById(encoded.userId);
-        // console.log(user);
         if (!user) {
             return nextFunction(
                 new HttpError(
@@ -93,10 +90,10 @@ export const authenticationToken = async (
 
 /**
  * Admin-only access middleware
- * 
+ *
  * Ensures that only users with admin role can access protected routes.
  * Must be used after authenticationToken middleware.
- * 
+ *
  * @param request - Extended Express request with authentication properties
  * @param response - Express response object
  * @param nextFunction - Express next middleware function
@@ -108,8 +105,6 @@ export const adminOnlyMiddleware = (
     nextFunction: NextFunction,
 ) => {
     const userRole: USER_ROLE | undefined = request.user?.role;
-
-    //Commented for testing purposes
 
     if (userRole !== USER_ROLE.ADMIN || !userRole) {
         return nextFunction(
@@ -125,10 +120,10 @@ export const adminOnlyMiddleware = (
 
 /**
  * Regular user-only access middleware
- * 
+ *
  * Ensures that only users with regular user role can access protected routes.
  * Must be used after authenticationToken middleware.
- * 
+ *
  * @param request - Extended Express request with authentication properties
  * @param response - Express response object
  * @param nextFunction - Express next middleware function

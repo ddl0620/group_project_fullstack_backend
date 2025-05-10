@@ -3,6 +3,9 @@ import fs from 'fs';
 import path from 'path';
 import { EmailOptions, formatDate, loadHtmlTemplate, transporter } from './email.config';
 import { EventInterface } from '../interfaces/event.interfaces';
+import { HttpError } from '../helpers/httpsError.helpers';
+import { StatusCode } from '../enums/statusCode.enums';
+import { ErrorCode } from '../enums/errorCode.enums';
 
 // Placeholder for EventType enum (replace with actual enum if available)
 
@@ -25,10 +28,12 @@ export const sendEmail = async ({
     };
 
     try {
+        if (!to || to.length < 1) return;
+
         const info = await transporter.sendMail(mailOptions);
         return info;
     } catch (error: any) {
-        throw new Error(`Failed to send email: ${error.message}`);
+        throw new HttpError('Failed to send email', StatusCode.NOT_FOUND, ErrorCode.CAN_NOT_CREATE);
     }
 };
 

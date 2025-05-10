@@ -69,6 +69,12 @@ export class AuthControllers {
                 email,
                 password,
             });
+            response.cookie('jwt', result.token, {
+                httpOnly: true, // Không cho JavaScript truy cập
+                secure: process.env.NODE_ENV === 'production', // Chỉ gửi qua HTTPS trong production
+                sameSite: 'strict', // Ngăn CSRF
+                maxAge: 24 * 60 * 60 * 1000, // Thời gian sống của cookie (ví dụ: 1 ngày)
+            });
 
             HttpResponse.sendYES(response, 200, 'Login successful', result);
         } catch (err) {
@@ -127,6 +133,15 @@ export class AuthControllers {
             const { email, code } = request.body;
             const result = await AuthService.completeSignUp(email, code);
             HttpResponse.sendYES(response, 201, 'User created successfully', result);
+        } catch (err) {
+            nextFunction(err);
+        }
+    }
+
+    async signOut(request: Request, response: Response, nextFunction: NextFunction): Promise<void> {
+        try {
+            response.clearCookie('jwt');
+            HttpResponse.sendYES(response, 200, 'Logout successful', {});
         } catch (err) {
             nextFunction(err);
         }

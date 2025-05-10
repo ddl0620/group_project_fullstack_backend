@@ -1,27 +1,26 @@
 import { SignInResponse, SignInType, SignUpResponse, SignUpType } from '../types/auth.type';
 import { UserService } from './user.service';
 import { OtpService } from './otp.service';
-import {StatusCode} from "../enums/statusCode.enums";
-import {ErrorCode} from "../enums/errorCode.enums";
-import {HttpError} from "../helpers/httpsError.helpers";
-import {NextFunction} from "express";
-import {HttpResponse} from "../helpers/HttpResponse";
+import { StatusCode } from '../enums/statusCode.enums';
+import { ErrorCode } from '../enums/errorCode.enums';
+import { HttpError } from '../helpers/httpsError.helpers';
+import { NextFunction } from 'express';
+import { HttpResponse } from '../helpers/HttpResponse';
 
 /**
  * Authentication Service
- * 
+ *
  * This service handles user authentication operations including sign-in validation,
  * user registration, and email verification. It acts as a facade over the UserService
  * for authentication-specific operations.
  */
 export class AuthService {
-
     /**
      * Validates user credentials for authentication
-     * 
+     *
      * Delegates to UserService to verify that the provided email and password
      * match an existing user account.
-     * 
+     *
      * @param {SignInType} input - Object containing email and password
      * @returns {Promise<SignInResponse>} Authentication result with user data and tokens
      * @throws Will throw an error if credentials are invalid or user doesn't exist
@@ -33,10 +32,10 @@ export class AuthService {
 
     /**
      * Creates a new user account
-     * 
+     *
      * Delegates to UserService to register a new user in the system.
      * Sets confirmPassword to match the provided password.
-     * 
+     *
      * @param {SignUpType} data - User registration data
      * @returns {Promise<SignUpResponse>} Registration result with user data
      * @throws Will throw an error if registration fails (e.g., email already exists)
@@ -50,10 +49,10 @@ export class AuthService {
 
     /**
      * Generates and sends a verification code to the user's email
-     * 
+     *
      * Creates a random 6-digit verification code and sends it to the
      * specified email address using the email helper.
-     * 
+     *
      * @param {string} email - Email address to send verification code to
      * @returns {Promise<void>}
      * @throws Will throw an error if email sending fails
@@ -61,7 +60,6 @@ export class AuthService {
     static async sendVerificationCode(email: string): Promise<void> {
         return await OtpService.sendOtp(email);
     }
-
 
     static async initiateSignUp(data: SignUpType): Promise<void> {
         // Check if user already exists
@@ -99,7 +97,6 @@ export class AuthService {
         }
 
         // Create user
-        return await UserService.createUser(action.data);
+        return await AuthService.createUser(action.data);
     }
-
 }

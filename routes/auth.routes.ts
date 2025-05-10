@@ -37,6 +37,7 @@ router.post('/sign-up', authController.signUp);
 router.post('/verify-sign-up', authController.verifySignUp);
 router.post('/send-verification', authController.sendVerification);
 router.post('/verification', authController.verifyCode);
+router.post('/sign-out', authController.signOut);
 
 /**
  * Commented endpoint for sending verification codes
