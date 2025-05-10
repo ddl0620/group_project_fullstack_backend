@@ -24,8 +24,8 @@ const applyGlobalMiddleware = (app: express.Express) => {
      * the number of requests from a single IP address within a time window.
      */
     const limiter = rateLimit({
-        windowMs: 2 * 60 * 1000, // 15 minutes
-        limit: 300, // Limit each IP to 10 requests per windowMs
+        windowMs: 2 * 60 * 1000, // 2 minutes
+        limit: 300, // Limit each IP to 300 requests per windowMs
         standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
         legacyHeaders: false, // Disable the `X-RateLimit-*` headers
         handler: (req, res, next) => {
@@ -36,6 +36,7 @@ const applyGlobalMiddleware = (app: express.Express) => {
             );
         },
     });
+
     app.use(cookieParser());
     app.use(limiter);
     app.use(express.static('public'));
@@ -52,8 +53,11 @@ const applyGlobalMiddleware = (app: express.Express) => {
         'https://your-another-frontend.vercel.app',
     ];
 
-    const corsOptions = {
-        origin: (origin, callback) => {
+    const corsOptions: cors.CorsOptions = {
+        origin: (
+            origin: string | undefined,
+            callback: (err: Error | null, allow?: boolean) => void
+        ) => {
             if (!origin || allowedOrigins.includes(origin)) {
                 callback(null, true);
             } else {
@@ -64,7 +68,7 @@ const applyGlobalMiddleware = (app: express.Express) => {
     };
 
     app.use(cors(corsOptions));
-    app.options('*', cors(corsOptions)); // 👈 Xử lý preflight bằng cùng config
+    app.options('*', cors(corsOptions)); // Handle preflight with the same config
 };
 
 export default applyGlobalMiddleware;
