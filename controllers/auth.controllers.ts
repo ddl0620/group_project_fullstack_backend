@@ -72,8 +72,8 @@ export class AuthControllers {
 
             response.cookie('jwt', result.token, {
                 httpOnly: true,
-                secure: true,                          // ✅ HTTPS trong production
-                sameSite: 'none', // Always set to 'none' for cross-origin cookies
+                secure: process.env.NODE_ENV === 'production', // Chỉ gửi qua HTTPS trong production
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // ❗ đổi từ 'st
                 maxAge: 24 * 60 * 60 * 1000,             // ✅ 1 ngày
             });
 
