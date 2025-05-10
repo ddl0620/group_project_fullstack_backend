@@ -47,7 +47,7 @@ const applyGlobalMiddleware = (app: express.Express) => {
     app.use(morgan('common'));
     app.use(
         cors({
-            origin: 'http://localhost:5173', // Match the frontend origin
+            origin: [ "https://group-project-fullstack-frontend-copy.vercel.app",'http://localhost:5173'], // Match the frontend origin
             methods: ['GET', 'POST', 'PUT', 'DELETE'],
             allowedHeaders: ['Content-Type', 'Authorization'],
             exposedHeaders: ['RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset'],
