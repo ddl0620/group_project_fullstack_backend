@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verify Your Email - Eventify × RMIT</title>
+  <title>Event Request Approval - {{title}}</title>
   <style>
       body {
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -66,42 +66,39 @@
           padding: 40px 30px;
           line-height: 1.6;
       }
-      .greeting {
-          font-size: 18px;
-          font-weight: 500;
-          margin-bottom: 20px;
+      .success-message {
+          background-color: #dcfce7;
+          border: 1px solid #bbf7d0;
+          border-radius: 8px;
+          padding: 20px;
+          margin: 20px 0;
+          color: #166534;
       }
-      .message {
-          margin-bottom: 30px;
-          color: #4b5563;
-      }
-      .code-container {
+      .event-details {
           background-color: #f8f9fa;
           border: 1px solid #e5e7eb;
           border-radius: 8px;
-          padding: 25px;
+          padding: 20px;
+          margin: 20px 0;
+      }
+      .event-detail {
+          margin-bottom: 10px;
+      }
+      .event-detail strong {
+          display: inline-block;
+          width: 100px;
+          color: #4b5563;
+      }
+      .button {
+          display: inline-block;
+          padding: 12px 24px;
+          background-color: #E60028;
+          color: #ffffff;
+          text-decoration: none;
+          border-radius: 6px;
+          font-weight: 600;
+          margin: 20px 0 10px;
           text-align: center;
-          margin: 25px 0;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      }
-      .code {
-          font-family: 'Courier New', monospace;
-          font-size: 32px;
-          font-weight: bold;
-          color: #1f2937;
-          letter-spacing: 8px;
-      }
-      .expiry {
-          margin-top: 25px;
-          font-size: 14px;
-          color: #6b7280;
-      }
-      .help-text {
-          margin-top: 30px;
-          padding-top: 20px;
-          border-top: 1px solid #e5e7eb;
-          font-size: 14px;
-          color: #6b7280;
       }
       .footer {
           background-color: #f3f4f6;
@@ -124,9 +121,6 @@
           color: #6b7280;
           margin: 5px 0;
       }
-      .highlight {
-          color: #E60028;
-      }
       @media screen and (max-width: 600px) {
           .container {
               margin: 20px 15px;
@@ -137,10 +131,6 @@
           }
           .content {
               padding: 30px 20px;
-          }
-          .code {
-              font-size: 28px;
-              letter-spacing: 6px;
           }
       }
   </style>
@@ -153,24 +143,28 @@
         <img src="https://res.cloudinary.com/dvdlovkqi/image/upload/v1746904834/event/6801dad65ac6f6873198f732/kmj07nyuzevuvgajx2kg.png" alt="RMIT" style="height: 40px; width: auto; object-fit: contain;">
         <span class="brand-text">Eventify × RMIT</span>
       </div>
-      <h1 style="width: 100%; text-align: center; margin-top: 15px;">Verify Your Email</h1>
+      <h1 style="width: 100%; text-align: center; margin-top: 15px;">Event Request Approval</h1>
     </div>
   </div>
   <div class="content">
-    <p class="greeting">Hello there,</p>
-    <p class="message">Thank you for choosing Eventify for your event management needs. To complete your account verification, please use the following one-time password:</p>
+    <p>Dear Applicant,</p>
 
-    <div class="code-container">
-      <div class="code">{{code}}</div>
+    <div class="success-message">
+      <p>We are pleased to inform you that your request to participate in the event <strong>{{title}}</strong> has been approved.</p>
     </div>
 
-    <p class="expiry">This code will expire in <span class="highlight">10 minutes</span>.</p>
+    <p>Your registration has been confirmed. Please find the event details below:</p>
 
-    <p>If you didn't request this code, please ignore this email or contact our support team if you have any concerns.</p>
-
-    <div class="help-text">
-      <p>Need help? Contact our support team at <a href="mailto:s4021494@rmit.edu.vn" class="highlight">s4021494@rmit.edu.vn</a></p>
+    <div class="event-details">
+      <div class="event-detail"><strong>Event:</strong> {{title}}</div>
+      <div class="event-detail"><strong>Start:</strong> {{startDate}}</div>
+      <div class="event-detail"><strong>End:</strong> {{endDate}}</div>
+      <div class="event-detail"><strong>Location:</strong> {{location}}</div>
     </div>
+
+    <p>For comprehensive event information, please access the event details via the link provided below.</p>
+
+    <a href="{{eventLink}}" class="button">Access Event Details</a>
   </div>
   <div class="footer">
     <div class="social-links">
@@ -181,6 +175,7 @@
     </div>
     <p class="footer-text">© 2025 Eventify × RMIT. All rights reserved.</p>
     <p class="footer-text">RMIT University Vietnam - 521 Kim Ma Street - 5Knights</p>
+    <p class="footer-text">Contact us at <a href="mailto:s4021494@rmit.edu.vn" style="color: #E60028;">s4021494@rmit.edu.vn</a></p>
   </div>
 </div>
 </body>

@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Event Cancellation Notice - {{title}}</title>
+        <title>Event Reminder - {{title}}</title>
         <style>
             body {
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -66,13 +66,31 @@
                 padding: 40px 30px;
                 line-height: 1.6;
             }
-            .message-box {
-                background-color: #fee2e2;
-                border: 1px solid #fecaca;
+            .event-details {
+                background-color: #f8f9fa;
+                border: 1px solid #e5e7eb;
                 border-radius: 8px;
                 padding: 20px;
                 margin: 20px 0;
-                color: #991b1b;
+            }
+            .event-detail {
+                margin-bottom: 10px;
+            }
+            .event-detail strong {
+                display: inline-block;
+                width: 100px;
+                color: #4b5563;
+            }
+            .button {
+                display: inline-block;
+                padding: 12px 24px;
+                background-color: #e60028;
+                color: #ffffff;
+                text-decoration: none;
+                border-radius: 6px;
+                font-weight: 600;
+                margin: 20px 0 10px;
+                text-align: center;
             }
             .footer {
                 background-color: #f3f4f6;
@@ -122,30 +140,32 @@
                         <span class="brand-text">Eventify × RMIT</span>
                     </div>
                     <h1 style="width: 100%; text-align: center; margin-top: 15px">
-                        Event Cancellation Notice
+                        Event Reminder: {{title}}
                     </h1>
                 </div>
             </div>
             <div class="content">
                 <p>Dear Participant,</p>
+                <p>
+                    This is an official reminder regarding your upcoming registered event. Please
+                    note that the event will commence shortly as scheduled.
+                </p>
 
-                <div class="message-box">
-                    <p>
-                        We regret to inform you that the event <strong>{{title}}</strong> has been
-                        cancelled.
-                    </p>
+                <div class="event-details">
+                    <div class="event-detail"><strong>Event:</strong> {{title}}</div>
+                    <div class="event-detail"><strong>Type:</strong> {{type}}</div>
+                    <div class="event-detail"><strong>Start:</strong> {{startDate}}</div>
+                    <div class="event-detail"><strong>End:</strong> {{endDate}}</div>
+                    <div class="event-detail"><strong>Location:</strong> {{location}}</div>
+                    <div class="event-detail"><strong>Description:</strong> {{description}}</div>
                 </div>
 
                 <p>
-                    We sincerely apologize for any inconvenience this cancellation may cause. Should
-                    you have any inquiries regarding this matter, please do not hesitate to contact
-                    our administrative team.
+                    Your attendance is confirmed. Should you need to modify your attendance status,
+                    please utilize the link below to access the event details.
                 </p>
 
-                <p>
-                    We appreciate your understanding and look forward to your participation in
-                    future events.
-                </p>
+                <a href="{{eventLink}}" class="button">Access Event Details</a>
             </div>
             <div class="footer">
                 <div class="social-links">
@@ -156,12 +176,6 @@
                 </div>
                 <p class="footer-text">© 2025 Eventify × RMIT. All rights reserved.</p>
                 <p class="footer-text">RMIT University Vietnam - 521 Kim Ma Street - 5Knights</p>
-                <p class="footer-text">
-                    Contact us at
-                    <a href="mailto:s4021494@rmit.edu.vn" style="color: #e60028"
-                        >s4021494@rmit.edu.vn</a
-                    >
-                </p>
             </div>
         </div>
     </body>

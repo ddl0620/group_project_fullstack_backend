@@ -20,10 +20,13 @@ import { convertToCronSchedule } from '../helpers/convertToCronSchedule';
 import { CronManager } from '../cron/cronManager';
 import {
     notifyEventDeleted,
+    notifyEventRequestAccepted,
+    notifyEventRequestDenied,
     notifyEventUpdated,
-    upcommingEventEmail,
+    upcomingEventEmailAction,
 } from '../cron/action/commonActions';
 import { as } from '@faker-js/faker/dist/airline-BUL6NtOJ';
+import CronScheduleBuilder from '../helpers/CronScheduleBuilder';
 
 /**
  * Event Service
@@ -94,16 +97,19 @@ export class EventService {
                 );
             }
 
-            //Set up cron job for event notification
+            // Set up cron job for event notification
             const schedule: string = convertToCronSchedule(
                 event.startDate,
                 event.startTime,
                 event.notifyWhen,
             );
-            CronManager.getInstance().registerJob(
+            console.log('schedule: ', schedule);
+            await CronManager.getInstance().registerJob(
                 `event-${event._id}`,
                 schedule,
-                upcommingEventEmail(event),
+                upcomingEventEmailAction,
+                { timezone: 'Asia/Ho_Chi_Minh' },
+                event,
             );
 
             return event;
@@ -476,16 +482,19 @@ export class EventService {
 
         await notifyEventUpdated(updatedEvent);
 
-        // const schedule: string = convertToCronSchedule(
-        //     updatedEvent.startDate,
-        //     updatedEvent.startTime,
-        //     updatedEvent.notifyWhen,
-        // );
-        // CronManager.getInstance().registerJob(
-        //     `event-${updatedEvent._id}`,
-        //     schedule,
-        //     upcommingEventEmail(updatedEvent),
-        // );
+        const schedule: string = convertToCronSchedule(
+            updatedEvent.startDate,
+            updatedEvent.startTime,
+            updatedEvent.notifyWhen,
+        );
+        console.log('schedule: ', schedule);
+        CronManager.getInstance().registerJob(
+            `event-${updatedEvent._id}`,
+            schedule,
+            upcomingEventEmailAction,
+            { timezone: 'Asia/Ho_Chi_Minh' },
+            updatedEvent,
+        );
 
         return updatedEvent;
     }
@@ -803,6 +812,10 @@ export class EventService {
             ...notiContent,
             userIds: [input.userId],
         });
+
+        if (input.status === 'ACCEPTED')
+            await notifyEventRequestAccepted(input.userId, updatedEvent);
+        else await notifyEventRequestDenied(input.userId, updatedEvent);
 
         return updatedEvent;
     }
