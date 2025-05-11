@@ -16,8 +16,8 @@ export const cookieOptions: CookieOptions = {
 
 const applyGlobalMiddleware = (app: express.Express) => {
     const limiter = rateLimit({
-        windowMs: 2 * 60 * 1000,
-        limit: 300,
+        windowMs: 1 * 60 * 1000,
+        limit: 1000,
         standardHeaders: true,
         legacyHeaders: false,
         handler: (req, res, next) => {

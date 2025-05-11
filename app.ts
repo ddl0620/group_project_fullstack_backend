@@ -6,13 +6,7 @@ import connectToDB from './database/mongodb';
 import applyGlobalMiddleware from './middlewares';
 import errorMiddleware from './middlewares/error.middlewares';
 import applyRoutes from './routes';
-import CronScheduleBuilder from './helpers/CronScheduleBuilder';
 import { CronManager } from './cron/cronManager';
-import { sendEventNotificationEmail } from './email/email';
-import { EventInterface } from './interfaces/event.interfaces';
-import mongoose from 'mongoose';
-import { EventType } from './enums/eventType.enums';
-import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 /**
  * Express application instance
@@ -20,15 +14,15 @@ import dotenv from 'dotenv';
  * Primary Express application object that handles HTTP requests,
  * middleware application, and route definitions.
  */
-const envFile = `.env.${process.env.NODE_ENV || 'development'}.local`;
-console.log('NODE_ENV:', process.env.NODE_ENV);
-console.log('Loading env file:', envFile);
-dotenv.config({ path: envFile });
-
-// Kiểm tra một số biến môi trường
-console.log('PORT:', process.env.PORT);
-console.log('DB_URI:', process.env.DB_URI);
-console.log('JWT_SECRET:', process.env.JWT_SECRET);
+// const envFile = `.env.${process.env.NODE_ENV || 'development'}.local`;
+// console.log('NODE_ENV:', process.env.NODE_ENV);
+// console.log('Loading env file:', envFile);
+// dotenv.config({ path: envFile });
+//
+// // Kiểm tra một số biến môi trường
+// console.log('PORT:', process.env.PORT);
+// console.log('DB_URI:', process.env.DB_URI);
+// console.log('JWT_SECRET:', process.env.JWT_SECRET);
 
 const app: Express = express();
 /**
