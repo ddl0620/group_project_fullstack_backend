@@ -13,13 +13,22 @@ import { EventInterface } from './interfaces/event.interfaces';
 import mongoose from 'mongoose';
 import { EventType } from './enums/eventType.enums';
 import cookieParser from 'cookie-parser';
-
+import dotenv from 'dotenv';
 /**
  * Express application instance
  *
  * Primary Express application object that handles HTTP requests,
  * middleware application, and route definitions.
  */
+const envFile = `.env.${process.env.NODE_ENV || 'development'}.local`;
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('Loading env file:', envFile);
+dotenv.config({ path: envFile });
+
+// Kiểm tra một số biến môi trường
+console.log('PORT:', process.env.PORT);
+console.log('DB_URI:', process.env.DB_URI);
+console.log('JWT_SECRET:', process.env.JWT_SECRET);
 
 const app: Express = express();
 /**

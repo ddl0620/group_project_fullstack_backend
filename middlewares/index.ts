@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { CookieOptions } from 'express';
 import morgan from 'morgan';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -6,7 +6,13 @@ import cors from 'cors';
 import trimRequest from './requestTrimming';
 import rateLimit from 'express-rate-limit';
 import { HttpError } from '../helpers/httpsError.helpers';
-import app from '../app';
+
+export const cookieOptions: CookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'lax' | 'none',
+    maxAge: 24 * 60 * 60 * 1000,
+};
 
 const applyGlobalMiddleware = (app: express.Express) => {
     const limiter = rateLimit({
@@ -32,28 +38,32 @@ const applyGlobalMiddleware = (app: express.Express) => {
     app.use(helmet());
     app.use(morgan('common'));
 
-    const allowedOrigins = [
-        'http://localhost:5173',
-        'https://eventify.solve.vn',
-        'https://your-another-frontend.vercel.app',
-    ];
+    app.use(
+        cors({
+            origin: (origin, callback) => {
+                const allowedOrigins = [
+                    'http://localhost:5173',
+                    'https://eventify.solve.vn',
+                    'https://your-another-frontend.vercel.app',
+                ];
 
-    const corsOptions: cors.CorsOptions = {
-        origin: (
-            origin: string | undefined,
-            callback: (err: Error | null, allow?: boolean) => void
-        ) => {
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error('Not allowed by CORS'));
-            }
-        },
-        credentials: true, // Required for cookies with sameSite: 'none'
-    };
+                // if (!origin || allowedOrigins.includes(origin)) {
+                //     callback(null, true);
+                // } else {
+                //     callback(new Error('Not allowed by CORS'));
+                // }
 
-    app.use(cors(corsOptions));
-    app.options('*', cors(corsOptions));
+                if (allowedOrigins.includes(<string>origin) || !origin) {
+                    callback(null, true);
+                } else {
+                    callback(new Error('Not allowed by CORS'));
+                }
+            },
+            methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+            allowedHeaders: ['Content-Type', 'Authorization'],
+            credentials: true,
+        }),
+    );
 };
 
 export default applyGlobalMiddleware;
