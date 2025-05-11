@@ -43,6 +43,7 @@ const applyGlobalMiddleware = (app: express.Express) => {
             origin: (origin, callback) => {
                 const allowedOrigins = [
                     'http://localhost:5173',
+                    'http://localhost:5174',
                     'https://eventify.solve.vn',
                     'https://your-another-frontend.vercel.app',
                 ];
