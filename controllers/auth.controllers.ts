@@ -1,10 +1,11 @@
-import { NextFunction, Request, Response } from 'express';
+import { CookieOptions, NextFunction, Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
 import { HttpResponse } from '../helpers/HttpResponse';
 import { SignInResponse, SignInType, SignUpType } from '../types/auth.type';
 import { signInSchema, signUpSchema } from '../validation/auth.validation';
 import { validateInput } from '../helpers/validateInput';
 import { OtpService } from '../services/otp.service';
+import { cookieOptions } from '../middlewares';
 
 /**
  * AuthControllers
@@ -70,13 +71,7 @@ export class AuthControllers {
                 password,
             });
 
-            response.cookie('jwt', result.token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production', // Chỉ gửi qua HTTPS trong production
-                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // ❗ đổi từ 'st
-                maxAge: 24 * 60 * 60 * 1000,             // ✅ 1 ngày
-            });
-
+            response.cookie('jwt', result.token, cookieOptions);
 
             HttpResponse.sendYES(response, 200, 'Login successful', result);
         } catch (err) {
