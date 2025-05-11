@@ -70,6 +70,8 @@ export class AuthControllers {
                 email,
                 password,
             });
+            console.log('🧁 Setting cookie with options:', cookieOptions);
+            console.log('Token:', result.token);
 
             response.cookie('jwt', result.token, cookieOptions);
 
