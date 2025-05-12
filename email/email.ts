@@ -1,6 +1,4 @@
 import nodemailer from 'nodemailer';
-import fs from 'fs';
-import path from 'path';
 import { EmailOptions, formatDate, loadHtmlTemplate, transporter } from './email.config';
 import { EventInterface } from '../interfaces/event.interfaces';
 import { HttpError } from '../helpers/httpsError.helpers';
@@ -161,6 +159,38 @@ export const sendEventRequestDeniedEmail = async (
         location: location || 'To Be Determined',
         description,
         eventsLink,
+        year: new Date().getFullYear().toString(),
+        email: process.env.EMAIL_USER as string,
+    });
+
+    return sendEmail({ to, subject, text, html });
+};
+
+export const sendEventJoinRequestEmail = async (
+    to: string | string[],
+    event: EventInterface,
+    applicant: { name: string; email: string; message: string },
+    organizerName: string,
+    approvalLink: string = 'https://example.com/approve-request',
+    rejectLink: string = 'https://example.com/reject-request',
+    eventLink: string = 'https://example.com/event-details',
+): Promise<nodemailer.SentMessageInfo> => {
+    const { title, startDate, location } = event;
+
+    const subject = `Join Event Request: ${title}`;
+    const text = `Dear ${organizerName},\n\nYou have a new request from ${applicant.name} (${applicant.email}) to join your event "${title}".\n\nMessage: ${applicant.message}\nEvent Date: ${formatDate(startDate)}\nLocation: ${location || 'TBD'}\n\nApprove: ${approvalLink}\nReject: ${rejectLink}\nView Event: ${eventLink}`;
+
+    const html = loadHtmlTemplate('event-join-request.html', {
+        organizerName,
+        applicantName: applicant.name,
+        applicantEmail: applicant.email,
+        eventTitle: title,
+        eventDate: formatDate(startDate),
+        eventLocation: location || 'To Be Determined',
+        requestMessage: applicant.message,
+        approvalLink,
+        rejectLink,
+        eventLink,
         year: new Date().getFullYear().toString(),
         email: process.env.EMAIL_USER as string,
     });

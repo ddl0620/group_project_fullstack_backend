@@ -3,8 +3,9 @@ import {
     sendEventDeletedEmail,
     sendEventNotificationEmail,
     sendEventUpdatedEmail,
-    sendEventRequestAcceptedEmail,
     sendEventRequestDeniedEmail,
+    sendEventJoinRequestEmail,
+    sendEventRequestAcceptedEmail,
 } from '../../email/email';
 import { UserService } from '../../services/user.service';
 import { ParticipationStatus } from '../../enums/participationStatus.enums';
@@ -64,6 +65,47 @@ export const notifyEventDeleted = async (event: EventInterface) => {
     if (participantEmails.length > 0) {
         await sendEventDeletedEmail(participantEmails, event);
         console.log('Email deleted sent to participants');
+    }
+};
+
+export const notifyNewRequest = async (
+    event: EventInterface,
+    applicant: { userId: string; message: string },
+    approvalLink: string = 'https://example.com/approve-request',
+    rejectLink: string = 'https://example.com/reject-request',
+    eventLink: string = 'https://example.com/event-details',
+) => {
+    // Lấy thông tin người tổ chức
+    const organizer: UserInterface = await UserService.getUserById(event.organizer.toString());
+    if (!organizer) {
+        console.log('Organizer not found');
+        return;
+    }
+
+    // Lấy thông tin người yêu cầu
+    const applicantUser: UserInterface = await UserService.getUserById(applicant.userId);
+    if (!applicantUser) {
+        console.log('Applicant not found');
+        return;
+    }
+
+    const participantEmails: string[] = [organizer.email];
+
+    if (participantEmails.length > 0) {
+        await sendEventJoinRequestEmail(
+            participantEmails,
+            event,
+            {
+                name: applicantUser.name || 'Unknown',
+                email: applicantUser.email,
+                message: applicant.message || 'No message provided',
+            },
+            organizer.name || 'Organizer',
+            approvalLink,
+            rejectLink,
+            eventLink,
+        );
+        console.log('Email join request sent to organizer');
     }
 };
 

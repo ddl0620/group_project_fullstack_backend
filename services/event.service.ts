@@ -23,10 +23,9 @@ import {
     notifyEventRequestAccepted,
     notifyEventRequestDenied,
     notifyEventUpdated,
+    notifyNewRequest,
     upcomingEventEmailAction,
 } from '../cron/action/commonActions';
-import { as } from '@faker-js/faker/dist/airline-BUL6NtOJ';
-import CronScheduleBuilder from '../helpers/CronScheduleBuilder';
 
 /**
  * Event Service
@@ -683,6 +682,10 @@ export class EventService {
             ),
             userIds: [event.organizer?.toString() || ''],
         });
+
+        if (updatedEvent) {
+            await notifyNewRequest(event, { userId: userId, message: 'Please accept my request' });
+        }
 
         return updatedEvent;
     }

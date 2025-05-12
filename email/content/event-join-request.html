@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Join Request - {{eventTitle}}</title>
+  <style>
+      body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background-color: #f9fafb;
+          margin: 0;
+          padding: 0;
+          color: #1f2937;
+      }
+      .container {
+          max-width: 600px;
+          margin: 40px auto;
+          background-color: #ffffff;
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      }
+      .header {
+          background-color: #E60028; /* RMIT Red */
+          padding: 30px 20px;
+          text-align: center;
+          position: relative;
+      }
+      .header-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+      }
+      .logo-container {
+          margin-bottom: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: white;
+          padding: 12px 20px;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          width: 100%;
+          max-width: 300px;
+      }
+      .logo img {
+          height: 40px;
+      }
+      .brand-text {
+          color: #1f2937;
+          font-size: 20px;
+          font-weight: 600;
+          margin-left: 10px;
+      }
+      .header h1 {
+          margin: 0;
+          color: #ffffff;
+          font-size: 24px;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+          width: 100%;
+          text-align: center;
+      }
+      .content {
+          padding: 40px 30px;
+          line-height: 1.6;
+      }
+      .notification-message {
+          background-color: #f0f9ff;
+          border: 1px solid #bae6fd;
+          border-radius: 8px;
+          padding: 20px;
+          margin: 20px 0;
+          color: #0369a1;
+      }
+      .event-details {
+          background-color: #f8f9fa;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          padding: 20px;
+          margin: 20px 0;
+      }
+      .event-detail {
+          margin-bottom: 10px;
+      }
+      .event-detail strong {
+          display: inline-block;
+          width: 100px;
+          color: #4b5563;
+      }
+      .message-box {
+          background-color: #f3f4f6;
+          border-radius: 8px;
+          padding: 15px;
+          margin: 10px 0 20px;
+          font-style: italic;
+          color: #4b5563;
+      }
+      .button-container {
+          display: flex;
+          justify-content: space-between;
+          margin: 25px 0;
+      }
+      .approve-button {
+          display: inline-block;
+          padding: 12px 20px;
+          background-color: #22c55e;
+          color: #ffffff;
+          text-decoration: none;
+          border-radius: 6px;
+          font-weight: 600;
+          text-align: center;
+          width: 45%;
+      }
+      .reject-button {
+          display: inline-block;
+          padding: 12px 20px;
+          background-color: #ef4444;
+          color: #ffffff;
+          text-decoration: none;
+          border-radius: 6px;
+          font-weight: 600;
+          text-align: center;
+          width: 45%;
+      }
+      .view-button {
+          display: inline-block;
+          padding: 12px 24px;
+          background-color: #E60028;
+          color: #ffffff;
+          text-decoration: none;
+          border-radius: 6px;
+          font-weight: 600;
+          margin: 20px 0 10px;
+          text-align: center;
+      }
+      .footer {
+          background-color: #f3f4f6;
+          padding: 25px 20px;
+          text-align: center;
+          border-top: 3px solid #E60028;
+      }
+      .social-links {
+          margin-bottom: 20px;
+      }
+      .social-link {
+          display: inline-block;
+          margin: 0 10px;
+          color: #E60028;
+          text-decoration: none;
+          font-weight: 500;
+      }
+      .footer-text {
+          font-size: 13px;
+          color: #6b7280;
+          margin: 5px 0;
+      }
+      @media screen and (max-width: 600px) {
+          .container {
+              margin: 20px 15px;
+              border-radius: 8px;
+          }
+          .header {
+              padding: 25px 15px;
+          }
+          .content {
+              padding: 30px 20px;
+          }
+          .button-container {
+              flex-direction: column;
+          }
+          .approve-button, .reject-button {
+              width: 100%;
+              margin-bottom: 10px;
+          }
+      }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-content">
+      <div class="logo-container">
+        <img src="https://res.cloudinary.com/dvdlovkqi/image/upload/v1746904834/event/6801dad65ac6f6873198f732/kmj07nyuzevuvgajx2kg.png" alt="RMIT" style="height: 40px; width: auto; object-fit: contain;">
+        <span class="brand-text">Eventify × RMIT</span>
+      </div>
+      <h1 style="width: 100%; text-align: center; margin-top: 15px;">New Event Join Request</h1>
+    </div>
+  </div>
+  <div class="content">
+    <p>Dear {{organizerName}},</p>
+
+    <div class="notification-message">
+      <p>You have received a new request from <strong>{{applicantName}}</strong> to join your event <strong>{{eventTitle}}</strong>.</p>
+    </div>
+
+    <p>Here are the applicant details:</p>
+
+    <div class="event-details">
+      <div class="event-detail"><strong>Name:</strong> {{applicantName}}</div>
+      <div class="event-detail"><strong>Email:</strong> {{applicantEmail}}</div>
+      <div class="event-detail"><strong>Event:</strong> {{eventTitle}}</div>
+      <div class="event-detail"><strong>Date:</strong> {{eventDate}}</div>
+      <div class="event-detail"><strong>Location:</strong> {{eventLocation}}</div>
+    </div>
+
+    <p>Message from applicant:</p>
+    <div class="message-box">
+      <p>"{{requestMessage}}"</p>
+    </div>
+
+    <p>Please review this request and take action:</p>
+
+    <div class="button-container">
+      <a href="{{approvalLink}}" class="approve-button">Approve Request</a>
+      <a href="{{rejectLink}}" class="reject-button">Decline Request</a>
+    </div>
+
+    <p>You can also view all pending requests by accessing your event dashboard:</p>
+
+    <a href="{{eventLink}}" class="view-button">View Event Dashboard</a>
+  </div>
+  <div class="footer">
+    <div class="social-links">
+      <a href="#" class="social-link">Facebook</a>
+      <a href="#" class="social-link">Twitter</a>
+      <a href="#" class="social-link">Instagram</a>
+      <a href="#" class="social-link">LinkedIn</a>
+    </div>
+    <p class="footer-text">© 2025 Eventify × RMIT. All rights reserved.</p>
+    <p class="footer-text">RMIT University Vietnam - 521 Kim Ma Street - 5Knights</p>
+    <p class="footer-text">Contact us at <a href="mailto:s4021494@rmit.edu.vn" style="color: #E60028;">s4021494@rmit.edu.vn</a></p>
+  </div>
+</div>
+</body>
+</html>
