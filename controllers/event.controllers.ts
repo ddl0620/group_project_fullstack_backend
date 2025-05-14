@@ -2,7 +2,11 @@ import { NextFunction, Response } from 'express';
 import { HttpResponse } from '../helpers/HttpResponse';
 import { EventService } from '../services/event.service';
 import { AuthenticationRequest } from '../interfaces/authenticationRequest.interface';
-import { createEventSchema, updateEventSchema } from '../validation/event.validation';
+import {
+    createEventSchema,
+    joinEventSchema,
+    updateEventSchema,
+} from '../validation/event.validation';
 import { validateInput } from '../helpers/validateInput';
 import { StatusCode } from '../enums/statusCode.enums';
 import { EventInterface } from '../interfaces/event.interfaces';
@@ -290,6 +294,8 @@ export class EventController {
         try {
             const { userId } = req.body;
             const { eventId } = req.params;
+
+            validateInput(joinEventSchema, req.body);
 
             const event: EventInterface = await EventService.joinEvent(userId, eventId);
             HttpResponse.sendYES(res, StatusCode.OK, 'Event joined/send request successfully', {
