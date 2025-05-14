@@ -567,10 +567,15 @@ export class EventService {
      *
      * @param {string} userId - ID of the user requesting to join
      * @param {string} eventId - ID of the event to join
+     * @param {string} invited - invited
      * @returns {Promise<EventInterface>} The updated event
      * @throws {HttpError} If event not found, user already joined, or participant limit reached
      */
-    static async joinEvent(userId: string, eventId: string): Promise<EventInterface> {
+    static async joinEvent(
+        userId: string,
+        eventId: string,
+        invited: ParticipationStatus = ParticipationStatus.INVITED,
+    ): Promise<EventInterface> {
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
             throw new HttpError(
                 'Invalid event ID format',
@@ -592,12 +597,25 @@ export class EventService {
             throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
         }
 
-        // HERE: Check if the event is open for joining
-        if (!event.isOpen) {
-            throw new HttpError('Event is closed', StatusCode.FORBIDDEN, ErrorCode.EVENT_CLOSED);
+        const organizer: UserInterface | null = await UserModel.findById(event.organizer);
+        if (!organizer) {
+            throw new HttpError(
+                'Event organizer not found',
+                StatusCode.NOT_FOUND,
+                ErrorCode.USER_NOT_FOUND,
+            );
         }
 
-        const user = await UserModel.findById(userId);
+        // HERE: Check if the event is open for joining
+        if (!event.isOpen) {
+            throw new HttpError(
+                'This event is ended!',
+                StatusCode.FORBIDDEN,
+                ErrorCode.EVENT_CLOSED,
+            );
+        }
+
+        const user: UserInterface | null = await UserModel.findById(userId);
         if (!user) {
             throw new HttpError('User not found', StatusCode.NOT_FOUND, ErrorCode.USER_NOT_FOUND);
         }
@@ -625,15 +643,6 @@ export class EventService {
         }
 
         if (event.isPublic) {
-            const organizer: UserInterface | null = await UserModel.findById(event.organizer);
-            if (!organizer) {
-                throw new HttpError(
-                    'Event organizer not found',
-                    StatusCode.NOT_FOUND,
-                    ErrorCode.USER_NOT_FOUND,
-                );
-            }
-
             // Count current accepted participants
             const acceptedParticipantsCount =
                 event.participants?.filter(p => p.status === ParticipationStatus.ACCEPTED).length ||
@@ -652,9 +661,14 @@ export class EventService {
             }
         }
 
-        const status: Partial<ParticipationStatus> = event.isPublic
-            ? ParticipationStatus.ACCEPTED
-            : ParticipationStatus.PENDING;
+        let status: ParticipationStatus = ParticipationStatus.INVITED;
+        if (!invited) {
+            if (event.isPublic) {
+                status = ParticipationStatus.ACCEPTED;
+            } else {
+                status = ParticipationStatus.PENDING;
+            }
+        }
 
         const newParticipant: Partial<ParticipantInterface> = {
             userId: new mongoose.Types.ObjectId(userId),
@@ -732,12 +746,21 @@ export class EventService {
             throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
         }
 
-        if (userIdToken !== event.organizer.toString()) {
-            throw new HttpError(
-                'Only the organizer can respond to this event',
-                StatusCode.FORBIDDEN,
-                ErrorCode.UNAUTHORIZED,
-            );
+        const isUserInvited: boolean =
+            event.participants?.some(
+                participant =>
+                    participant.userId?.toString() === userIdToken &&
+                    participant.status === ParticipationStatus.INVITED,
+            ) || false;
+
+        if (!isUserInvited) {
+            if (userIdToken !== event.organizer.toString()) {
+                throw new HttpError(
+                    'Only the organizer can respond to this event',
+                    StatusCode.FORBIDDEN,
+                    ErrorCode.UNAUTHORIZED,
+                );
+            }
         }
 
         if (input.status === 'ACCEPTED') {
@@ -780,7 +803,10 @@ export class EventService {
             );
         }
 
-        if (participant.status !== ParticipationStatus.PENDING) {
+        if (
+            participant.status !== ParticipationStatus.PENDING &&
+            participant.status !== ParticipationStatus.INVITED
+        ) {
             throw new HttpError(
                 'Participant already replied',
                 StatusCode.FORBIDDEN,

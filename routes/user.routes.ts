@@ -17,6 +17,8 @@ const controller = new UserController();
  *
  * @returns {Object} The authenticated user's profile information
  */
+userRoutes.get('/all', authenticationToken, controller.getAllUsers);
+
 userRoutes.get('/me', authenticationToken, controller.me);
 
 /**

@@ -309,6 +309,13 @@ export const joinEventSchema = Joi.object({
         'string.base': 'User ID must be a string',
         'any.required': 'User ID is required',
     }),
+    status: Joi.string()
+        .optional()
+        .valid(ParticipationStatus.INVITED)
+        .messages({
+            'string.base': 'Status must be a string',
+            'any.only': `Status must be ${ParticipationStatus.INVITED}`,
+        }),
 });
 
 /**
