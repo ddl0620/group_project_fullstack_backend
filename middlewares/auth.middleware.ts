@@ -24,6 +24,7 @@ export const authenticationToken = async (
     nextFunction: NextFunction,
 ) => {
     const token: string | undefined = request.cookies?.jwt; // Lấy token từ cookie 'jwt'
+    console.log('Token:', token);
     if (!token) {
         return nextFunction(
             new HttpError(
