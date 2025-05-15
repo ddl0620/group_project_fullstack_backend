@@ -94,7 +94,7 @@ export class UserController {
     ): Promise<void> {
         try {
             const user = await UserService.getUserById(req.params?.id as string);
-
+            console.log(user);
             HttpResponse.sendYES(res, StatusCode.OK, 'Users fetched successfully', user);
         } catch (err) {
             next(err);

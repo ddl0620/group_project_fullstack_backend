@@ -11,6 +11,7 @@ import { validateInput } from '../helpers/validateInput';
 import { StatusCode } from '../enums/statusCode.enums';
 import { EventInterface } from '../interfaces/event.interfaces';
 import { EventListResponse } from '../types/event.type';
+import { ParticipationStatus } from '../enums/participationStatus.enums';
 
 /**
  * EventController
@@ -294,10 +295,16 @@ export class EventController {
         try {
             const { userId } = req.body;
             const { eventId } = req.params;
+            const { status } = req.body;
 
             validateInput(joinEventSchema, req.body);
 
-            const event: EventInterface = await EventService.joinEvent(userId, eventId);
+            const event: EventInterface = await EventService.joinEvent(
+                req.user?.userId as string,
+                userId,
+                eventId,
+                status === 'INVITED' ? ParticipationStatus.INVITED : null,
+            );
             HttpResponse.sendYES(res, StatusCode.OK, 'Event joined/send request successfully', {
                 event,
             });

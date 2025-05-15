@@ -6,13 +6,15 @@ import {
     sendEventRequestDeniedEmail,
     sendEventJoinRequestEmail,
     sendEventRequestAcceptedEmail,
+    sendEventInvitationEmail,
+    sendEventRequestDeclinedEmail,
+    sendEventRequestAcceptedOrganizerEmail,
 } from '../../email/email';
 import { UserService } from '../../services/user.service';
 import { ParticipationStatus } from '../../enums/participationStatus.enums';
 import { UserInterface } from '../../interfaces/user.interfaces';
 
-// Function to notify participants about an upcoming event
-export const upcomingEventEmailAction = async (event: EventInterface) => {
+export const notifyUpcommingEvent = async (event: EventInterface) => {
     const participantEmails: string[] = [];
     for (const participant of event.participants || []) {
         if (participant.status !== ParticipationStatus.ACCEPTED) continue;
@@ -30,7 +32,6 @@ export const upcomingEventEmailAction = async (event: EventInterface) => {
     console.log('Email upcoming sent successfully');
 };
 
-// Function to notify participants that an event has been updated
 export const notifyEventUpdated = async (
     event: EventInterface,
     rsvpLink: string = 'https://example.com/event-details',
@@ -52,7 +53,6 @@ export const notifyEventUpdated = async (
     console.log('Email updated sent successfully');
 };
 
-// Function to notify participants that an event has been deleted
 export const notifyEventDeleted = async (event: EventInterface) => {
     const participantEmails: string[] = [];
     for (const participant of event.participants || []) {
@@ -68,6 +68,29 @@ export const notifyEventDeleted = async (event: EventInterface) => {
     }
 };
 
+export const notifyEventInvitation = async (
+    invitee: { userId: string },
+    event: EventInterface,
+    organizerName: string,
+    rsvpLink: string = 'https://example.com/rsvp',
+) => {
+    const inviteeUser: UserInterface = await UserService.getUserById(invitee.userId);
+    if (!inviteeUser) {
+        console.log('Invitee not found');
+        return;
+    }
+
+    await sendEventInvitationEmail(
+        inviteeUser.email,
+        event,
+        inviteeUser.name || 'Guest',
+        organizerName,
+        rsvpLink,
+    );
+    console.log(`Invitation email sent to ${inviteeUser.email}`);
+};
+
+// Function to notify new join request
 export const notifyNewRequest = async (
     event: EventInterface,
     applicant: { userId: string; message: string },
@@ -75,14 +98,12 @@ export const notifyNewRequest = async (
     rejectLink: string = 'https://example.com/reject-request',
     eventLink: string = 'https://example.com/event-details',
 ) => {
-    // Lấy thông tin người tổ chức
     const organizer: UserInterface = await UserService.getUserById(event.organizer.toString());
     if (!organizer) {
         console.log('Organizer not found');
         return;
     }
 
-    // Lấy thông tin người yêu cầu
     const applicantUser: UserInterface = await UserService.getUserById(applicant.userId);
     if (!applicantUser) {
         console.log('Applicant not found');
@@ -139,4 +160,72 @@ export const notifyEventRequestDenied = async (
 
     await sendEventRequestDeniedEmail(user.email, event, eventsLink);
     console.log(`Email request denied sent to ${user.email}`);
+};
+
+// Function to notify organizer that a user has accepted an event invitation
+export const notifyEventRequestAcceptedOrganizer = async (
+    userId: string,
+    event: EventInterface,
+    organizerName: string,
+    acceptMessage: string = 'No message provided',
+    eventLink: string = 'https://example.com/event-details',
+) => {
+    const user: UserInterface = await UserService.getUserById(userId);
+    if (!user) {
+        console.log('User not found');
+        return;
+    }
+
+    const organizer: UserInterface = await UserService.getUserById(event.organizer.toString());
+    if (!organizer) {
+        console.log('Organizer not found');
+        return;
+    }
+
+    await sendEventRequestAcceptedOrganizerEmail(
+        organizer.email,
+        event,
+        {
+            name: user.name || 'Unknown',
+            email: user.email,
+            message: acceptMessage,
+        },
+        organizerName,
+        eventLink,
+    );
+    console.log(`Email request accepted sent to organizer ${organizer.email}`);
+};
+
+// Function to notify organizer that a user has declined an event invitation
+export const notifyEventRequestDeclinedOrganizer = async (
+    userId: string,
+    event: EventInterface,
+    organizerName: string,
+    declineMessage: string = 'No reason provided',
+    eventLink: string = 'https://example.com/event-details',
+) => {
+    const user: UserInterface = await UserService.getUserById(userId);
+    if (!user) {
+        console.log('User not found');
+        return;
+    }
+
+    const organizer: UserInterface = await UserService.getUserById(event.organizer.toString());
+    if (!organizer) {
+        console.log('Organizer not found');
+        return;
+    }
+
+    await sendEventRequestDeclinedEmail(
+        organizer.email,
+        event,
+        {
+            name: user.name || 'Unknown',
+            email: user.email,
+            message: declineMessage,
+        },
+        organizerName,
+        eventLink,
+    );
+    console.log(`Email request declined sent to organizer ${organizer.email}`);
 };

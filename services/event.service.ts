@@ -20,11 +20,14 @@ import { convertToCronSchedule } from '../helpers/convertToCronSchedule';
 import { CronManager } from '../cron/cronManager';
 import {
     notifyEventDeleted,
+    notifyEventInvitation,
     notifyEventRequestAccepted,
+    notifyEventRequestAcceptedOrganizer,
+    notifyEventRequestDeclinedOrganizer,
     notifyEventRequestDenied,
     notifyEventUpdated,
     notifyNewRequest,
-    upcomingEventEmailAction,
+    notifyUpcommingEvent,
 } from '../cron/action/commonActions';
 
 /**
@@ -106,7 +109,7 @@ export class EventService {
             await CronManager.getInstance().registerJob(
                 `event-${event._id}`,
                 schedule,
-                upcomingEventEmailAction,
+                notifyUpcommingEvent,
                 { timezone: 'Asia/Ho_Chi_Minh' },
                 event,
             );
@@ -490,7 +493,7 @@ export class EventService {
         CronManager.getInstance().registerJob(
             `event-${updatedEvent._id}`,
             schedule,
-            upcomingEventEmailAction,
+            notifyUpcommingEvent,
             { timezone: 'Asia/Ho_Chi_Minh' },
             updatedEvent,
         );
@@ -565,6 +568,7 @@ export class EventService {
      * Handles join requests with different flows for public vs. private events,
      * enforcing participant limits and preventing duplicate joins.
      *
+     * @param callerId
      * @param {string} userId - ID of the user requesting to join
      * @param {string} eventId - ID of the event to join
      * @param {string} invited - invited
@@ -572,10 +576,12 @@ export class EventService {
      * @throws {HttpError} If event not found, user already joined, or participant limit reached
      */
     static async joinEvent(
-        userId: string,
+        callerId: string, // Added to identify the user performing the action
+        userId: string, // The user who will be added as a participant
         eventId: string,
         invited: ParticipationStatus.INVITED | null = null,
     ): Promise<EventInterface> {
+        console.log('invited: ', invited);
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
             throw new HttpError(
                 'Invalid event ID format',
@@ -583,7 +589,6 @@ export class EventService {
                 ErrorCode.INVALID_ID,
             );
         }
-
         if (!mongoose.Types.ObjectId.isValid(userId)) {
             throw new HttpError(
                 'Invalid user ID format',
@@ -591,64 +596,96 @@ export class EventService {
                 ErrorCode.INVALID_ID,
             );
         }
-
-        const event = await EventModel.findOne({ _id: eventId, isDeleted: false }); // Loại bỏ sự kiện đã bị xóa
-        if (!event) {
-            throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
-        }
-
-        const organizer: UserInterface | null = await UserModel.findById(event.organizer);
-        if (!organizer) {
+        if (!mongoose.Types.ObjectId.isValid(callerId)) {
             throw new HttpError(
-                'Event organizer not found',
+                'Invalid caller ID format',
                 StatusCode.NOT_FOUND,
-                ErrorCode.USER_NOT_FOUND,
+                ErrorCode.INVALID_ID,
             );
         }
 
-        // HERE: Check if the event is open for joining
-        if (!event.isOpen) {
-            throw new HttpError(
-                'This event is ended!',
-                StatusCode.FORBIDDEN,
-                ErrorCode.EVENT_CLOSED,
+        // Start a session for atomic operations
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
+        try {
+            // Fetch event and ensure it's not deleted
+            const event = await EventModel.findOne({ _id: eventId, isDeleted: false }).session(
+                session,
             );
-        }
+            if (!event) {
+                throw new HttpError(
+                    'Event not found',
+                    StatusCode.NOT_FOUND,
+                    ErrorCode.EVENT_NOT_FOUND,
+                );
+            }
 
-        const user: UserInterface | null = await UserModel.findById(userId);
-        if (!user) {
-            throw new HttpError('User not found', StatusCode.NOT_FOUND, ErrorCode.USER_NOT_FOUND);
-        }
+            // Check if event is open
+            if (!event.isOpen) {
+                throw new HttpError(
+                    'This event is ended!',
+                    StatusCode.FORBIDDEN,
+                    ErrorCode.EVENT_CLOSED,
+                );
+            }
 
-        const isJoined: boolean | undefined = event.participants?.some(
-            participant => participant.userId?.toString() === userId,
-        );
+            // Fetch organizer
+            const organizer = await UserModel.findById(event.organizer).session(session);
+            if (!organizer) {
+                throw new HttpError(
+                    'Event organizer not found',
+                    StatusCode.NOT_FOUND,
+                    ErrorCode.USER_NOT_FOUND,
+                );
+            }
 
-        const isOrganizer: boolean = event.organizer?.toString() === userId;
+            // Fetch user
+            const user = await UserModel.findById(userId).session(session);
+            if (!user) {
+                throw new HttpError(
+                    'User not found',
+                    StatusCode.NOT_FOUND,
+                    ErrorCode.USER_NOT_FOUND,
+                );
+            }
 
-        if (isJoined) {
-            throw new HttpError(
-                'User already joined or sent request to the event',
-                StatusCode.FORBIDDEN,
-                ErrorCode.CUSTOM_ERROR,
+            // Check if user is already a participant
+            const isJoined = event.participants?.some(
+                participant => participant.userId?.toString() === userId,
             );
-        }
+            if (isJoined) {
+                throw new HttpError(
+                    'User already joined or sent request to the event',
+                    StatusCode.FORBIDDEN,
+                    ErrorCode.CUSTOM_ERROR,
+                );
+            }
 
-        if (isOrganizer) {
-            throw new HttpError(
-                'Organizer cannot join their own event',
-                StatusCode.FORBIDDEN,
-                ErrorCode.UNAUTHORIZED,
-            );
-        }
+            // Check if user is the organizer
+            const isOrganizer = event.organizer?.toString() === userId;
+            if (isOrganizer) {
+                throw new HttpError(
+                    'Organizer cannot join their own event',
+                    StatusCode.FORBIDDEN,
+                    ErrorCode.CUSTOM_ERROR,
+                );
+            }
 
-        if (event.isPublic) {
-            // Count current accepted participants
+            // Validate caller permissions for invitations
+            const isCallerOrganizer = event.organizer?.toString() === callerId;
+            if (invited === ParticipationStatus.INVITED && !isCallerOrganizer) {
+                throw new HttpError(
+                    'Only the organizer can send invitations',
+                    StatusCode.FORBIDDEN,
+                    ErrorCode.UNAUTHORIZED,
+                );
+            }
+
+            // Check participant limit for both public and private events
             const acceptedParticipantsCount =
                 event.participants?.filter(p => p.status === ParticipationStatus.ACCEPTED).length ||
                 0;
-
-            // Check if joining would exceed the limit
             if (
                 organizer.maxParticipantPerEvent !== undefined &&
                 acceptedParticipantsCount >= organizer.maxParticipantPerEvent
@@ -659,45 +696,64 @@ export class EventService {
                     ErrorCode.MAX_PARTICIPANT_EXCEEDED_LIMIT,
                 );
             }
+
+            // Determine participant status
+            let status: ParticipationStatus;
+            if (invited === ParticipationStatus.INVITED) {
+                status = ParticipationStatus.INVITED; // Organizer invitation
+            } else {
+                status = event.isPublic
+                    ? ParticipationStatus.ACCEPTED
+                    : ParticipationStatus.PENDING; // User request
+            }
+
+            // Create new participant
+            const newParticipant: Partial<ParticipantInterface> = {
+                userId: new mongoose.Types.ObjectId(userId),
+                status,
+                invitedAt: new Date(),
+                respondedAt: status === ParticipationStatus.ACCEPTED ? new Date() : null,
+            };
+
+            // Update event with new participant
+            const updatedEvent = await EventModel.findByIdAndUpdate(
+                eventId,
+                { $push: { participants: newParticipant } },
+                { new: true, session },
+            );
+
+            // Handle notifications
+            if (invited === ParticipationStatus.INVITED) {
+                // Organizer sent an invitation
+                await notifyEventInvitation(
+                    { userId },
+                    updatedEvent!,
+                    organizer.name || 'Organizer',
+                );
+            } else if (!event.isPublic) {
+                // User sent a join request for a private event
+                await NotificationService.createNotification({
+                    ...NotificationService.requestJoinNotificationContent(
+                        user.name || 'User',
+                        event.title || 'Event',
+                    ),
+                    userIds: [event.organizer?.toString() || ''],
+                });
+                await notifyNewRequest(event, {
+                    userId: userId,
+                    message: 'Please accept my request',
+                });
+            }
+            // Note: No notification for public events since the user is auto-accepted
+
+            await session.commitTransaction();
+            return updatedEvent!;
+        } catch (error) {
+            await session.abortTransaction();
+            throw error;
+        } finally {
+            session.endSession();
         }
-
-        let status: ParticipationStatus = event.isPublic
-            ? ParticipationStatus.ACCEPTED
-            : ParticipationStatus.PENDING;
-        status = invited ? ParticipationStatus.INVITED : status;
-
-        const newParticipant: Partial<ParticipantInterface> = {
-            userId: new mongoose.Types.ObjectId(userId),
-            status,
-            invitedAt: new Date(),
-            respondedAt: event.isPublic ? new Date() : null,
-        };
-
-        const updatedEvent: EventInterface | null = await EventModel.findByIdAndUpdate(
-            eventId,
-            {
-                $push: { participants: newParticipant },
-            },
-            { new: true },
-        );
-
-        if (!updatedEvent) {
-            throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
-        }
-
-        await NotificationService.createNotification({
-            ...NotificationService.requestJoinNotificationContent(
-                user.name || 'User',
-                event.title || 'Event',
-            ),
-            userIds: [event.organizer?.toString() || ''],
-        });
-
-        if (updatedEvent) {
-            await notifyNewRequest(event, { userId: userId, message: 'Please accept my request' });
-        }
-
-        return updatedEvent;
     }
 
     /**
@@ -717,20 +773,20 @@ export class EventService {
         userIdToken: string,
         input: RespondJoinInput,
     ): Promise<EventInterface> {
-        if (!mongoose.Types.ObjectId.isValid(eventId)) {
-            throw new HttpError(
-                'Invalid event ID format',
-                StatusCode.NOT_FOUND,
-                ErrorCode.INVALID_ID,
-            );
+        const user: UserInterface | null = await UserModel.findById({
+            _id: input.userId,
+            isDeleted: false,
+        });
+        if (!user) {
+            throw new HttpError('User not found', StatusCode.NOT_FOUND, ErrorCode.USER_NOT_FOUND);
         }
 
-        if (!mongoose.Types.ObjectId.isValid(input.userId)) {
-            throw new HttpError(
-                'Invalid user ID format',
-                StatusCode.NOT_FOUND,
-                ErrorCode.INVALID_ID,
-            );
+        const organizer: UserInterface | null = await UserModel.findById({
+            _id: userIdToken,
+            isDeleted: false,
+        });
+        if (!organizer) {
+            throw new HttpError('User not found', StatusCode.NOT_FOUND, ErrorCode.USER_NOT_FOUND);
         }
 
         const event: EventInterface | null = await EventModel.findOne({
@@ -742,6 +798,7 @@ export class EventService {
             throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
         }
 
+        //possibly wrong
         const isUserInvited: boolean =
             event.participants?.some(
                 participant =>
@@ -828,19 +885,34 @@ export class EventService {
             throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
         }
 
-        const notiContent =
-            input.status === 'ACCEPTED'
-                ? NotificationService.requestAcceptNotificationContent(event.title)
-                : NotificationService.requestDeniedNotificationContent(event.title);
+        if (isUserInvited) {
+            if (input.status === 'ACCEPTED')
+                await notifyEventRequestAcceptedOrganizer(
+                    userIdToken,
+                    updatedEvent,
+                    organizer.name,
+                );
+            else
+                await notifyEventRequestDeclinedOrganizer(
+                    userIdToken,
+                    updatedEvent,
+                    organizer.name,
+                );
+        } else {
+            const notiContent =
+                input.status === 'ACCEPTED'
+                    ? NotificationService.requestAcceptNotificationContent(event.title)
+                    : NotificationService.requestDeniedNotificationContent(event.title);
 
-        await NotificationService.createNotification({
-            ...notiContent,
-            userIds: [input.userId],
-        });
+            await NotificationService.createNotification({
+                ...notiContent,
+                userIds: [input.userId],
+            });
 
-        if (input.status === 'ACCEPTED')
-            await notifyEventRequestAccepted(input.userId, updatedEvent);
-        else await notifyEventRequestDenied(input.userId, updatedEvent);
+            if (input.status === 'ACCEPTED')
+                await notifyEventRequestAccepted(input.userId, updatedEvent);
+            else await notifyEventRequestDenied(input.userId, updatedEvent);
+        }
 
         return updatedEvent;
     }
