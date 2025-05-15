@@ -295,14 +295,15 @@ export class EventController {
         try {
             const { userId } = req.body;
             const { eventId } = req.params;
-            let { invited } = req.body;
+            const { status } = req.body;
 
             validateInput(joinEventSchema, req.body);
 
             const event: EventInterface = await EventService.joinEvent(
+                req.user?.userId as string,
                 userId,
                 eventId,
-                !invited ? ParticipationStatus.INVITED : null,
+                status === 'INVITED' ? ParticipationStatus.INVITED : null,
             );
             HttpResponse.sendYES(res, StatusCode.OK, 'Event joined/send request successfully', {
                 event,
