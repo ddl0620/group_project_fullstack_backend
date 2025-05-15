@@ -5,6 +5,7 @@ import { FeedbackModel } from '../models/feedback/feedback.model';
 import { HttpError } from '../helpers/httpsError.helpers';
 import { StatusCode } from '../enums/statusCode.enums';
 import { ErrorCode } from '../enums/errorCode.enums';
+import { notifyWebsiteFeedbackReceived } from '../cron/action/commonActions';
 
 export class FeedbackService {
     static async createFeedback(feedbackData: FeedbackInterfaces): Promise<FeedbackInterfaces> {
@@ -23,6 +24,8 @@ export class FeedbackService {
                     ErrorCode.CAN_NOT_CREATE,
                 );
             }
+
+            await notifyWebsiteFeedbackReceived(feedback);
 
             return feedback;
         } catch (error: any) {

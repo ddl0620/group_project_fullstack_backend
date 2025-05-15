@@ -4,6 +4,7 @@ import { EventInterface } from '../interfaces/event.interfaces';
 import { HttpError } from '../helpers/httpsError.helpers';
 import { StatusCode } from '../enums/statusCode.enums';
 import { ErrorCode } from '../enums/errorCode.enums';
+import { FeedbackInterfaces } from '../interfaces/feedback/feedback.interfaces';
 
 // Generic sendEmail function
 export const sendEmail = async ({
@@ -277,6 +278,33 @@ export const sendEventRequestDeclinedEmail = async (
         eventLocation: location || 'To Be Determined',
         declineMessage: applicant.message,
         eventLink,
+        year: new Date().getFullYear().toString(),
+        email: process.env.EMAIL_USER as string,
+    });
+
+    return sendEmail({ to, subject, text, html });
+};
+
+// Function for sending website feedback received email
+export const sendWebsiteFeedbackReceivedEmail = async (
+    to: string | string[],
+    feedback: FeedbackInterfaces,
+    adminDashboardLink: string = 'https://example.com/admin-dashboard',
+): Promise<nodemailer.SentMessageInfo> => {
+    const subject = 'New Website Feedback Received';
+    const text = `Dear Administrator,\n\nYou have received new feedback from ${feedback.name} (${feedback.email})`;
+
+    const html = loadHtmlTemplate('website-feedback-received.html', {
+        feedbackName: feedback.name,
+        feedbackEmail: feedback.email,
+        feedbackRole: feedback.role,
+        feedbackUniversity: feedback.university,
+        feedbackRatingOverall: feedback.rating.overall.toString(),
+        feedbackRatingUI: feedback.rating.ui.toString(),
+        feedbackRatingUX: feedback.rating.ux.toString(),
+        feedbackMessage: feedback.feedback,
+        feedbackDate: formatDate(feedback.createdAt),
+        adminDashboardLink,
         year: new Date().getFullYear().toString(),
         email: process.env.EMAIL_USER as string,
     });

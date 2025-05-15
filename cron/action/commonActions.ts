@@ -9,10 +9,12 @@ import {
     sendEventInvitationEmail,
     sendEventRequestDeclinedEmail,
     sendEventRequestAcceptedOrganizerEmail,
+    sendWebsiteFeedbackReceivedEmail,
 } from '../../email/email';
 import { UserService } from '../../services/user.service';
 import { ParticipationStatus } from '../../enums/participationStatus.enums';
 import { UserInterface } from '../../interfaces/user.interfaces';
+import { FeedbackInterfaces } from '../../interfaces/feedback/feedback.interfaces';
 
 export const notifyUpcommingEvent = async (event: EventInterface) => {
     const participantEmails: string[] = [];
@@ -228,4 +230,13 @@ export const notifyEventRequestDeclinedOrganizer = async (
         eventLink,
     );
     console.log(`Email request declined sent to organizer ${organizer.email}`);
+};
+
+export const notifyWebsiteFeedbackReceived = async (
+    feedback: FeedbackInterfaces,
+    adminEmail: string = 'khanhquoc1125@gmail.com',
+    adminDashboardLink: string = 'https://example.com/admin-dashboard',
+) => {
+    await sendWebsiteFeedbackReceivedEmail(adminEmail, feedback, adminDashboardLink);
+    console.log(`Website feedback received email sent to ${adminEmail}`);
 };
