@@ -4,11 +4,11 @@ import { ErrorCode } from '../enums/errorCode.enums';
 import { ErrorHandler } from '../types/error.type';
 /**
  * Error Handler Registry Module
- * 
+ *
  * This module implements a centralized error handling system for the application.
  * It provides a registry for mapping specific error types or codes to appropriate
  * HTTP error responses, ensuring consistent error handling throughout the application.
- * 
+ *
  * The module includes:
  * - A registry to store error handlers
  * - A function to register new error handlers
@@ -18,10 +18,10 @@ import { ErrorHandler } from '../types/error.type';
  *   - Bcrypt encryption errors
  *   - General authentication and authorization errors
  *   - Common application-specific errors
- * 
+ *
  * Each handler converts specific errors into standardized HttpError objects
  * with appropriate status codes and error codes.
- * 
+ *
  * @module utils/errorHandlerRegistry
  */
 
@@ -145,10 +145,10 @@ registerErrorHandler(ErrorCode.RESOURCE_NOT_FOUND, () => {
     );
 });
 
-registerErrorHandler(ErrorCode.CUSTOM_ERROR, () => {
-    return new HttpError(
-        'Custom application error',
-        StatusCode.BAD_REQUEST,
-        ErrorCode.CUSTOM_ERROR,
-    );
-});
+// registerErrorHandler(ErrorCode.CUSTOM_ERROR, () => {
+//     return new HttpError(
+//         'Custom application error',
+//         StatusCode.BAD_REQUEST,
+//         ErrorCode.CUSTOM_ERROR,
+//     );
+// });

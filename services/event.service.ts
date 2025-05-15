@@ -574,7 +574,7 @@ export class EventService {
     static async joinEvent(
         userId: string,
         eventId: string,
-        invited: ParticipationStatus = ParticipationStatus.INVITED,
+        invited: ParticipationStatus.INVITED | null = null,
     ): Promise<EventInterface> {
         if (!mongoose.Types.ObjectId.isValid(eventId)) {
             throw new HttpError(
@@ -630,7 +630,7 @@ export class EventService {
             throw new HttpError(
                 'User already joined or sent request to the event',
                 StatusCode.FORBIDDEN,
-                ErrorCode.UNAUTHORIZED,
+                ErrorCode.CUSTOM_ERROR,
             );
         }
 
@@ -661,14 +661,10 @@ export class EventService {
             }
         }
 
-        let status: ParticipationStatus = ParticipationStatus.INVITED;
-        if (!invited) {
-            if (event.isPublic) {
-                status = ParticipationStatus.ACCEPTED;
-            } else {
-                status = ParticipationStatus.PENDING;
-            }
-        }
+        let status: ParticipationStatus = event.isPublic
+            ? ParticipationStatus.ACCEPTED
+            : ParticipationStatus.PENDING;
+        status = invited ? ParticipationStatus.INVITED : status;
 
         const newParticipant: Partial<ParticipantInterface> = {
             userId: new mongoose.Types.ObjectId(userId),
