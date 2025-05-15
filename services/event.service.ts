@@ -641,7 +641,7 @@ export class EventService {
             throw new HttpError(
                 'Organizer cannot join their own event',
                 StatusCode.FORBIDDEN,
-                ErrorCode.UNAUTHORIZED,
+                ErrorCode.CUSTOM_ERROR,
             );
         }
 
@@ -664,10 +664,14 @@ export class EventService {
             }
         }
 
-        let status: ParticipationStatus = event.isPublic
-            ? ParticipationStatus.ACCEPTED
-            : ParticipationStatus.PENDING;
-        status = invited ? ParticipationStatus.INVITED : status;
+        let status: ParticipationStatus = ParticipationStatus.INVITED;
+        if (invited === null) {
+            if (event.isPublic) {
+                status = ParticipationStatus.ACCEPTED;
+            } else {
+                status = ParticipationStatus.PENDING;
+            }
+        }
 
         const newParticipant: Partial<ParticipantInterface> = {
             userId: new mongoose.Types.ObjectId(userId),
@@ -690,7 +694,7 @@ export class EventService {
 
         console.log('invited: ', invited);
 
-        if (!invited) {
+        if (invited) {
             await notifyEventInvitation({ userId }, updatedEvent, organizer.name || 'Organizer');
         } else {
             await NotificationService.createNotification({
