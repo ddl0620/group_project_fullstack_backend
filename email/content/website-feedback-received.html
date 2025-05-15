@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Website Feedback Received</title>
+  <style>
+      body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+      .container { max-width: 600px; margin: 20px auto; background: #ffffff; padding: 20px; border-radius: 8px; }
+      .header { text-align: center; padding: 10px 0; }
+      .header img { max-width: 150px; }
+      .content { padding: 20px; }
+      .content h2 { color: #333; }
+      .content p { color: #555; line-height: 1.6; }
+      .details { background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0; }
+      .details p { margin: 5px 0; }
+      .button { display: inline-block; padding: 10px 20px; margin: 10px 5px; background: #007bff; color: #fff; text-decoration: none; border-radius: 5px; }
+      .button:hover { background: #0056b3; }
+      .footer { text-align: center; padding: 20px 0; color: #777; font-size: 12px; }
+      .footer a { color: #007bff; text-decoration: none; margin: 0 10px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <img src="https://via.placeholder.com/150x50?text=Eventify+%C3%97+RMIT" alt="Eventify × RMIT">
+    <h2>New Website Feedback Received</h2>
+  </div>
+  <div class="content">
+    <p>Dear Administrator,</p>
+    <p>You have received new feedback from {{feedbackName}} regarding the Eventify website.</p>
+    <div class="details">
+      <h3>Feedback Details:</h3>
+      <p><strong>Name:</strong> {{feedbackName}}</p>
+      <p><strong>Email:</strong> {{feedbackEmail}}</p>
+      <p><strong>Role:</strong> {{feedbackRole}}</p>
+      <p><strong>University:</strong> {{feedbackUniversity}}</p>
+      <p><strong>Ratings:</strong></p>
+      <p>Overall: {{feedbackRatingOverall}}/10</p>
+      <p>UI: {{feedbackRatingUI}}/10</p>
+      <p>UX: {{feedbackRatingUX}}/10</p>
+      <p><strong>Feedback:</strong> {{feedbackMessage}}</p>
+      <p><strong>Submitted On:</strong> {{feedbackDate}}</p>
+    </div>
+    <p>You can review all feedback and manage website settings via the admin dashboard:</p>
+    <a href="{{adminDashboardLink}}" class="button">View Admin Dashboard</a>
+  </div>
+  <div class="footer">
+    <a href="https://facebook.com">Facebook</a> |
+    <a href="https://twitter.com">Twitter</a> |
+    <a href="https://instagram.com">Instagram</a> |
+    <a href="https://linkedin.com">LinkedIn</a>
+    <p>© {{year}} Eventify × RMIT. All rights reserved.</p>
+    <p>RMIT University Vietnam - 521 Kim Ma Street - 5Knights</p>
+    <p>Contact us at <a href="mailto:{{email}}">{{email}}</a></p>
+  </div>
+</div>
+</body>
+</html>
