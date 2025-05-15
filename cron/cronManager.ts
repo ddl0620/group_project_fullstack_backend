@@ -1,7 +1,7 @@
 import { Agenda } from 'agenda';
 import { cronConfig } from './cronConfig';
 import cronJobs from './jobs';
-import { upcomingEventEmailAction } from './action/commonActions';
+import { notifyUpcommingEvent } from './action/commonActions';
 
 /**
  * Options for configuring a cron job.
@@ -71,7 +71,7 @@ export class CronManager {
                     action = this.actionMap.get(name)!;
                 } else if (name.startsWith('event-')) {
                     // Ánh xạ action cho các công việc event-...
-                    action = upcomingEventEmailAction;
+                    action = notifyUpcommingEvent;
                     this.actionMap.set(name, action);
                 } else {
                     action = async (data: any) => {

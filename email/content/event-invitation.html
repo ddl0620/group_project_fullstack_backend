@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Invitation</title>
+  <style>
+      body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+      .container { max-width: 600px; margin: 20px auto; background: #ffffff; padding: 20px; border-radius: 8px; }
+      .header { text-align: center; padding: 10px 0; }
+      .header img { max-width: 150px; }
+      .content { padding: 20px; }
+      .content h2 { color: #333; }
+      .content p { color: #555; line-height: 1.6; }
+      .details { background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0; }
+      .details p { margin: 5px 0; }
+      .button { display: inline-block; padding: 10px 20px; margin:  units: inches; background: #007bff; color: #fff; text-decoration: none; border-radius: 5px; }
+      .button:hover { background: #0056b3; }
+      .footer { text-align: center; padding: 20px 0; color: #777; font-size: 12px; }
+      .footer a { color: #007bff; text-decoration: none; margin: 0 10px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <img src="https://via.placeholder.com/150x50?text=Eventify+%C3%97+RMIT" alt="Eventify × RMIT">
+    <h2>You’re Invited to {{eventTitle}}!</h2>
+  </div>
+  <div class="content">
+    <p>Dear {{inviteeName}},</p>
+    <p>You have been invited to join the exciting event <strong>{{eventTitle}}</strong> organized by {{organizerName}}. We’d love to have you with us!</p>
+    <div class="details">
+      <h3>Event Details:</h3>
+      <p><strong>Name:</strong> {{eventTitle}}</p>
+      <p><strong>Date:</strong> {{eventDate}}</p>
+      <p><strong>Location:</strong> {{eventLocation}}</p>
+      <p><strong>Description:</strong> {{eventDescription}}</p>
+    </div>
+    <p>Please let us know if you can make it by clicking the button below:</p>
+    <a href="{{rsvpLink}}" class="button">RSVP Now</a>
+    <p>We look forward to seeing you at the event!</p>
+    <p>Best regards,<br>{{organizerName}}</p>
+  </div>
+  <div class="footer">
+    <a href="https://facebook.com">Facebook</a> |
+    <a href="https://twitter.com">Twitter</a> |
+    <a href="https://instagram.com">Instagram</a> |
+    <a href="https://linkedin.com">LinkedIn</a>
+    <p>© {{year}} Eventify × RMIT. All rights reserved.</p>
+    <p>RMIT University Vietnam - 521 Kim Ma Street - 5Knights</p>
+    <p>Contact us at <a href="mailto:{{email}}">{{email}}</a></p>
+  </div>
+</div>
+</body>
+</html>

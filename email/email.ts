@@ -24,8 +24,7 @@ export const sendEmail = async ({
     try {
         if (!to || to.length < 1) return;
 
-        const info = await transporter.sendMail(mailOptions);
-        return info;
+        return await transporter.sendMail(mailOptions);
     } catch (error: any) {
         throw new HttpError('Failed to send email', StatusCode.NOT_FOUND, ErrorCode.CAN_NOT_CREATE);
     }
@@ -54,10 +53,10 @@ export const sendEventNotificationEmail = async (
 ): Promise<nodemailer.SentMessageInfo> => {
     const { title, description, type, startDate, endDate, location, isPublic } = event;
 
-    const subject = `Upcomming Event: ${title} (${type})`;
+    const subject = `Upcoming Event: ${title} (${type})`;
     const text = `Join us for ${title}!\n\nType: ${type}\nStart: ${formatDate(startDate)}\nEnd: ${formatDate(endDate)}\nLocation: ${location || 'TBD'}\nDescription: ${description}\nPublic: ${isPublic ? 'Yes' : 'No'}\n`;
 
-    const html = loadHtmlTemplate('event-upcomming.html', {
+    const html = loadHtmlTemplate('event-upcoming.html', {
         title,
         type,
         startDate: formatDate(startDate),
@@ -114,7 +113,35 @@ export const sendEventDeletedEmail = async (
     return sendEmail({ to, subject, text, html });
 };
 
-// Function for sending event request accepted email
+// Function for sending event invitation email
+export const sendEventInvitationEmail = async (
+    to: string | string[],
+    event: EventInterface,
+    inviteeName: string,
+    organizerName: string,
+    rsvpLink: string = 'https://example.com/rsvp',
+): Promise<nodemailer.SentMessageInfo> => {
+    const { title, description, startDate, location } = event;
+
+    const subject = `You're Invited to ${title}!`;
+    const text = `Dear ${inviteeName},\n\nYou are invited to ${title}!\n\nStart: ${formatDate(startDate)}\nLocation: ${location || 'TBD'}\nDescription: ${description}\n\nRSVP at: ${rsvpLink}`;
+
+    const html = loadHtmlTemplate('event-invitation.html', {
+        eventTitle: title,
+        eventDate: formatDate(startDate),
+        eventLocation: location || 'To Be Determined',
+        eventDescription: description,
+        inviteeName,
+        organizerName,
+        rsvpLink,
+        year: new Date().getFullYear().toString(),
+        email: process.env.EMAIL_USER as string,
+    });
+
+    return sendEmail({ to, subject, text, html });
+};
+
+// Function for sending event request accepted email to user
 export const sendEventRequestAcceptedEmail = async (
     to: string | string[],
     event: EventInterface,
@@ -140,7 +167,7 @@ export const sendEventRequestAcceptedEmail = async (
     return sendEmail({ to, subject, text, html });
 };
 
-// Function for sending event request denied email
+// Function for sending event request denied email to user
 export const sendEventRequestDeniedEmail = async (
     to: string | string[],
     event: EventInterface,
@@ -166,6 +193,7 @@ export const sendEventRequestDeniedEmail = async (
     return sendEmail({ to, subject, text, html });
 };
 
+// Function for sending event join request email
 export const sendEventJoinRequestEmail = async (
     to: string | string[],
     event: EventInterface,
@@ -190,6 +218,64 @@ export const sendEventJoinRequestEmail = async (
         requestMessage: applicant.message,
         approvalLink,
         rejectLink,
+        eventLink,
+        year: new Date().getFullYear().toString(),
+        email: process.env.EMAIL_USER as string,
+    });
+
+    return sendEmail({ to, subject, text, html });
+};
+
+// Function for sending event request accepted email to organizer
+export const sendEventRequestAcceptedOrganizerEmail = async (
+    to: string | string[],
+    event: EventInterface,
+    applicant: { name: string; email: string; message: string },
+    organizerName: string,
+    eventLink: string = 'https://example.com/event-details',
+): Promise<nodemailer.SentMessageInfo> => {
+    const { title, startDate, location } = event;
+
+    const subject = `Event Request Accepted: ${title}`;
+    const text = `Dear ${organizerName},\n\n${applicant.name} (${applicant.email}) has accepted the invitation to join your event "${title}".\n\nMessage: ${applicant.message}\nEvent Date: ${formatDate(startDate)}\nLocation: ${location || 'TBD'}\n\nView Event: ${eventLink}`;
+
+    const html = loadHtmlTemplate('event-user-accepted.html', {
+        organizerName,
+        applicantName: applicant.name,
+        applicantEmail: applicant.email,
+        eventTitle: title,
+        eventDate: formatDate(startDate),
+        eventLocation: location || 'To Be Determined',
+        acceptMessage: applicant.message,
+        eventLink,
+        year: new Date().getFullYear().toString(),
+        email: process.env.EMAIL_USER as string,
+    });
+
+    return sendEmail({ to, subject, text, html });
+};
+
+// Function for sending event request declined email to organizer
+export const sendEventRequestDeclinedEmail = async (
+    to: string | string[],
+    event: EventInterface,
+    applicant: { name: string; email: string; message: string },
+    organizerName: string,
+    eventLink: string = 'https://example.com/event-details',
+): Promise<nodemailer.SentMessageInfo> => {
+    const { title, startDate, location } = event;
+
+    const subject = `Event Request Declined: ${title}`;
+    const text = `Dear ${organizerName},\n\n${applicant.name} (${applicant.email}) has declined the invitation to join your event "${title}".\n\nReason: ${applicant.message}\nEvent Date: ${formatDate(startDate)}\nLocation: ${location || 'TBD'}\n\nView Event: ${eventLink}`;
+
+    const html = loadHtmlTemplate('event-user-denied.html', {
+        organizerName,
+        applicantName: applicant.name,
+        applicantEmail: applicant.email,
+        eventTitle: title,
+        eventDate: formatDate(startDate),
+        eventLocation: location || 'To Be Determined',
+        declineMessage: applicant.message,
         eventLink,
         year: new Date().getFullYear().toString(),
         email: process.env.EMAIL_USER as string,

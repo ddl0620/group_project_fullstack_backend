@@ -20,11 +20,14 @@ import { convertToCronSchedule } from '../helpers/convertToCronSchedule';
 import { CronManager } from '../cron/cronManager';
 import {
     notifyEventDeleted,
+    notifyEventInvitation,
     notifyEventRequestAccepted,
+    notifyEventRequestAcceptedOrganizer,
+    notifyEventRequestDeclinedOrganizer,
     notifyEventRequestDenied,
     notifyEventUpdated,
     notifyNewRequest,
-    upcomingEventEmailAction,
+    notifyUpcommingEvent,
 } from '../cron/action/commonActions';
 
 /**
@@ -106,7 +109,7 @@ export class EventService {
             await CronManager.getInstance().registerJob(
                 `event-${event._id}`,
                 schedule,
-                upcomingEventEmailAction,
+                notifyUpcommingEvent,
                 { timezone: 'Asia/Ho_Chi_Minh' },
                 event,
             );
@@ -490,7 +493,7 @@ export class EventService {
         CronManager.getInstance().registerJob(
             `event-${updatedEvent._id}`,
             schedule,
-            upcomingEventEmailAction,
+            notifyUpcommingEvent,
             { timezone: 'Asia/Ho_Chi_Minh' },
             updatedEvent,
         );
@@ -685,16 +688,25 @@ export class EventService {
             throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
         }
 
-        await NotificationService.createNotification({
-            ...NotificationService.requestJoinNotificationContent(
-                user.name || 'User',
-                event.title || 'Event',
-            ),
-            userIds: [event.organizer?.toString() || ''],
-        });
+        console.log('invited: ', invited);
 
-        if (updatedEvent) {
-            await notifyNewRequest(event, { userId: userId, message: 'Please accept my request' });
+        if (!invited) {
+            await notifyEventInvitation({ userId }, updatedEvent, organizer.name || 'Organizer');
+        } else {
+            await NotificationService.createNotification({
+                ...NotificationService.requestJoinNotificationContent(
+                    user.name || 'User',
+                    event.title || 'Event',
+                ),
+                userIds: [event.organizer?.toString() || ''],
+            });
+
+            if (updatedEvent) {
+                await notifyNewRequest(event, {
+                    userId: userId,
+                    message: 'Please accept my request',
+                });
+            }
         }
 
         return updatedEvent;
@@ -717,20 +729,20 @@ export class EventService {
         userIdToken: string,
         input: RespondJoinInput,
     ): Promise<EventInterface> {
-        if (!mongoose.Types.ObjectId.isValid(eventId)) {
-            throw new HttpError(
-                'Invalid event ID format',
-                StatusCode.NOT_FOUND,
-                ErrorCode.INVALID_ID,
-            );
+        const user: UserInterface | null = await UserModel.findById({
+            _id: input.userId,
+            isDeleted: false,
+        });
+        if (!user) {
+            throw new HttpError('User not found', StatusCode.NOT_FOUND, ErrorCode.USER_NOT_FOUND);
         }
 
-        if (!mongoose.Types.ObjectId.isValid(input.userId)) {
-            throw new HttpError(
-                'Invalid user ID format',
-                StatusCode.NOT_FOUND,
-                ErrorCode.INVALID_ID,
-            );
+        const organizer: UserInterface | null = await UserModel.findById({
+            _id: userIdToken,
+            isDeleted: false,
+        });
+        if (!organizer) {
+            throw new HttpError('User not found', StatusCode.NOT_FOUND, ErrorCode.USER_NOT_FOUND);
         }
 
         const event: EventInterface | null = await EventModel.findOne({
@@ -742,6 +754,7 @@ export class EventService {
             throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
         }
 
+        //possibly wrong
         const isUserInvited: boolean =
             event.participants?.some(
                 participant =>
@@ -828,19 +841,34 @@ export class EventService {
             throw new HttpError('Event not found', StatusCode.NOT_FOUND, ErrorCode.EVENT_NOT_FOUND);
         }
 
-        const notiContent =
-            input.status === 'ACCEPTED'
-                ? NotificationService.requestAcceptNotificationContent(event.title)
-                : NotificationService.requestDeniedNotificationContent(event.title);
+        if (isUserInvited) {
+            if (input.status === 'ACCEPTED')
+                await notifyEventRequestAcceptedOrganizer(
+                    userIdToken,
+                    updatedEvent,
+                    organizer.name,
+                );
+            else
+                await notifyEventRequestDeclinedOrganizer(
+                    userIdToken,
+                    updatedEvent,
+                    organizer.name,
+                );
+        } else {
+            const notiContent =
+                input.status === 'ACCEPTED'
+                    ? NotificationService.requestAcceptNotificationContent(event.title)
+                    : NotificationService.requestDeniedNotificationContent(event.title);
 
-        await NotificationService.createNotification({
-            ...notiContent,
-            userIds: [input.userId],
-        });
+            await NotificationService.createNotification({
+                ...notiContent,
+                userIds: [input.userId],
+            });
 
-        if (input.status === 'ACCEPTED')
-            await notifyEventRequestAccepted(input.userId, updatedEvent);
-        else await notifyEventRequestDenied(input.userId, updatedEvent);
+            if (input.status === 'ACCEPTED')
+                await notifyEventRequestAccepted(input.userId, updatedEvent);
+            else await notifyEventRequestDenied(input.userId, updatedEvent);
+        }
 
         return updatedEvent;
     }
