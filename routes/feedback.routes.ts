@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { FeedbackController } from '../controllers/feedback.controller';
-import { authenticationToken } from '../middlewares/auth.middleware';
+import { adminOnlyMiddleware, authenticationToken } from '../middlewares/auth.middleware';
 
 /**
  * Authentication Router
@@ -11,7 +11,7 @@ import { authenticationToken } from '../middlewares/auth.middleware';
  */
 const router = Router();
 
-router.post('/', authenticationToken, FeedbackController.createFeedback);
-router.get('/', FeedbackController.getAllFeedback);
+router.post('/', FeedbackController.createFeedback);
+router.get('/', authenticationToken, adminOnlyMiddleware, FeedbackController.getAllFeedback);
 
 export default router;
