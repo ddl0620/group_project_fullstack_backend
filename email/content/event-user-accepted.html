@@ -1,55 +1,183 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Event Request Accepted</title>
   <style>
-      body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
-      .container { max-width: 600px; margin: 20px auto; background: #ffffff; padding: 20px; border-radius: 8px; }
-      .header { text-align: center; padding: 10px 0; }
-      .header img { max-width: 150px; }
-      .content { padding: 20px; }
-      .content h2 { color: #333; }
-      .content p { color: #555; line-height: 1.6; }
-      .details { background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0; }
-      .details p { margin: 5px 0; }
-      .button { display: inline-block; padding: 10px 20px; margin: 10px 5px; background: #007bff; color: #fff; text-decoration: none; border-radius: 5px; }
-      .button:hover { background: #0056b3; }
-      .footer { text-align: center; padding: 20px 0; color: #777; font-size: 12px; }
-      .footer a { color: #007bff; text-decoration: none; margin: 0 10px; }
+      body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background-color: #f9fafb;
+          margin: 0;
+          padding: 0;
+          color: #1f2937;
+      }
+      .container {
+          max-width: 600px;
+          margin: 40px auto;
+          background-color: #ffffff;
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      }
+      .header {
+          background-color: #e60028; /* RMIT Red */
+          padding: 30px 20px;
+          text-align: center;
+          position: relative;
+      }
+      .header-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+      }
+      .logo-container {
+          margin-bottom: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: white;
+          padding: 12px 20px;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          width: 100%;
+          max-width: 300px;
+      }
+      .logo img {
+          height: 40px;
+      }
+      .brand-text {
+          color: #1f2937;
+          font-size: 20px;
+          font-weight: 600;
+          margin-left: 10px;
+      }
+      .header h1 {
+          margin: 0;
+          color: #ffffff;
+          font-size: 24px;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+          width: 100%;
+          text-align: center;
+      }
+      .content {
+          padding: 40px 30px;
+          line-height: 1.6;
+      }
+      .event-details {
+          background-color: #f8f9fa;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          padding: 20px;
+          margin: 20px 0;
+      }
+      .event-detail {
+          margin-bottom: 10px;
+      }
+      .event-detail strong {
+          display: inline-block;
+          width: 100px;
+          color: #4b5563;
+      }
+      .button {
+          display: inline-block;
+          padding: 12px 24px;
+          background-color: #e60028;
+          color: #ffffff;
+          text-decoration: none;
+          border-radius: 6px;
+          font-weight: 600;
+          margin: 20px 0 10px;
+          text-align: center;
+      }
+      .footer {
+          background-color: #f3f4f6;
+          padding: 25px 20px;
+          text-align: center;
+          border-top: 3px solid #e60028;
+      }
+      .social-links {
+          margin-bottom: 20px;
+      }
+      .social-link {
+          display: inline-block;
+          margin: 0 10px;
+          color: #e60028;
+          text-decoration: none;
+          font-weight: 500;
+      }
+      .footer-text {
+          font-size: 13px;
+          color: #6b7280;
+          margin: 5px 0;
+      }
+      @media screen and (max-width: 600px) {
+          .container {
+              margin: 20px 15px;
+              border-radius: 8px;
+          }
+          .header {
+              padding: 25px 15px;
+          }
+          .content {
+              padding: 30px 20px;
+          }
+      }
   </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
-    <img src="https://via.placeholder.com/150x50?text=Eventify+%C3%97+RMIT" alt="Eventify × RMIT">
-    <h2>Event Request Accepted</h2>
+    <div class="header-content">
+      <div class="logo-container">
+        <img
+          src="https://res.cloudinary.com/dvdlovkqi/image/upload/v1746904834/event/6801dad65ac6f6873198f732/kmj07nyuzevuvgajx2kg.png"
+          alt="RMIT"
+          style="height: 40px; width: auto; object-fit: contain"
+        />
+        <span class="brand-text">Eventify × RMIT</span>
+      </div>
+      <h1 style="width: 100%; text-align: center; margin-top: 15px">
+        Event Request Accepted
+      </h1>
+    </div>
   </div>
   <div class="content">
     <p>Dear {{organizerName}},</p>
-    <p>Great news! {{applicantName}} has accepted the invitation to join your event <strong>{{eventTitle}}</strong>.</p>
-    <div class="details">
-      <h3>Applicant Details:</h3>
-      <p><strong>Name:</strong> {{applicantName}}</p>
-      <p><strong>Email:</strong> {{applicantEmail}}</p>
-      <p><strong>Event:</strong> {{eventTitle}}</p>
-      <p><strong>Date:</strong> {{eventDate}}</p>
-      <p><strong>Location:</strong> {{eventLocation}}</p>
+    <p>
+      Great news! {{applicantName}} has accepted the invitation to join your event <strong>{{eventTitle}}</strong>.
+    </p>
+
+    <div class="event-details">
+      <h3 style="margin-top: 0; color: #4b5563;">Applicant Details:</h3>
+      <div class="event-detail"><strong>Name:</strong> {{applicantName}}</div>
+      <div class="event-detail"><strong>Email:</strong> {{applicantEmail}}</div>
+      <div class="event-detail"><strong>Event:</strong> {{eventTitle}}</div>
+      <div class="event-detail"><strong>Date:</strong> {{eventDate}}</div>
+      <div class="event-detail"><strong>Location:</strong> {{eventLocation}}</div>
     </div>
+
     <p>Message from applicant (if provided):</p>
     <p>"{{acceptMessage}}"</p>
-    <p>You can manage all participants and view event details via your event dashboard:</p>
+
+    <p>
+      You can manage all participants and view event details via your event dashboard:
+    </p>
+
     <a href="{{eventLink}}" class="button">View Event Dashboard</a>
   </div>
   <div class="footer">
-    <a href="https://facebook.com">Facebook</a> |
-    <a href="https://twitter.com">Twitter</a> |
-    <a href="https://instagram.com">Instagram</a> |
-    <a href="https://linkedin.com">LinkedIn</a>
-    <p>© {{year}} Eventify × RMIT. All rights reserved.</p>
-    <p>RMIT University Vietnam - 521 Kim Ma Street - 5Knights</p>
-    <p>Contact us at <a href="mailto:{{email}}">{{email}}</a></p>
+    <div class="social-links">
+      <a href="#" class="social-link">Facebook</a>
+      <a href="#" class="social-link">Twitter</a>
+      <a href="#" class="social-link">Instagram</a>
+      <a href="#" class="social-link">LinkedIn</a>
+    </div>
+    <p class="footer-text">© {{year}} Eventify × RMIT. All rights reserved.</p>
+    <p class="footer-text">RMIT University Vietnam - 521 Kim Ma Street - 5Knights</p>
+    <p class="footer-text">Contact us at <a href="mailto:{{email}}" style="color: #e60028;">{{email}}</a></p>
   </div>
 </div>
 </body>
