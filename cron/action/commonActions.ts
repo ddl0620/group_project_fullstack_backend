@@ -25,6 +25,9 @@ export const notifyUpcommingEvent = async (event: EventInterface) => {
         participantEmails.push(user.email);
     }
 
+    const organizer: UserInterface = await UserService.getUserById(event.organizer.toString());
+    participantEmails.push(organizer.email);
+
     if (participantEmails.length === 0) {
         console.log('No participants to notify');
         return;
@@ -36,7 +39,7 @@ export const notifyUpcommingEvent = async (event: EventInterface) => {
 
 export const notifyEventUpdated = async (
     event: EventInterface,
-    rsvpLink: string = 'https://example.com/event-details',
+    rsvpLink: string = 'https://eventify.solve.vn/',
 ) => {
     const participantEmails: string[] = [];
     for (const participant of event.participants || []) {
@@ -74,7 +77,7 @@ export const notifyEventInvitation = async (
     invitee: { userId: string },
     event: EventInterface,
     organizerName: string,
-    rsvpLink: string = 'https://example.com/rsvp',
+    rsvpLink: string = 'https://eventify.solve.vn/',
 ) => {
     const inviteeUser: UserInterface = await UserService.getUserById(invitee.userId);
     if (!inviteeUser) {
@@ -96,9 +99,9 @@ export const notifyEventInvitation = async (
 export const notifyNewRequest = async (
     event: EventInterface,
     applicant: { userId: string; message: string },
-    approvalLink: string = 'https://example.com/approve-request',
-    rejectLink: string = 'https://example.com/reject-request',
-    eventLink: string = 'https://example.com/event-details',
+    approvalLink: string = 'https://eventify.solve.vn/',
+    rejectLink: string = 'https://eventify.solve.vn/',
+    eventLink: string = 'https://eventify.solve.vn/',
 ) => {
     const organizer: UserInterface = await UserService.getUserById(event.organizer.toString());
     if (!organizer) {
@@ -136,7 +139,7 @@ export const notifyNewRequest = async (
 export const notifyEventRequestAccepted = async (
     userId: string,
     event: EventInterface,
-    eventLink: string = 'https://example.com/event-details',
+    eventLink: string = 'https://eventify.solve.vn/',
 ) => {
     const user: UserInterface = await UserService.getUserById(userId);
     if (!user) {
@@ -152,7 +155,7 @@ export const notifyEventRequestAccepted = async (
 export const notifyEventRequestDenied = async (
     userId: string,
     event: EventInterface,
-    eventsLink: string = 'https://example.com/events',
+    eventsLink: string = 'https://eventify.solve.vn/',
 ) => {
     const user: UserInterface = await UserService.getUserById(userId);
     if (!user) {
@@ -170,7 +173,7 @@ export const notifyEventRequestAcceptedOrganizer = async (
     event: EventInterface,
     organizerName: string,
     acceptMessage: string = 'No message provided',
-    eventLink: string = 'https://example.com/event-details',
+    eventLink: string = 'https://eventify.solve.vn/',
 ) => {
     const user: UserInterface = await UserService.getUserById(userId);
     if (!user) {
@@ -204,7 +207,7 @@ export const notifyEventRequestDeclinedOrganizer = async (
     event: EventInterface,
     organizerName: string,
     declineMessage: string = 'No reason provided',
-    eventLink: string = 'https://example.com/event-details',
+    eventLink: string = 'https://eventify.solve.vn/',
 ) => {
     const user: UserInterface = await UserService.getUserById(userId);
     if (!user) {
@@ -235,7 +238,7 @@ export const notifyEventRequestDeclinedOrganizer = async (
 export const notifyWebsiteFeedbackReceived = async (
     feedback: FeedbackInterfaces,
     adminEmail: string = 'khanhquoc1125@gmail.com',
-    adminDashboardLink: string = 'https://example.com/admin-dashboard',
+    adminDashboardLink: string = 'https://eventify.solve.vn/',
 ) => {
     await sendWebsiteFeedbackReceivedEmail(adminEmail, feedback, adminDashboardLink);
     console.log(`Website feedback received email sent to ${adminEmail}`);
