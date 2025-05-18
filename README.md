@@ -29,13 +29,26 @@ The Eventify backend is built using the following technologies:
 
 Eventify backend provides a comprehensive set of features to support the event management platform:
 
+## Contributors
+
+| Name             | Student ID | Role        | Email                 |
+|------------------|------------|-------------|-----------------------|
+| Khong Quoc Khanh | 4021494    | Team Lead   | s4021494@rmit.edu.vn  |
+| Dao Duc Lam      | 4019052    | Team Member | s4019052@rmit.edu.vn  |
+| [Tran Dinh Hai   | 4041605    | Team Member | s4041605@rmit.edu.vn  |
+| Luong Chi Bach   | 4029308    | Team Member | s4029308@rmit.edu.vn  |
+| Duong Bao Ngoc   | s3425449   | Team Member | ss3425449@rmit.edu.vn |
+
+
 ### User Management
+
 - User registration with email verification
 - Authentication using JWT tokens
 - User profile management
 - Role-based access control (admin, organizer, attendee)
 
 ### Event Management
+
 - Create public or private events
 - Update event details
 - Delete events
@@ -43,18 +56,21 @@ Eventify backend provides a comprehensive set of features to support the event m
 - Track event engagement metrics
 
 ### Invitation System
+
 - Send invitations to users for private events
 - Track RSVP responses (accept/decline)
 - Manage invitation status
 - Set maximum invitation limits
 
 ### Discussion Board
+
 - Create discussion posts for events
 - Reply to discussion posts
 - Support for hierarchical replies (nested comments)
 - Soft deletion for maintaining data integrity
 
 ### Notification System
+
 - Event reminders for upcoming events
 - RSVP confirmation requests
 - Event update notifications
@@ -62,12 +78,14 @@ Eventify backend provides a comprehensive set of features to support the event m
 - Customizable notification settings
 
 ### Admin Dashboard
+
 - System-wide statistics and metrics
 - User management capabilities
 - Configuration of system settings (max events, max invitations)
 - Monitoring of platform activity
 
 ### Automated Tasks
+
 - Scheduled reminders for upcoming events
 - Cleanup of expired data
 - Regular statistics calculation
@@ -240,17 +258,20 @@ The application uses nearly identical configuration for both development and pro
 The backend provides the following API endpoints:
 
 ### Authentication
+
 - `POST /api/auth/register` - Register a new user
 - `POST /api/auth/login` - Authenticate a user
 - `POST /api/auth/verify-otp` - Verify OTP for registration
 - `POST /api/auth/resend-otp` - Resend OTP for verification
 
 ### User Management
+
 - `GET /api/users/profile` - Get user profile
 - `PUT /api/users/profile` - Update user profile
 - `GET /api/users/statistics` - Get user statistics
 
 ### Event Management
+
 - `POST /api/events` - Create a new event
 - `GET /api/events` - Get all public events
 - `GET /api/events/:id` - Get event details
@@ -259,12 +280,14 @@ The backend provides the following API endpoints:
 - `GET /api/events/user` - Get user's events
 
 ### Invitation Management
+
 - `POST /api/invitations` - Send event invitations
 - `GET /api/invitations` - Get user's invitations
 - `PUT /api/invitations/:id` - Respond to invitation (accept/decline)
 - `GET /api/invitations/event/:eventId` - Get event invitations
 
 ### Discussion Board
+
 - `POST /api/discussions/posts` - Create a discussion post
 - `GET /api/discussions/posts/event/:eventId` - Get event discussion posts
 - `PUT /api/discussions/posts/:id` - Update a discussion post
@@ -275,11 +298,13 @@ The backend provides the following API endpoints:
 - `DELETE /api/discussions/replies/:id` - Delete a reply
 
 ### Notification Management
+
 - `GET /api/notifications` - Get user notifications
 - `PUT /api/notifications/:id` - Mark notification as read
 - `DELETE /api/notifications/:id` - Delete a notification
 
 ### Admin Routes
+
 - `GET /api/admin/statistics` - Get platform statistics
 - `GET /api/admin/users` - Get all users
 - `PUT /api/admin/settings` - Update system settings
@@ -295,6 +320,7 @@ The backend provides the following API endpoints:
 The admin panel provides comprehensive management capabilities:
 
 ### User Management
+
 - View all registered users
 - Filter and search users
 - Edit user details and roles
@@ -302,6 +328,7 @@ The admin panel provides comprehensive management capabilities:
 - Reset user passwords
 
 ### Event Management
+
 - View all events (public and private)
 - Filter and search events
 - Edit event details
@@ -309,6 +336,7 @@ The admin panel provides comprehensive management capabilities:
 - Manage event visibility
 
 ### System Statistics
+
 - Total user count and active user metrics
 - Total event count and active event metrics
 - Discussion post and reply metrics
@@ -316,6 +344,7 @@ The admin panel provides comprehensive management capabilities:
 - Weekly and monthly trend comparisons
 
 ### System Settings
+
 - Configure maximum number of active events per user
 - Set maximum number of invitations that can be sent
 - Adjust notification settings
@@ -336,30 +365,24 @@ Before setting up the Eventify backend, ensure you have the following installed:
 To set up the development environment for Eventify backend, follow these steps:
 
 1. Clone the repository to your local machine:
-   ```
-   git clone https://github.com/qckhanh/group_project_fullstack_backend-main.git
-   cd group_project_fullstack_backend-main
-   ```
+
+    ```
+    git clone https://github.com/ddl0620/group_project_fullstack_backend.git
+    cd group_project_fullstack_backend
+    ```
 
 2. Install the required dependencies:
-   ```
-   npm install
-   ```
-   or if you're using yarn:
-   ```
-   yarn install
-   ```
+
+    ```
+    npm install
+    ```
 
 3. Create a `.env.development.local` file in the root directory and add the environment variables as shown in the Environment Variables section.
 
 4. Start the development server:
-   ```
-   npm run dev
-   ```
-   or if you're using yarn:
-   ```
-   yarn dev
-   ```
+    ```
+    npm run dev
+    ```
 
 ### Building for Production
 
@@ -378,9 +401,9 @@ To run the application in production mode:
 1. Create a `.env.production.local` file with production environment variables
 2. Build the application as described above
 3. Start the production server:
-   ```
-   npm run start
-   ```
+    ```
+    npm run start
+    ```
 
 ## Third-Party Services Integration
 
@@ -409,4 +432,3 @@ The application uses a Gmail account for sending emails. To set up email functio
 1. Create a Gmail account or use an existing one
 2. Enable "Less secure app access" or create an app password
 3. Update the EMAIL environment variables
-
