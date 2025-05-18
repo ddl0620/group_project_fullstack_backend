@@ -56,7 +56,7 @@ app.get('/', (_req: Request, res: Response): void => {
 server.listen(PORT, async (): Promise<void> => {
     await connectToDB();
     CronManager.getInstance();
-    console.log(`✅ Server is running on http://localhost :${PORT}`);
+    console.log(`✅ Server is running on http://localhost:${PORT}`);
 });
 
 export default app;
