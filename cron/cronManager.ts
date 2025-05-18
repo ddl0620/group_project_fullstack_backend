@@ -50,7 +50,7 @@ export class CronManager {
         });
 
         this.agenda.on('ready', async () => {
-            console.log('Agenda đã kết nối thành công đến MongoDB!');
+            console.log('✅ Agenda has connected to MongoDB!');
             this.isReady = true;
 
             // Điền actionMap từ cronJobs
@@ -75,7 +75,7 @@ export class CronManager {
                     this.actionMap.set(name, action);
                 } else {
                     action = async (data: any) => {
-                        console.log(`Thực thi công việc đã lưu ${name} với dữ liệu:`, data);
+                        console.log(`Execute job:  ${name} với with data:`, data);
                     };
                 }
 
@@ -84,7 +84,7 @@ export class CronManager {
                     try {
                         await action(job.attrs.data);
                     } catch (error) {
-                        console.error(`Lỗi khi thực thi công việc ${name}:`, error);
+                        console.error(`Error when executing ${name}:`, error);
                     }
                 });
 
@@ -94,8 +94,9 @@ export class CronManager {
                     options: { timezone: cronConfig.defaultTimezone },
                     data,
                 });
-                console.log(`Đã tải công việc từ database: ${name}, lịch trình: ${schedule}`);
             }
+            console.log(`✅ Loaded ${this.jobs.size} jobs from the database.`);
+
 
             // Đăng ký các công việc từ cronJobs (nếu chưa tồn tại)
             for (const job of cronJobs) {
@@ -105,25 +106,25 @@ export class CronManager {
             }
 
             await this.agenda.start();
-            console.log('Agenda đã khởi động!');
+            console.log('✅ Agenda has started!');
         });
 
         this.agenda.on('error', err => {
-            console.error('Lỗi kết nối MongoDB:', err);
+            console.error('Error in connect to MongoDB', err);
             this.isReady = false;
-            throw new Error('Không thể kết nối đến MongoDB. Vui lòng kiểm tra URI và mạng.');
+            throw new Error('Cant connect to MongoDB and Agenda. Please check your connection.');
         });
 
         this.agenda.on('fail', (err, job) => {
-            console.error(`Công việc ${job.attrs.name} thất bại:`, err);
+            console.error(`Job ${job.attrs.name} failed:`, err);
         });
 
         this.agenda.on('start', job => {
-            console.log(`Công việc ${job.attrs.name} bắt đầu chạy vào ${new Date()}`);
+            console.log(`Job ${job.attrs.name} has started at ${new Date()}`);
         });
 
         this.agenda.on('complete', job => {
-            console.log(`Công việc ${job.attrs.name} đã hoàn thành vào ${new Date()}`);
+            console.log(`Job ${job.attrs.name} has done at ${new Date()}`);
         });
     }
 
